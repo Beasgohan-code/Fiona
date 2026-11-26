@@ -146,9 +146,15 @@ async def generate_group_start_message(client, message=None, lang: str = None):
     buttons.append(
         [
             premium_button(
+                t("btn_help_commands", lang),
+                emoji="HELP_SUPPORT",
+                callback_data="grouphelp:open",
+            ),
+            premium_button(
                 f"{t('btn_group_settings', lang)} ({get_lang_label(lang)})",
-                emoji="SETTINGS", callback_data="open_group_settings",
-            )
+                emoji="SETTINGS",
+                callback_data="open_group_settings",
+            ),
         ]
     )
     return (caption, buttons)

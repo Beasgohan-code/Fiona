@@ -102,6 +102,12 @@ class MergedCommandTests(unittest.TestCase):
             self.assertEqual(missing, [], f"Unregistered {scope} commands: {missing}")
         self.assertIn("grouphelp", {name for name, _ in GROUP_COMMANDS})
 
+    def test_group_start_panel_opens_group_management_guide(self):
+        start = (WAIFU / "modules/start.py").read_text(encoding="utf-8")
+        group_tools = (MUSIC / "plugins/manage/group_utils.py").read_text(encoding="utf-8")
+        self.assertIn('callback_data="grouphelp:open"', start)
+        self.assertIn("grouphelp:(open|home|moderation|setup|safety|tools)", group_tools)
+
     def test_group_management_guide_references_real_commands_and_emojis(self):
         guide_path = MUSIC / "plugins/manage/group_utils.py"
         tree = ast.parse(guide_path.read_text(encoding="utf-8"))

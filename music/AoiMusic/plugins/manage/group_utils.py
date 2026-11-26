@@ -138,12 +138,15 @@ async def group_help_cmd(_, message: Message):
     await send_rich(message.chat.id, _group_help_view(), reply_to=message.id)
 
 
-@app.on_callback_query(filters.regex(r"^grouphelp:(home|moderation|setup|safety|tools)$"))
+@app.on_callback_query(filters.regex(r"^grouphelp:(open|home|moderation|setup|safety|tools)$"))
 async def group_help_callback(_, query: CallbackQuery):
     if not query.message or query.message.chat.type not in (ChatType.GROUP, ChatType.SUPERGROUP):
         return await query.answer("Open this guide in a group.", show_alert=True)
     section = query.data.split(":", 1)[1]
-    await edit_rich(query.message.chat.id, query.message.id, _group_help_view(section))
+    if section == "open":
+        await send_rich(query.message.chat.id, _group_help_view(), reply_to=query.message.id)
+    else:
+        await edit_rich(query.message.chat.id, query.message.id, _group_help_view(section))
     await query.answer()
 
 
