@@ -359,7 +359,7 @@ def find_help_modules(lang: str = DEFAULT_LANG):
                 button_name,
                 emoji=HELP_MODULE_EMOJIS.get(module_name, "INFO"),
                 style="PRIMARY",
-                callback_data=f"help_{module_name}",
+                callback_data=f"waifuhelp:{module_name}",
             )
         )
     return [buttons[i : i + 3] for i in range(0, len(buttons), 3)]
@@ -376,11 +376,11 @@ async def show_help_menu(client, query: CallbackQuery):
     await query.answer()
 
 
-@app.on_callback_query(filters.regex("^help_(.+)"))
+@app.on_callback_query(filters.regex(r"^waifuhelp:([a-z0-9_]+)$"))
 async def show_help(client, query: CallbackQuery):
     await asyncio.sleep(0.05)
     lang = await get_effective_lang(query)
-    module_name = query.data.split("_", 1)[1]
+    module_name = query.data.split(":", 1)[1]
     try:
         module_data = HELP_DATA.get(module_name, {})
         help_text = module_data.get(f"HELP_{lang.upper()}") or module_data.get("HELP", t("help_not_found", lang))

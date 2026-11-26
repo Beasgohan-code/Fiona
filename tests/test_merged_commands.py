@@ -152,6 +152,12 @@ class MergedCommandTests(unittest.TestCase):
         self.assertIn("edit_panel", start)
         self.assertIn("premiumize_html", rich_ui)
 
+    def test_waifu_help_callback_namespace_does_not_overlap_music_help(self):
+        start = (WAIFU / "modules/start.py").read_text(encoding="utf-8")
+        self.assertIn('callback_data=f"waifuhelp:{module_name}"', start)
+        self.assertIn('filters.regex(r"^waifuhelp:([a-z0-9_]+)$")', start)
+        self.assertNotIn('filters.regex("^help_(.+)")', start)
+
     def test_waifu_premium_button_icons_exist_in_registry(self):
         keys = premium_emoji_keys()
         for path in (WAIFU / "modules/start.py", WAIFU / "unit/aoi_lang.py"):
