@@ -176,6 +176,11 @@ def _youtube_download_error_hint(exc: Exception) -> str:
     )
     if any(term in detail for term in unavailable_errors):
         return "This video is unavailable to Fiona (private, removed, or region restricted). Try another track."
+    if "requested format is not available" in detail or "no video formats found" in detail:
+        return (
+            "YouTube returned no compatible format for this track, even after alternate client retries. "
+            "It may be restricted or temporarily unavailable; try another track."
+        )
     if any(term in detail for term in ("http error 403", "http error 429", "forbidden")):
         return (
             "YouTube refused the download request. Check the Render logs; a fresh "

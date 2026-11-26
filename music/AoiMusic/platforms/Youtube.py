@@ -2,6 +2,7 @@
 
 #
 import asyncio
+import copy
 import os
 import re
 import shlex
@@ -423,33 +424,56 @@ def _js_runtime_opt():
     return {"js_runtimes": {runtimes[0]: {}}} if runtimes else {}
 
 
-def extract_info_with_fallback(link, opts):
-    """Try JS runtimes, then progressive format 18 if adaptive formats fail (SABR)."""
+def extract_info_with_fallback(link, opts, return_options=False):
+    """Try runtime, format, and player-client fallbacks for a YouTube URL.
+
+    When the caller will download the media, return the exact options that
+    extracted it. Otherwise the later download can silently re-run the original
+    failing format/client selection and discard the successful fallback.
+    """
     runtimes = get_available_runtimes() or [None]
-    last_error = None
     attempts = []
     for runtime in runtimes:
-        temp_opts = opts.copy()
+        attempt_opts = copy.deepcopy(opts)
         if runtime:
-            temp_opts["js_runtime"] = runtime
-        attempts.append((runtime or "default", temp_opts))
-    # SABR-safe progressive fallback
-    fallback_opts = opts.copy()
+            attempt_opts["js_runtime"] = runtime
+        attempts.append((runtime or "default", attempt_opts))
+
+    fallback_opts = copy.deepcopy(opts)
     fallback_opts["format"] = "18/best/worst"
     if runtimes and runtimes[0]:
         fallback_opts["js_runtime"] = runtimes[0]
     attempts.append(("progressive-18", fallback_opts))
 
-    for label, temp_opts in attempts:
+    # YouTube can expose different format ladders to different clients. Retry
+    # a few widely supported clients individually instead of letting one
+    # unavailable format selection reject an otherwise playable video.
+    for client in ("android", "ios", "tv"):
+        client_opts = copy.deepcopy(opts)
+        extractor_args = client_opts.setdefault("extractor_args", {})
+        youtube_args = extractor_args.setdefault("youtube", {})
+        youtube_args["player_client"] = [client]
+        client_opts["format"] = "best/bestvideo+bestaudio/worst"
+        if runtimes and runtimes[0]:
+            client_opts["js_runtime"] = runtimes[0]
+        attempts.append((f"client-{client}", client_opts))
+
+    errors = []
+    last_error = None
+    for label, attempt_opts in attempts:
         try:
             _log("info", "extract_info_with_fallback: trying %s", label)
-            with _get_youtube_dl()(temp_opts) as ydl:
-                return ydl.extract_info(link)
-        except Exception as e:
-            _log("warning", "extract_info_with_fallback: %s failed: %s", label, e)
-            last_error = e
-            continue
-    raise Exception(f"All extract attempts failed: {last_error}")
+            with _get_youtube_dl()(attempt_opts) as ydl:
+                info = ydl.extract_info(link, download=False)
+            if return_options:
+                return info, attempt_opts
+            return info
+        except Exception as exc:
+            _log("warning", "extract_info_with_fallback: %s failed: %s", label, exc)
+            errors.append(f"{label}: {exc}")
+            last_error = exc
+    summary = " | ".join(errors[-4:])
+    raise Exception(f"All extract attempts failed: {summary or last_error}") from last_error
 
 
 NOTHING = {"cookies_dead": None}
@@ -1675,7 +1699,9 @@ class YouTube:
             # formats here; tv/mweb/web only return progressive itag 18.
             ydl_optssx["extractor_args"]["youtube"]["player_client"] = ["web_embedded"] + list(_YT_CLIENTS)
 
-            info = extract_info_with_fallback(link, ydl_optssx)
+            info, download_opts = extract_info_with_fallback(
+                link, ydl_optssx, return_options=True
+            )
             xyz = os.path.join("downloads", f"{info['id']}.{info['ext']}")
             if os.path.exists(xyz):
                 fsize = os.path.getsize(xyz)
@@ -1688,7 +1714,7 @@ class YouTube:
                 else:
                     _log("info", "audio_dl() file exists (%d bytes): %s", fsize, xyz)
                     return xyz
-            with _get_youtube_dl()(ydl_optssx) as x:
+            with _get_youtube_dl()(download_opts) as x:
                 x.download([link])
                 final_size = os.path.getsize(xyz) if os.path.exists(xyz) else 0
                 _log("info", "audio_dl() download done in %.1fs size=%d -> %s", time.monotonic() - dl_t0, final_size, xyz)
@@ -1704,7 +1730,9 @@ class YouTube:
                 merge_output_format="mp4",
             )
 
-            info = extract_info_with_fallback(link, ydl_optssx)
+            info, download_opts = extract_info_with_fallback(
+                link, ydl_optssx, return_options=True
+            )
             xyz = os.path.join("downloads", f"{info['id']}.{info['ext']}")
             if os.path.exists(xyz):
                 fsize = os.path.getsize(xyz)
@@ -1717,7 +1745,7 @@ class YouTube:
                 else:
                     _log("info", "video_dl() file exists (%d bytes): %s", fsize, xyz)
                     return xyz
-            with _get_youtube_dl()(ydl_optssx) as x:
+            with _get_youtube_dl()(download_opts) as x:
                 x.download([link])
             final_size = os.path.getsize(xyz) if os.path.exists(xyz) else 0
             _log("info", "video_dl() download done in %.1fs size=%d -> %s", time.monotonic() - dl_t0, final_size, xyz)
@@ -1736,11 +1764,23 @@ class YouTube:
                 merge_output_format="mp4",
             )
 
-            info = extract_info_with_fallback(link, ydl_optssx)
-            with _get_youtube_dl()(ydl_optssx) as x:
-                filename = f"{info['id']}_{format_id}.mp4"
-                file_path = os.path.join("downloads", filename)
-                return file_path
+            info, download_opts = extract_info_with_fallback(
+                link, ydl_optssx, return_options=True
+            )
+            filename = f"{info['id']}_{format_id}.mp4"
+            file_path = os.path.join("downloads", filename)
+            with _get_youtube_dl()(download_opts) as x:
+                x.download([link])
+            if not os.path.exists(file_path):
+                stem = os.path.splitext(file_path)[0]
+                candidates = [
+                    os.path.join("downloads", name)
+                    for name in os.listdir("downloads")
+                    if name.startswith(os.path.basename(stem) + ".")
+                ]
+                if candidates:
+                    file_path = candidates[0]
+            return file_path
 
         @asyncify
         def song_audio_dl():
@@ -1769,11 +1809,14 @@ class YouTube:
                 postprocessor_args={"ffmpeg": ["-threads", "4", "-b:a", "320k"]},
             )
 
-            info = extract_info_with_fallback(link, ydl_optssx)
-            with _get_youtube_dl()(ydl_optssx) as x:
-                filename = f"{info['id']}_{format_id}.mp3"
-                file_path = os.path.join("downloads", filename)
-                return file_path
+            info, download_opts = extract_info_with_fallback(
+                link, ydl_optssx, return_options=True
+            )
+            filename = f"{info['id']}_{format_id}.mp3"
+            file_path = os.path.join("downloads", filename)
+            with _get_youtube_dl()(download_opts) as x:
+                x.download([link])
+            return file_path
 
         try:
             # Primary fast-path: Aoi Hosting Music API download (MP3 / MP4)

@@ -32,6 +32,11 @@ class YouTubeDownloadErrorTests(unittest.TestCase):
         self.assertIn("unavailable to Fiona", hint)
         self.assertNotIn("cookie", hint.lower())
 
+    def test_missing_format_suggests_track_availability_not_cookie_refresh(self):
+        hint = HINT(Exception("Requested format is not available"))
+        self.assertIn("no compatible format", hint)
+        self.assertNotIn("cookie", hint.lower())
+
     def test_unknown_errors_point_to_render_logs(self):
         hint = HINT(Exception("All extractor clients failed"))
         self.assertIn("Render logs", hint)
