@@ -17,6 +17,9 @@ RUN apt-get update \
 
 WORKDIR /app
 
+# Render routes the configured web-service port to the in-container listener.
+EXPOSE 10000
+
 # Install dependencies first so source changes don't invalidate this layer.
 COPY requirements.txt requirements.txt
 COPY requirements/ requirements/

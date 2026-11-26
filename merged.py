@@ -89,6 +89,14 @@ async def _set_unified_menu(app) -> None:
     await app.set_bot_commands(convert(ADMIN_COMMANDS), scope=BotCommandScopeAllChatAdministrators())
 
 
+async def _health_heartbeat() -> None:
+    from keep_alive import beat
+
+    while True:
+        await asyncio.sleep(30)
+        beat()
+
+
 async def run() -> None:
     # Import the music package first: it owns the one Telegram bot client and
     # voice-call stack. The Waifu package is attached to that client before its
@@ -104,6 +112,7 @@ async def run() -> None:
     from AoiMusic.utils.premium import install_text_entities_patch, validate_db
     from AoiMusic.utils.premium_emoji import patch_pyrogram_premium_emoji
     from pyrogram import idle
+    from keep_alive import set_ready, start_server, stop_server
 
     if not config.STRING_SESSIONS:
         raise RuntimeError("Music voice playback requires at least one STRING_SESSIONS assistant session.")
@@ -120,7 +129,11 @@ async def run() -> None:
     client_started = False
     userbot_started = False
     trim_task = None
+    health_server = None
+    heartbeat_task = None
     try:
+        health_server = start_server()
+        heartbeat_task = asyncio.create_task(_health_heartbeat(), name="fiona-health-heartbeat")
         await app.start()
         client_started = True
 
@@ -156,9 +169,15 @@ async def run() -> None:
         except Exception as exc:
             LOGGER("Fiona").warning("Could not update Telegram command menus (%s).", type(exc).__name__)
 
+        set_ready(True)
         LOGGER("Fiona").info("Fiona is online: music, group tools, and character collection share one bot.")
         await idle()
     finally:
+        set_ready(False)
+        if heartbeat_task:
+            heartbeat_task.cancel()
+            await asyncio.gather(heartbeat_task, return_exceptions=True)
+        stop_server(health_server)
         if trim_task:
             trim_task.cancel()
         if AoiCall.calls:

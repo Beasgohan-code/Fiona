@@ -24,6 +24,9 @@ htmlcov/
 sessions/
 downloads/
 tempdb/
+# YouTube browser cookies are credentials; keep only the harmless example tracked.
+music/cookies/*.txt
+!music/cookies/example.txt
 *.session
 *.session-journal
 *.db

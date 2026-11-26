@@ -27,6 +27,28 @@ STOP / UPDATE
 - Stop:  docker compose down
 - Update: docker compose up --build -d
 
+RENDER
+------
+A Render Blueprint is included in render.yaml. Create a Blueprint from this
+repository, then provide the required Telegram, MongoDB, owner, and assistant
+session environment variables in Render. The Docker process exposes /health on
+the Render-provided PORT. Choose an always-on paid web instance for continuous
+bot availability: a free Render web instance can sleep, and an HTTP health
+endpoint or self-ping script cannot guarantee that it stays awake.
+
+YOUTUBE COOKIES (OPTIONAL)
+--------------------------
+The bot can use YouTube cookies to access videos that require a signed-in
+session. Export your own cookies in Netscape cookies.txt format. Never commit,
+share, or paste this file into chat; it is equivalent to a login credential.
+
+On Render, open the service's Environment settings and add a Secret File named
+"youtube-cookies.txt". Render mounts it at /etc/secrets/youtube-cookies.txt;
+keep YT_COOKIES set to that exact path (the supplied render.yaml already does).
+Redeploy after adding or replacing the secret file. Cookie files can expire and
+may need re-exporting. Cookies are optional; leave YT_COOKIES empty if you do
+not need authenticated YouTube playback.
+
 The container runs as the non-root fiona user. MongoDB holds bot data; local
 cache/download files are container-local and may be discarded on replacement.
 The image has not been built in this environment; validate it on a Docker host

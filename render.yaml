@@ -1,0 +1,31 @@
+# Render Blueprint for the unified Fiona bot.
+# Choose a paid always-on instance for reliable long-running Telegram polling.
+# A free web instance may sleep; this health server does not bypass Render's limits.
+services:
+  - type: web
+    name: fiona
+    runtime: docker
+    plan: starter
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: API_ID
+        sync: false
+      - key: API_HASH
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: MONGO_DB_URI
+        sync: false
+      - key: OWNER_ID
+        sync: false
+      - key: STRING_SESSIONS
+        sync: false
+      # Add a Render Secret File named youtube-cookies.txt and use this path.
+      - key: YT_COOKIES
+        value: /etc/secrets/youtube-cookies.txt
+      - key: PORT
+        value: "10000"
