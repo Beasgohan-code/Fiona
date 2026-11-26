@@ -2,8 +2,15 @@
 
 import asyncio
 import html
+import logging
+import os
 import random
+import tempfile
 import time
+from pathlib import Path
+from urllib.parse import urlparse
+
+import aiohttp
 from pyrogram import enums, filters
 from pyrogram.types import CallbackQuery, InlineKeyboardMarkup
 
@@ -147,21 +154,112 @@ async def generate_group_start_message(client, message=None, lang: str = None):
     return (caption, buttons)
 
 
+def _start_media_kind(media: str) -> str:
+    suffix = Path(urlparse(str(media)).path).suffix.lower()
+    if suffix in {".png", ".jpg", ".jpeg", ".webp"}:
+        return "photo"
+    if suffix == ".gif":
+        return "animation"
+    return "video"
+
+
+async def _reply_with_media(message, media, kind, caption, reply_markup):
+    common = {
+        "caption": caption,
+        "reply_markup": reply_markup,
+        "parse_mode": enums.ParseMode.HTML,
+    }
+    if kind == "photo":
+        await message.reply_photo(photo=media, **common)
+    elif kind == "animation":
+        await message.reply_animation(animation=media, **common)
+    else:
+        await message.reply_video(video=media, **common)
+
+
+async def _download_start_media(url: str) -> tuple[str, str]:
+    """Fetch a remote start asset locally when Telegram cannot curl its URL."""
+    parsed = urlparse(str(url))
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("start media is not an HTTP(S) URL")
+
+    timeout = aiohttp.ClientTimeout(total=20, connect=8, sock_read=12)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with session.get(url, allow_redirects=True) as response:
+            response.raise_for_status()
+            content_type = response.headers.get("Content-Type", "").split(";", 1)[0].lower()
+            suffix = Path(urlparse(str(response.url)).path).suffix.lower()
+            if suffix not in {".png", ".jpg", ".jpeg", ".webp", ".gif", ".mp4"}:
+                suffix = {
+                    "image/jpeg": ".jpg",
+                    "image/png": ".png",
+                    "image/webp": ".webp",
+                    "image/gif": ".gif",
+                    "video/mp4": ".mp4",
+                }.get(content_type, "")
+            if not suffix:
+                raise ValueError(f"unsupported start-media content type: {content_type or 'unknown'}")
+
+            kind = "animation" if suffix == ".gif" else "video" if suffix == ".mp4" else "photo"
+            fd, path = tempfile.mkstemp(prefix="fiona-start-", suffix=suffix)
+            total = 0
+            try:
+                with os.fdopen(fd, "wb") as output:
+                    async for chunk in response.content.iter_chunked(64 * 1024):
+                        total += len(chunk)
+                        if total > 50 * 1024 * 1024:
+                            raise ValueError("start-media file exceeds 50 MiB")
+                        output.write(chunk)
+                if total == 0:
+                    raise ValueError("start-media file is empty")
+                return path, kind
+            except Exception:
+                try:
+                    os.unlink(path)
+                except OSError:
+                    pass
+                raise
+
+
 async def send_media_message(message, media, caption, buttons):
     reply_markup = buttons if isinstance(buttons, InlineKeyboardMarkup) else InlineKeyboardMarkup(buttons)
     caption = premium_text(caption)
-    if media.lower().endswith((".png", ".jpg", ".jpeg")):
-        await message.reply_photo(
-            photo=media, caption=caption, reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
+    kind = _start_media_kind(media)
+    is_remote = urlparse(str(media)).scheme in {"http", "https"}
+
+    try:
+        await _reply_with_media(message, media, kind, caption, reply_markup)
+        return
+    except Exception as telegram_error:
+        logging.getLogger(__name__).warning(
+            "Telegram could not send start media (%s); attempting a local upload.",
+            type(telegram_error).__name__,
         )
-    elif media.lower().endswith(".gif"):
-        await message.reply_animation(
-            animation=media, caption=caption, reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
-        )
-    else:
-        await message.reply_video(
-            video=media, caption=caption, reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
-        )
+
+    if is_remote:
+        local_path = None
+        try:
+            local_path, local_kind = await _download_start_media(str(media))
+            await _reply_with_media(message, local_path, local_kind, caption, reply_markup)
+            return
+        except Exception as download_error:
+            logging.getLogger(__name__).warning(
+                "Local start-media fallback failed (%s); sending the start caption without media.",
+                type(download_error).__name__,
+            )
+        finally:
+            if local_path:
+                try:
+                    os.unlink(local_path)
+                except OSError:
+                    pass
+
+    await message.reply_text(
+        text=caption,
+        reply_markup=reply_markup,
+        parse_mode=enums.ParseMode.HTML,
+        disable_web_page_preview=True,
+    )
 
 
 @app.on_message(filters.command("waifu") & filters.private)

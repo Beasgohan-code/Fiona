@@ -36,6 +36,15 @@ the Render-provided PORT. Choose an always-on paid web instance for continuous
 bot availability: a free Render web instance can sleep, and an HTTP health
 endpoint or self-ping script cannot guarantee that it stays awake.
 
+FIXING `WEBPAGE_CURL_FAILED` ON /START
+--------------------------------------
+This means Telegram could not fetch the configured start image/video URL. The
+bot now retries by downloading remote media itself and uploading the file; if
+that also fails, it sends the start caption and buttons as a normal text message
+instead of failing the command. If you set START_MEDIA in Render, replace dead
+or protected URLs with stable public HTTPS media URLs. START_MEDIA accepts a
+comma-separated list of image, GIF, or MP4 URLs.
+
 FIXING `PEER_ID_INVALID` FOR GLOG
 ---------------------------------
 This error means Telegram could not resolve the configured log chat, or Fiona
