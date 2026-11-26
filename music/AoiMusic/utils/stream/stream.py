@@ -146,6 +146,46 @@ async def _api_stream_url(vidid, video):
         slog.warning("Aoi Music API failed for %s: %s", vidid, exc)
         return None
 
+def _youtube_download_error_hint(exc: Exception) -> str:
+    """Turn yt-dlp's wrapped exception into a safe, useful user-facing hint."""
+    details = []
+    current = exc
+    seen = set()
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        details.append(str(current).lower())
+        current = current.__cause__ or current.__context__
+    detail = " ".join(details)
+
+    sign_in_errors = (
+        "sign in to confirm",
+        "confirm you're not a bot",
+        "cookies are no longer valid",
+        "login required",
+    )
+    if any(term in detail for term in sign_in_errors):
+        return (
+            "YouTube requires a valid login session for this track. If it is available to your account, "
+            "refresh the Render cookies Secret File and redeploy."
+        )
+    unavailable_errors = (
+        "private video",
+        "video unavailable",
+        "has been removed",
+        "not available in your country",
+    )
+    if any(term in detail for term in unavailable_errors):
+        return "This video is unavailable to Fiona (private, removed, or region restricted). Try another track."
+    if any(term in detail for term in ("http error 403", "http error 429", "forbidden")):
+        return (
+            "YouTube refused the download request. Check the Render logs; a fresh "
+            "cookie file or a different track may help."
+        )
+    if "timeout" in detail or "timed out" in detail:
+        return "YouTube timed out while downloading this track. Please retry in a little while."
+    return "Could not download this track. Check the Render logs near this time for the yt-dlp error details."
+
+
 async def play_youtube_source(vidid, video, mystic, play, instant=True):
     """Fastest & most reliable playback path: local 1-hop API download for BOTH
     audio (MP3) and video (MP4), avoiding remote FFmpeg probe/Range failures
@@ -209,7 +249,8 @@ async def play_youtube_source(vidid, video, mystic, play, instant=True):
     try:
         path, _ = await Platform.youtube.download(vidid, mystic, videoid=True, video=video)
     except Exception as exc:
-        raise AssistantErr(f"Could not download this track ({type(exc).__name__}).") from exc
+        slog.exception("[%s] YouTube download failed for vidid=%s", _STREAM_LOG, vidid)
+        raise AssistantErr(_youtube_download_error_hint(exc)) from exc
     try:
         await play(path)
     except MEDIA_ERRORS as exc:
