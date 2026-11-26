@@ -503,6 +503,11 @@ def _beautify(html: str) -> str:
     return _nl_fix(html)
 
 
+def premiumize_html(text: str) -> str:
+    """Apply rich HTML normalization and available premium-emoji entities."""
+    return _beautify(str(text or ""))
+
+
 async def url_ok(url: str) -> bool:
     """HEAD-check an image URL (best effort — assumes yes on any failure)."""
     try:

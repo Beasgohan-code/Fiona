@@ -5,7 +5,7 @@ import html
 import random
 import time
 from pyrogram import enums, filters
-from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram.types import CallbackQuery, InlineKeyboardMarkup
 
 from aoiwaifu import (
     GLOG,
@@ -17,6 +17,7 @@ from aoiwaifu import (
     user_collection,
 )
 from aoiwaifu.unit.aoi_help import HELP_DATA
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text
 from aoiwaifu.unit.aoi_lang import (
     DEFAULT_LANG,
     build_language_keyboard,
@@ -41,7 +42,7 @@ def get_uptime():
 
 def build_dm_first_start_lang_prompt() -> tuple[str, InlineKeyboardMarkup]:
     caption = (
-        f"╭━〔 🌐 𝐀𝐎𝐈 𝐖𝐀𝐈𝐅𝐔 • 𝐋𝐀𝐍𝐆𝐔𝐀𝐆𝐄 〕━╮\n\n"
+        f"╭━〔 🌐 𝐅𝐈𝐎𝐍𝐀 • 𝐋𝐀𝐍𝐆𝐔𝐀𝐆𝐄 〕━╮\n\n"
         f"<blockquote>{t('lang_select_dm_title', 'en')}\n"
         f"{t('lang_select_dm_body', 'en')}\n\n"
         f"🇺🇸 <b>English</b> • 🇷🇺 <b>Русский</b> • 🇪🇸 <b>Español</b> • 🇧🇷 <b>Português</b>\n"
@@ -85,28 +86,28 @@ async def generate_start_message(client, message, lang: str = None):
     if bot_username:
         buttons.append(
             [
-                InlineKeyboardButton(
-                    t("btn_add_to_group", lang),
+                premium_button(
+                    t("btn_add_to_group", lang), emoji="BOT", style="PRIMARY",
                     url=f"https://t.me/{bot_username}?startgroup=true",
                 )
             ]
         )
     links = []
     if SUPPORT_CHAT:
-        links.append(InlineKeyboardButton(t("btn_support", lang), url=SUPPORT_CHAT))
+        links.append(premium_button(t("btn_support", lang), emoji="CHAT_BUBBLE", style="SUCCESS", url=SUPPORT_CHAT))
     if UPDATE_CHAT:
-        links.append(InlineKeyboardButton(t("btn_updates", lang), url=UPDATE_CHAT))
+        links.append(premium_button(t("btn_updates", lang), emoji="MEGAPHONE", style="SUCCESS", url=UPDATE_CHAT))
     if links:
         buttons.append(links)
     buttons.append(
         [
-            InlineKeyboardButton(t("btn_help_commands", lang), callback_data="open_help"),
-            InlineKeyboardButton(f"{t('btn_language', lang)} ({get_lang_label(lang)})", callback_data="open_dm_lang"),
+            premium_button(t("btn_help_commands", lang), emoji="HELP_SUPPORT", style="PRIMARY", callback_data="open_help"),
+            premium_button(f"{t('btn_language', lang)} ({get_lang_label(lang)})", emoji="GLOBE_LANG", callback_data="open_dm_lang"),
         ]
     )
     if OWNER_USERNAME:
         buttons.append(
-            [InlineKeyboardButton(t("btn_owner", lang), url=f"https://t.me/{OWNER_USERNAME.lstrip('@')}")]
+            [premium_button(t("btn_owner", lang), emoji="CROWN_OWNER", url=f"https://t.me/{OWNER_USERNAME.lstrip('@')}")]
         )
     return (caption, buttons)
 
@@ -127,19 +128,19 @@ async def generate_group_start_message(client, message=None, lang: str = None):
     if bot_username:
         buttons.append(
             [
-                InlineKeyboardButton(
-                    t("btn_add_to_group", lang),
+                premium_button(
+                    t("btn_add_to_group", lang), emoji="BOT", style="PRIMARY",
                     url=f"https://t.me/{bot_username}?startgroup=true",
                 )
             ]
         )
     if SUPPORT_CHAT:
-        buttons.append([InlineKeyboardButton(t("btn_support", lang), url=SUPPORT_CHAT)])
+        buttons.append([premium_button(t("btn_support", lang), emoji="CHAT_BUBBLE", style="SUCCESS", url=SUPPORT_CHAT)])
     buttons.append(
         [
-            InlineKeyboardButton(
+            premium_button(
                 f"{t('btn_group_settings', lang)} ({get_lang_label(lang)})",
-                callback_data="open_group_settings",
+                emoji="SETTINGS", callback_data="open_group_settings",
             )
         ]
     )
@@ -148,6 +149,7 @@ async def generate_group_start_message(client, message=None, lang: str = None):
 
 async def send_media_message(message, media, caption, buttons):
     reply_markup = buttons if isinstance(buttons, InlineKeyboardMarkup) else InlineKeyboardMarkup(buttons)
+    caption = premium_text(caption)
     if media.lower().endswith((".png", ".jpg", ".jpeg")):
         await message.reply_photo(
             photo=media, caption=caption, reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
@@ -238,11 +240,30 @@ async def start_group_command(client, message):
     await send_media_message(message, media, caption, buttons)
 
 
+HELP_MODULE_EMOJIS = {
+    "guess": "GAMEPAD",
+    "harem": "USERS_GROUP",
+    "profile": "USER",
+    "balance": "WALLET",
+    "trade": "GIFT",
+    "search": "SEARCH",
+    "lang": "GLOBE_LANG",
+    "admin": "SHIELD_ADMIN",
+}
+
+
 def find_help_modules(lang: str = DEFAULT_LANG):
     buttons = []
     for module_name, module_data in HELP_DATA.items():
-        button_name = module_data.get("HELP_NAME", "Unknown")
-        buttons.append(InlineKeyboardButton(button_name, callback_data=f"help_{module_name}"))
+        button_name = tr(module_data.get("HELP_NAME", "Unknown"), lang)
+        buttons.append(
+            premium_button(
+                button_name,
+                emoji=HELP_MODULE_EMOJIS.get(module_name, "INFO"),
+                style="PRIMARY",
+                callback_data=f"help_{module_name}",
+            )
+        )
     return [buttons[i : i + 3] for i in range(0, len(buttons), 3)]
 
 
@@ -251,20 +272,9 @@ async def show_help_menu(client, query: CallbackQuery):
     await asyncio.sleep(0.05)
     lang = await get_effective_lang(query)
     buttons = find_help_modules(lang)
-    buttons.append([InlineKeyboardButton(t("btn_back", lang), callback_data="back_to_home")])
-    text = t("help_menu_caption", lang)
-    try:
-        await query.message.edit_caption(
-            caption=tr(text, lang),
-            reply_markup=InlineKeyboardMarkup(buttons),
-            parse_mode=enums.ParseMode.HTML,
-        )
-    except Exception:
-        await query.message.edit_text(
-            text=tr(text, lang),
-            reply_markup=InlineKeyboardMarkup(buttons),
-            parse_mode=enums.ParseMode.HTML,
-        )
+    buttons.append([premium_button(t("btn_back", lang), emoji="BACK_ARROW", callback_data="back_to_home")])
+    text = premium_text(tr(t("help_menu_caption", lang), lang))
+    await edit_panel(query.message, text, reply_markup=InlineKeyboardMarkup(buttons))
     await query.answer()
 
 
@@ -276,20 +286,13 @@ async def show_help(client, query: CallbackQuery):
     try:
         module_data = HELP_DATA.get(module_name, {})
         help_text = module_data.get(f"HELP_{lang.upper()}") or module_data.get("HELP", t("help_not_found", lang))
-        buttons = [[InlineKeyboardButton(t("btn_back", lang), callback_data="open_help")]]
+        buttons = [[premium_button(t("btn_back", lang), emoji="BACK_ARROW", callback_data="open_help")]]
         full_text = t("help_module_header", lang, module_name=module_name.upper(), help_text=help_text)
-        try:
-            await query.message.edit_caption(
-                caption=tr(full_text, lang),
-                reply_markup=InlineKeyboardMarkup(buttons),
-                parse_mode=enums.ParseMode.HTML,
-            )
-        except Exception:
-            await query.message.edit_text(
-                text=tr(full_text, lang),
-                reply_markup=InlineKeyboardMarkup(buttons),
-                parse_mode=enums.ParseMode.HTML,
-            )
+        await edit_panel(
+            query.message,
+            tr(full_text, lang),
+            reply_markup=InlineKeyboardMarkup(buttons),
+        )
         await query.answer()
     except Exception:
         await query.answer(t("help_load_error", lang))
@@ -300,16 +303,5 @@ async def back_to_home(client, query: CallbackQuery):
     await asyncio.sleep(0.05)
     lang = await get_effective_lang(query, user_id=query.from_user.id if query.from_user else None)
     caption, buttons = await generate_start_message(client, query.message, lang=lang)
-    try:
-        await query.message.edit_caption(
-            caption=tr(caption, lang),
-            reply_markup=InlineKeyboardMarkup(buttons),
-            parse_mode=enums.ParseMode.HTML,
-        )
-    except Exception:
-        await query.message.edit_text(
-            text=tr(caption, lang),
-            reply_markup=InlineKeyboardMarkup(buttons),
-            parse_mode=enums.ParseMode.HTML,
-        )
+    await edit_panel(query.message, tr(caption, lang), reply_markup=InlineKeyboardMarkup(buttons))
     await query.answer()

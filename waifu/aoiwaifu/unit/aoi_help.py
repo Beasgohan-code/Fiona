@@ -2,34 +2,34 @@
 
 HELP_DATA = {
     "guess": {
-        "HELP_NAME": "🎯 Catch",
+        "HELP_NAME": "Catch",
         "HELP": (
             "Catch anime characters that spawn in groups:\n\n"
             "• `/guess <name>` (or `/protecc`, `/collect`, `/grab`, `/hunt`) — Catch the spawned character and earn coins."
         ),
     },
     "harem": {
-        "HELP_NAME": "🌸 Harem",
+        "HELP_NAME": "Collection",
         "HELP": (
             "Manage and browse your character collection:\n\n"
             "• `/harem` or `/collection` — View your collected characters\n"
             "• `/hmode` — Filter your harem by rarity\n"
             "• `/fav <id>` — Set your favorite character\n"
-            "• `/pin <id>` / `/unpin <id>` / `/pinlist` — Pin up to 10 characters at the top of inline harem"
+            "• `/hpin <id>` / `/hunpin <id>` / `/pinlist` — Pin or unpin collection characters. Group-message pinning uses `/pin` and `/unpin`."
         ),
     },
     "profile": {
-        "HELP_NAME": "👤 Profile",
+        "HELP_NAME": "Profile",
         "HELP": (
             "View collector stats and rankings:\n\n"
-            "• `/profile` or `/stats` — View your collector profile, rank, and rarity breakdown\n"
+            "• `/profile` — View your collector profile, rank, and rarity breakdown\n"
             "• `/rank` — View global top collectors\n"
             "• `/ctop` — Top collectors in the current group\n"
             "• `/TopGroups` — Top 10 groups globally"
         ),
     },
     "balance": {
-        "HELP_NAME": "💰 Economy",
+        "HELP_NAME": "Economy",
         "HELP": (
             "Manage your coins and rewards:\n\n"
             "• `/balance` or `/bal` — Check your Coins & Tokens\n"
@@ -41,7 +41,7 @@ HELP_DATA = {
         ),
     },
     "trade": {
-        "HELP_NAME": "🤝 Trade & Gift",
+        "HELP_NAME": "Trade & Gift",
         "HELP": (
             "Exchange characters with other collectors:\n\n"
             "• `/trade <your_char_id> <their_char_id>` — Reply to a user to propose a trade\n"
@@ -51,7 +51,7 @@ HELP_DATA = {
         ),
     },
     "search": {
-        "HELP_NAME": "🔍 Search",
+        "HELP_NAME": "Search",
         "HELP": (
             "Explore the character database:\n\n"
             "• `/check <id>` — View details of a character by ID\n"
@@ -63,16 +63,16 @@ HELP_DATA = {
         ),
     },
     "lang": {
-        "HELP_NAME": "🌐 Language",
+        "HELP_NAME": "Language",
         "HELP": (
             "Customize bot language:\n\n"
             "• `/lang` or `/settings` — Choose from 10 supported languages for DM or Group"
         ),
     },
     "admin": {
-        "HELP_NAME": "🛡️ Admin",
+        "HELP_NAME": "Admin",
         "HELP": (
-            "Admin & Sudo commands (located in `aoiwaifu/admin/`):\n\n"
+            "Available owner and admin controls:\n\n"
             "• `/gupload <name> <anime> <rarity>` — Upload character (ImgBB)\n"
             "• `/gupdate`, `/maxupdate`, `/gdelete`, `/rdelete`, `/reupload` — Manage characters\n"
             "• `/find`, `/findani` — Find next available ID or search anime\n"
@@ -80,7 +80,7 @@ HELP_DATA = {
             "• `/cgen <char_id> <limit>` — Generate a character redeem code\n"
             "• `/add`, `/kill`, `/transfer`, `/backtransfer` — Manage user data & currency\n"
             "• `/blocklist`, `/removeblocklist`, `/addblocklistgc`, `/removeblocklistgc` — Blocklists\n"
-            "• `/bcast`, `/saddsudo`, `/sremovesudo`, `/seditsudo`, `/sudolist`, `/list`, `/groups`, `/backup`, `/eval`"
+            "• `/bcast`, `/saddsudo`, `/sremovesudo`, `/seditsudo`, `/sudolist`, `/list`, `/groups`, `/backup`"
         ),
     },
 }

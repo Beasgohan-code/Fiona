@@ -14,7 +14,9 @@ Supports:
 """
 import json
 import os
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram.types import InlineKeyboardMarkup
+
+from aoiwaifu.unit.rich_ui import premium_button
 
 LANGS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "langs"))
 
@@ -442,9 +444,18 @@ def build_language_keyboard(
         if cur and code == cur:
             label = f"✅ {label}"
         cb_data = f"{callback_prefix}:{code}{extra_suffix}"
-        buttons.append(InlineKeyboardButton(clamp_button_text(label, MAX_MULTI_BTN_LEN), callback_data=cb_data))
+        buttons.append(
+            premium_button(
+                clamp_button_text(label, MAX_MULTI_BTN_LEN),
+                emoji="GLOBE_LANG",
+                style="SUCCESS" if cur and code == cur else None,
+                callback_data=cb_data,
+            )
+        )
 
     rows = [buttons[i : i + 2] for i in range(0, len(buttons), 2)]
     if back_callback:
-        rows.append([InlineKeyboardButton(t("btn_back", cur or DEFAULT_LANG), callback_data=back_callback)])
+        rows.append(
+            [premium_button(t("btn_back", cur or DEFAULT_LANG), emoji="BACK_ARROW", callback_data=back_callback)]
+        )
     return InlineKeyboardMarkup(rows)
