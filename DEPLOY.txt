@@ -1,0 +1,33 @@
+FIONA DEPLOYMENT
+================
+
+Unified deployment: one Compose service runs the music and character-collection
+features together. Do not deploy music/ and waifu/ as separate bots.
+
+REQUIREMENTS
+------------
+- Docker Engine with the Compose plugin
+- A Telegram bot token, API_ID, API_HASH, and numeric OWNER_ID
+- MongoDB URI reachable from the container
+- At least one assistant STRING_SESSIONS value for voice-chat playback
+
+FIRST START
+-----------
+1. Copy .env.example to .env.
+2. Fill in API_ID, API_HASH, BOT_TOKEN, MONGO_DB_URI, OWNER_ID, and
+   STRING_SESSIONS. Optional links and API integrations can remain blank.
+3. Keep .env private; it is excluded from the image build context.
+4. From this directory, run:
+
+   docker compose up --build -d
+   docker compose logs -f fiona
+
+STOP / UPDATE
+-------------
+- Stop:  docker compose down
+- Update: docker compose up --build -d
+
+The container runs as the non-root fiona user. MongoDB holds bot data; local
+cache/download files are container-local and may be discarded on replacement.
+The image has not been built in this environment; validate it on a Docker host
+before relying on it in production.
