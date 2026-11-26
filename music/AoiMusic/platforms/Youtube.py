@@ -8,6 +8,8 @@ import shlex
 import shutil
 import socket
 import sys
+import tempfile
+import threading
 import time
 
 import aiohttp
@@ -104,15 +106,68 @@ def _valid_netscape(path: str) -> bool:
     return "# Netscape HTTP Cookie File" in header or "# HTTP Cookie File" in header
 
 
+_COOKIE_COPY_LOCK = threading.Lock()
+_COOKIE_COPY_SIGNATURE = None
+_COOKIE_COPY_SOURCE = None
+
+
+def _stage_cookie_file(source_path: str) -> str | None:
+    """Copy a secret/read-only cookie file to a private writable runtime path."""
+    global _COOKIE_COPY_SIGNATURE, _COOKIE_COPY_SOURCE
+    try:
+        source_stat = os.stat(source_path)
+        signature = (
+            os.path.realpath(source_path),
+            source_stat.st_mtime_ns,
+            source_stat.st_size,
+        )
+        cache_dir = os.path.join(tempfile.gettempdir(), "fiona-cookie-cache")
+        os.makedirs(cache_dir, mode=0o700, exist_ok=True)
+        try:
+            os.chmod(cache_dir, 0o700)
+        except OSError:
+            pass
+        target_path = os.path.join(cache_dir, "youtube-cookies.txt")
+
+        with _COOKIE_COPY_LOCK:
+            if (
+                signature == _COOKIE_COPY_SIGNATURE
+                and source_path == _COOKIE_COPY_SOURCE
+                and os.path.isfile(target_path)
+            ):
+                return target_path
+
+            temp_path = f"{target_path}.{os.getpid()}.tmp"
+            try:
+                shutil.copyfile(source_path, temp_path)
+                os.chmod(temp_path, 0o600)
+                os.replace(temp_path, target_path)
+            finally:
+                try:
+                    if os.path.exists(temp_path):
+                        os.unlink(temp_path)
+                except OSError:
+                    pass
+            _COOKIE_COPY_SIGNATURE = signature
+            _COOKIE_COPY_SOURCE = source_path
+        return target_path
+    except Exception as exc:
+        _log("warning", "could not stage YT_COOKIES in writable runtime storage (%s)", type(exc).__name__)
+        return None
+
+
 def cookies():
-    # Explicit path wins: typically YT_COOKIES pointing at the media API's
-    # yt-dlp-refreshed cookie file, which stays warm without any cron job.
+    # Render Secret Files are read-only, but yt-dlp refreshes cookie jars.
+    # Stage the configured source into private writable runtime storage first.
     env_path = str(getattr(config, "YT_COOKIES", "") or "").strip()
     if env_path and os.path.isfile(env_path):
         if _valid_netscape(env_path):
-            _log("info", "using cookie file: %s", env_path)
-            return env_path
-        _log("warning", "YT_COOKIES file is not a Netscape cookie file: %s", env_path)
+            staged_path = _stage_cookie_file(env_path)
+            if staged_path:
+                _log("info", "using staged cookie file: %s", staged_path)
+                return staged_path
+        else:
+            _log("warning", "YT_COOKIES file is not a Netscape cookie file: %s", env_path)
     folder_path = f"{os.getcwd()}/cookies"
     if not os.path.isdir(folder_path):
         _log("warning", "cookies folder not found at %s", folder_path)

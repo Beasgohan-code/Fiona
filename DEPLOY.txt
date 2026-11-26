@@ -64,9 +64,11 @@ share, or paste this file into chat; it is equivalent to a login credential.
 On Render, open the service's Environment settings and add a Secret File named
 "youtube-cookies.txt". Render mounts it at /etc/secrets/youtube-cookies.txt;
 keep YT_COOKIES set to that exact path (the supplied render.yaml already does).
-Redeploy after adding or replacing the secret file. Cookie files can expire and
-may need re-exporting. Cookies are optional; leave YT_COOKIES empty if you do
-not need authenticated YouTube playback.
+Redeploy after adding or replacing the secret file. Fiona copies the read-only
+secret into a private writable runtime file before yt-dlp uses it, since yt-dlp
+may refresh its cookie jar. Do not chmod or edit the Render secret itself.
+Cookie files can expire and may need re-exporting. Cookies are optional; leave
+YT_COOKIES empty if you do not need authenticated YouTube playback.
 
 The container runs as the non-root fiona user. MongoDB holds bot data; local
 cache/download files are container-local and may be discarded on replacement.
