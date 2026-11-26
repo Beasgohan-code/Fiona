@@ -11,8 +11,8 @@ import asyncio
 import io
 import json
 from pyrogram import filters
-from pyrogram.enums import ChatMembersFilter, ParseMode
-from pyrogram.types import Message
+from pyrogram.enums import ChatMembersFilter, ChatType, ParseMode
+from pyrogram.types import CallbackQuery, Message
 
 from config import BANNED_USERS
 from AoiMusic import app
@@ -47,6 +47,7 @@ from AoiMusic.utils.manage_helpers import (
     user_mention,
 )
 from AoiMusic.utils.premium_emoji import pe
+from AoiMusic.utils.rich_msg import edit_rich, rich_button, rich_button_row, rich_heading, send_rich
 
 __MODULE__ = "Group Tools"
 __HELP__ = f"""
@@ -66,7 +67,85 @@ __HELP__ = f"""
 <code>/connect</code> &lt;chat_id&gt;, <code>/disconnect</code>, <code>/connection</code> — Manage group from PM
 <code>/export</code> / <code>/import</code> — Backup or restore group settings JSON
 <code>/id</code>, <code>/info</code> [user] — Get user/chat ID &amp; profile info
+<code>/grouphelp</code> — Open the interactive group-management guide
 """
+
+_GROUP_HELP = {
+    "moderation": (
+        "Member moderation",
+        "BAN_BLOCK",
+        "<code>/ban</code>, <code>/tban</code>, <code>/unban</code>, <code>/kick</code> — Ban, temp-ban, unban, or remove a member\n"
+        "<code>/mute</code>, <code>/tmute</code>, <code>/unmute</code> — Control member messaging\n"
+        "<code>/warn</code>, <code>/warns</code>, <code>/resetwarns</code> — Manage warnings\n"
+        "<code>/purge</code> — Delete messages from a replied-to message onward\n"
+        "<code>/pin</code>, <code>/unpin</code>, <code>/pinned</code> — Manage pinned messages"
+    ),
+    "setup": (
+        "Group setup",
+        "SETTINGS",
+        "<code>/welcome</code>, <code>/setwelcome</code>, <code>/setgoodbye</code> — Configure member messages\n"
+        "<code>/rules</code>, <code>/setrules</code>, <code>/clearrules</code> — Manage group rules\n"
+        "<code>/lock</code>, <code>/unlock</code>, <code>/locks</code> — Control group content types\n"
+        "<code>/setgtitle</code>, <code>/setdesc</code>, <code>/invitelink</code> — Update group details"
+    ),
+    "safety": (
+        "Safety & filters",
+        "SHIELD_CHECK",
+        "<code>/setflood</code>, <code>/setfloodmode</code>, <code>/lockdown</code> — Configure flood controls\n"
+        "<code>/antiedit</code>, <code>/biolink</code>, <code>/nsfw</code>, <code>/abuse</code> — Toggle safety filters\n"
+        "<code>/blacklist</code>, <code>/addblacklist</code>, <code>/unblacklist</code> — Manage blocked phrases"
+    ),
+    "tools": (
+        "Group utilities",
+        "LINK",
+        "<code>/report</code> — Reply to a message to alert admins\n"
+        "<code>/admins</code>, <code>/id</code>, <code>/info</code> — Inspect group and member details\n"
+        "<code>/tagall</code> [message], <code>/canceltag</code> — Mention members in controlled batches\n"
+        "<code>/setlog</code>, <code>/logchannel</code> — Configure moderation logs\n"
+        "<code>/export</code>, <code>/import</code> — Back up or restore settings\n"
+        "<code>/disable</code>, <code>/enable</code>, <code>/disabled</code> — Manage group commands"
+    ),
+}
+
+
+def _group_help_view(section: str = "home") -> str:
+    if section in _GROUP_HELP:
+        title, icon, details = _GROUP_HELP[section]
+        body = rich_heading(f"{pe(icon)} <b>{title}</b>", level=4)
+        body += f"<blockquote>{details}</blockquote>"
+        body += rich_button_row(
+            rich_button("ʙᴀᴄᴋ ᴛᴏ ɢʀᴏᴜᴘ ɢᴜɪᴅᴇ", callback_data="grouphelp:home", emoji="BACK_ARROW")
+        )
+        return body
+
+    body = rich_heading(f"{pe('SETTINGS')} <b>Group management</b>", level=4)
+    body += (
+        "<blockquote>Choose a section to see the available commands. Admin actions require the "
+        "matching Telegram permission, and Fiona must have the corresponding bot permission.</blockquote>"
+    )
+    buttons = [
+        rich_button("Moderation", callback_data="grouphelp:moderation", emoji="BAN_BLOCK", style="danger"),
+        rich_button("Setup", callback_data="grouphelp:setup", emoji="SETTINGS", style="primary"),
+        rich_button("Safety", callback_data="grouphelp:safety", emoji="SHIELD_CHECK", style="primary"),
+        rich_button("Utilities", callback_data="grouphelp:tools", emoji="LINK", style="success"),
+    ]
+    body += rich_button_row(*buttons[:2]) + rich_button_row(*buttons[2:])
+    return body
+
+
+@app.on_message(filters.command("grouphelp") & filters.group & ~BANNED_USERS)
+async def group_help_cmd(_, message: Message):
+    await send_rich(message.chat.id, _group_help_view(), reply_to=message.id)
+
+
+@app.on_callback_query(filters.regex(r"^grouphelp:(home|moderation|setup|safety|tools)$"))
+async def group_help_callback(_, query: CallbackQuery):
+    if not query.message or query.message.chat.type not in (ChatType.GROUP, ChatType.SUPERGROUP):
+        return await query.answer("Open this guide in a group.", show_alert=True)
+    section = query.data.split(":", 1)[1]
+    await edit_rich(query.message.chat.id, query.message.id, _group_help_view(section))
+    await query.answer()
+
 
 _ACTIVE_TAGALL: set[int] = set()
 

@@ -87,10 +87,48 @@ class MergedCommandTests(unittest.TestCase):
         details = [f"/{name}: music={music[name]}, waifu={waifu[name]}" for name in duplicates]
         self.assertEqual(duplicates, [], "\n".join(details))
 
-    def test_telegram_menus_have_unique_names_per_scope(self):
+    def test_telegram_menus_have_unique_names_and_fit_api_limit(self):
         for commands in (PRIVATE_COMMANDS, GROUP_COMMANDS, ADMIN_COMMANDS):
             names = [name for name, _ in commands]
             self.assertEqual(len(names), len(set(names)))
+            self.assertLessEqual(len(commands), 100)
+
+    def test_advertised_group_and_admin_commands_are_registered(self):
+        music = commands_in_tree(MUSIC, is_music=True)
+        waifu = commands_in_tree(WAIFU, is_music=False)
+        registered = set(music) | set(waifu)
+        for scope, commands in (("group", GROUP_COMMANDS), ("admin", ADMIN_COMMANDS)):
+            missing = sorted(name for name, _ in commands if name not in registered)
+            self.assertEqual(missing, [], f"Unregistered {scope} commands: {missing}")
+        self.assertIn("grouphelp", {name for name, _ in GROUP_COMMANDS})
+
+    def test_group_management_guide_references_real_commands_and_emojis(self):
+        guide_path = MUSIC / "plugins/manage/group_utils.py"
+        tree = ast.parse(guide_path.read_text(encoding="utf-8"))
+        guide = next(
+            ast.literal_eval(node.value)
+            for node in tree.body
+            if isinstance(node, ast.Assign)
+            and any(isinstance(target, ast.Name) and target.id == "_GROUP_HELP" for target in node.targets)
+        )
+        registered = set(commands_in_tree(MUSIC, is_music=True))
+        emoji_keys = premium_emoji_keys()
+        for title, emoji, text in guide.values():
+            self.assertIn(emoji, emoji_keys)
+            for name in re.findall(r"<code>/([a-z0-9_]+)</code>", text):
+                self.assertIn(name, registered, f"Guide command /{name} has no handler")
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "rich_button":
+                emoji = next(
+                    (
+                        kw.value.value
+                        for kw in node.keywords
+                        if kw.arg == "emoji" and isinstance(kw.value, ast.Constant)
+                    ),
+                    None,
+                )
+                if emoji:
+                    self.assertIn(emoji, emoji_keys)
 
     def test_help_uses_the_unified_waifu_command_names(self):
         help_data = waifu_help_data()
