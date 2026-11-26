@@ -446,9 +446,11 @@ def extract_info_with_fallback(link, opts, return_options=False):
     attempts.append(("progressive-18", fallback_opts))
 
     # YouTube can expose different format ladders to different clients. Retry
-    # a few widely supported clients individually instead of letting one
-    # unavailable format selection reject an otherwise playable video.
-    for client in ("android", "ios", "tv"):
+    # clients individually instead of letting one unavailable format selection
+    # reject an otherwise playable video. Include tv_samsung and web_embedded:
+    # both are already used by Fiona's working download profiles, but the
+    # combined client list can still hide a client's distinct format ladder.
+    for client in ("tv_samsung", "web_embedded", "android", "ios", "tv"):
         client_opts = copy.deepcopy(opts)
         extractor_args = client_opts.setdefault("extractor_args", {})
         youtube_args = extractor_args.setdefault("youtube", {})

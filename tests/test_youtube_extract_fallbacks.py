@@ -66,7 +66,7 @@ class YouTubeExtractFallbackTests(unittest.TestCase):
                 self.assert_download_false(download)
                 clients = self.options["extractor_args"]["youtube"]["player_client"]
                 seen_clients.append(tuple(clients))
-                if clients == ["android"]:
+                if clients == ["tv_samsung"]:
                     return {"id": "test123", "ext": "m4a"}
                 raise Exception("Requested format is not available")
 
@@ -83,8 +83,8 @@ class YouTubeExtractFallbackTests(unittest.TestCase):
         info, chosen = helper("https://youtube.com/watch?v=test123", original, return_options=True)
 
         self.assertEqual(info["id"], "test123")
-        self.assertEqual(chosen["extractor_args"]["youtube"]["player_client"], ["android"])
-        self.assertIn(("android",), seen_clients)
+        self.assertEqual(chosen["extractor_args"]["youtube"]["player_client"], ["tv_samsung"])
+        self.assertIn(("tv_samsung",), seen_clients)
         self.assertEqual(original["extractor_args"]["youtube"]["player_client"], ["web_embedded", "tv"])
 
     def test_fallback_failure_reports_each_last_client_attempt(self):
