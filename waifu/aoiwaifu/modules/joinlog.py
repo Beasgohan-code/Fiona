@@ -3,14 +3,36 @@ import random
 from datetime import datetime
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from aoiwaifu import user_collection, app, db, GLOG
+from aoiwaifu import user_collection, app, db, GLOG, LOGGER
 
 game_active_groups_col = db["game_active_groups"]
 
 
-async def send_log_message(chat_id: int, message: str):
-    """Send a log message to the specified chat."""
-    await app.send_message(chat_id=chat_id, text=message)
+async def send_log_message(chat_id: int | str | None, message: str) -> bool:
+    """Send a log message without letting a stale or invalid peer break handlers."""
+    target = str(chat_id or "").strip()
+    if not target:
+        return False
+
+    # Render commonly supplies channel IDs as strings; normalize numeric IDs,
+    # while still allowing public @usernames as a configured destination.
+    numeric_target = target[1:].isdigit() if target.startswith("-") else target.isdigit()
+    if numeric_target:
+        target = int(target)
+        if target == 0:
+            return False
+
+    try:
+        await app.send_message(chat_id=target, text=message)
+        return True
+    except Exception as exc:
+        LOGGER("Waifu.JoinLog").warning(
+            "Could not send group log to %r (%s). Check GLOG and make sure Fiona "
+            "has joined the destination chat and can post there.",
+            target,
+            type(exc).__name__,
+        )
+        return False
 
 
 @app.on_message(filters.new_chat_members)

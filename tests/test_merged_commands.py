@@ -125,6 +125,25 @@ class MergedCommandTests(unittest.TestCase):
                     if keyword.arg == "emoji" and isinstance(keyword.value, ast.Constant):
                         self.assertIn(keyword.value.value, keys, f"{path.name}: {keyword.value.value}")
 
+    def test_join_log_failure_does_not_escape_the_member_handler(self):
+        source = (WAIFU / "modules/joinlog.py").read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        sender = next(
+            node
+            for node in tree.body
+            if isinstance(node, ast.AsyncFunctionDef) and node.name == "send_log_message"
+        )
+        self.assertTrue(any(isinstance(node, ast.Try) for node in ast.walk(sender)))
+        self.assertTrue(
+            any(
+                isinstance(node, ast.Return)
+                and isinstance(node.value, ast.Constant)
+                and node.value.value is False
+                for node in ast.walk(sender)
+            )
+        )
+        self.assertIn("GLOG", source)
+
     def test_shared_start_alias_is_waifu_and_standard_start_is_music_router(self):
         start = (MUSIC / "plugins/bot/start.py").read_text(encoding="utf-8")
         self.assertIn('name.lower() == "waifu"', start)

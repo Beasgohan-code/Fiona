@@ -36,6 +36,16 @@ the Render-provided PORT. Choose an always-on paid web instance for continuous
 bot availability: a free Render web instance can sleep, and an HTTP health
 endpoint or self-ping script cannot guarantee that it stays awake.
 
+FIXING `PEER_ID_INVALID` FOR GLOG
+---------------------------------
+This error means Telegram could not resolve the configured log chat, or Fiona
+cannot access it. In Render Environment, check that GLOG is the correct chat ID
+(usually a `-100...` channel/supergroup ID). Add Fiona to that group/channel;
+for a channel, grant permission to post. A public channel username such as
+`@channelname` can also be used. After changing GLOG or access, redeploy. The
+join-log handler now catches failed log sends and warns instead of crashing the
+new-member handler, but it cannot make an inaccessible destination valid.
+
 YOUTUBE COOKIES (OPTIONAL)
 --------------------------
 The bot can use YouTube cookies to access videos that require a signed-in
