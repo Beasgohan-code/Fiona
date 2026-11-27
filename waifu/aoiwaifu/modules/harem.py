@@ -1,13 +1,13 @@
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text
 from aoiwaifu import *
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto, CallbackQuery, Message
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
 from pyrogram.errors import ChatAdminRequired, UserNotParticipant
 from itertools import groupby
 import math
 from html import escape
 from pyrogram import enums
-import asyncio
 
 async def check_support_channel(client: Client, user_id: int) -> bool:
     if user_id == x:
@@ -117,13 +117,7 @@ async def harem_handler(client: Client, message: Message):
     page = 0
     user = await user_collection.find_one({'id': user_id})
     filter_rarity = user.get('filter_rarity', None) if user else None
-    msg = await display_harem(client, message, user_id, page, filter_rarity, is_initial=True)
-    if msg:
-        await asyncio.sleep(180)
-        try:
-            await msg.delete()
-        except Exception as e:
-            print(f'Error deleting message: {e}')
+    await display_harem(client, message, user_id, page, filter_rarity, is_initial=True)
 
 async def display_harem(client, message, user_id, page, filter_rarity, is_initial=False, callback_query=None, force_refresh_photo=False):
     # Initialize language before any operation that can fail, so error handlers can use it too.
@@ -134,28 +128,25 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
         user_first_name = (user_db.get('first_name') if user_db else None) or fallback_name
         characters, error = await fetch_user_characters(user_id)
         if error:
+            error_text = premium_text(tr(error, lang))
             if is_initial:
-                return await message.reply_text(tr(error, lang))
-            else:
-                try:
-                    await callback_query.message.edit_caption(caption=tr(error, lang))
-                except Exception:
-                    await callback_query.message.edit_text(tr(error, lang))
+                return await message.reply_text(error_text, parse_mode=enums.ParseMode.HTML)
+            await edit_panel(callback_query.message, error_text)
             return
         characters = sorted(characters, key=lambda x: (x.get('anime', ''), x.get('id', '')))
         if filter_rarity:
             filtered_characters = [c for c in characters if c.get('rarity') == filter_rarity]
             if not filtered_characters:
-                keyboard = [[InlineKeyboardButton('Remove Filter', callback_data=f'remove_filter:{user_id}')]]
+                keyboard = [[premium_button(tr('Remove filter', lang), emoji='CLOSE', style='DANGER', callback_data=f'remove_filter:{user_id}')]]
                 reply_markup = InlineKeyboardMarkup(keyboard)
-                empty_filter_text = f'No characters found with rarity: <b>{escape(str(filter_rarity))}</b>. Click below to remove the filter.'
+                empty_filter_text = f'╭━━〔 🔎 <b>COLLECTION FILTER</b> 〕━━╮\n\n<blockquote>No characters found with rarity: <b>{escape(str(filter_rarity))}</b>. Clear this filter to browse your full collection.</blockquote>'
                 if is_initial:
-                    return await message.reply_text(tr(empty_filter_text, lang), reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML)
-                else:
-                    try:
-                        await callback_query.message.edit_caption(caption=tr(empty_filter_text, lang), reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML)
-                    except Exception:
-                        await callback_query.message.edit_text(tr(empty_filter_text, lang), reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML)
+                    return await message.reply_text(
+                        premium_text(tr(empty_filter_text, lang)),
+                        reply_markup=reply_markup,
+                        parse_mode=enums.ParseMode.HTML,
+                    )
+                await edit_panel(callback_query.message, tr(empty_filter_text, lang), reply_markup)
                 return
             characters = filtered_characters
         total_characters = len(characters)
@@ -166,10 +157,13 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
         if page < 0 or page >= total_pages:
             page = 0
         lang = await get_effective_lang(callback_query or message, user_id=user_id)
-        harem_message = f"╭━〔 🌸 <b>{escape(user_first_name)}'s Harem</b> • Page {page + 1}/{total_pages} 〕━╮\n"
+        harem_message = (
+            f"╭━━〔 🎴 <b>COLLECTION</b> • {escape(user_first_name)} 〕━━╮\n"
+            f"<blockquote>📄 <b>Page:</b> {page + 1}/{total_pages}  •  "
+            f"✨ <b>Unique:</b> {len(unique_characters):,}  •  🎴 <b>Cards:</b> {total_characters:,}"
+        )
         if filter_rarity:
-            harem_message += t('harem_filtered_by', lang, rarity=escape(str(filter_rarity)))
-        harem_message += '<blockquote>'
+            harem_message += f"\n{t('harem_filtered_by', lang, rarity=escape(str(filter_rarity)))}"
         current_characters = unique_characters[page * 15:(page + 1) * 15]
         current_grouped_characters = {k: list(v) for k, v in groupby(current_characters, key=lambda x: x.get('anime', 'Unknown Anime'))}
         for anime, chars in current_grouped_characters.items():
@@ -182,19 +176,43 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
         harem_message += '</blockquote>\n╰━━━━━━━━━━━━━━━━━━╯'
         keyboard = [
             [
-                InlineKeyboardButton(f'🎴 Harem ({total_characters})', switch_inline_query_current_chat=f'collection.{user_id}'),
-                InlineKeyboardButton(f'💌 AMV ({amv_characters})', switch_inline_query_current_chat=f'collection.{user_id}.AMV'),
+                premium_button(
+                    f'Harem ({total_characters})',
+                    emoji='USERS_GROUP',
+                    switch_inline_query_current_chat=f'collection.{user_id}',
+                ),
+                premium_button(
+                    f'AMV ({amv_characters})',
+                    emoji='VIDEO_STREAM',
+                    switch_inline_query_current_chat=f'collection.{user_id}.AMV',
+                ),
             ],
             [
-                InlineKeyboardButton(t('btn_refresh', lang), callback_data=f"harem_refresh:{page}:{user_id}:{filter_rarity or 'None'}"),
+                premium_button(
+                    tr('Refresh', lang),
+                    emoji='REFRESH',
+                    callback_data=f"harem_refresh:{page}:{user_id}:{filter_rarity or 'None'}",
+                ),
             ],
         ]
         if total_pages > 1:
             nav_buttons = []
             if page > 0:
-                nav_buttons.append(InlineKeyboardButton('⬅️', callback_data=f"harem:{page - 1}:{user_id}:{filter_rarity or 'None'}"))
+                nav_buttons.append(
+                    premium_button(
+                        tr('Previous', lang),
+                        emoji='LEFT_CHEVRON',
+                        callback_data=f"harem:{page - 1}:{user_id}:{filter_rarity or 'None'}",
+                    )
+                )
             if page < total_pages - 1:
-                nav_buttons.append(InlineKeyboardButton('➡️', callback_data=f"harem:{page + 1}:{user_id}:{filter_rarity or 'None'}"))
+                nav_buttons.append(
+                    premium_button(
+                        tr('Next', lang),
+                        emoji='RIGHT_CHEVRON',
+                        callback_data=f"harem:{page + 1}:{user_id}:{filter_rarity or 'None'}",
+                    )
+                )
             keyboard.append(nav_buttons)
         reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -208,29 +226,29 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
         if not harem_photo:
             harem_photo = next((c.get('img_url') for c in current_characters if c.get('img_url')), None) or PHOTO_URL[0]
 
+        localized_caption = tr(harem_message, lang)
         if is_initial:
             try:
-                return await message.reply_photo(photo=harem_photo, caption=tr(harem_message, lang), reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML)
+                return await message.reply_photo(
+                    photo=harem_photo,
+                    caption=premium_text(localized_caption),
+                    reply_markup=reply_markup,
+                    parse_mode=enums.ParseMode.HTML,
+                )
             except Exception:
-                return await message.reply_text(tr(harem_message, lang), reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML)
-        else:
-            try:
-                await callback_query.message.edit_caption(caption=tr(harem_message, lang), reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML)
-            except Exception:
-                try:
-                    await callback_query.message.edit_text(tr(harem_message, lang), reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML)
-                except Exception:
-                    pass
+                return await message.reply_text(
+                    premium_text(localized_caption),
+                    reply_markup=reply_markup,
+                    parse_mode=enums.ParseMode.HTML,
+                )
+        await edit_panel(callback_query.message, localized_caption, reply_markup)
     except Exception as e:
         print(f'Error in display_harem: {e}')
-        error_msg = 'An error occurred. Please try again later.'
+        error_msg = premium_text(tr('⚠️ Could not load this collection page. Please try again.', lang))
         if is_initial:
-            await message.reply_text(tr(error_msg, lang))
+            await message.reply_text(error_msg, parse_mode=enums.ParseMode.HTML)
         elif callback_query:
-            try:
-                await callback_query.message.edit_caption(caption=tr(error_msg, lang))
-            except Exception:
-                await callback_query.message.edit_text(tr(error_msg, lang))
+            await edit_panel(callback_query.message, error_msg)
 
 @app.on_callback_query(filters.regex('^remove_filter'))
 async def remove_filter_callback(client: Client, callback_query: CallbackQuery):
@@ -242,8 +260,16 @@ async def remove_filter_callback(client: Client, callback_query: CallbackQuery):
             await callback_query.answer(tr("It's not your Harem!", lang), show_alert=True)
             return
         await user_collection.update_one({'id': user_id}, {'$set': {'filter_rarity': None}}, upsert=True)
-        await callback_query.message.delete()
-        await callback_query.answer(tr('Filter removed. Showing all rarities.', lang), show_alert=True)
+        await callback_query.answer(tr('Filter removed. Showing all rarities.', lang))
+        await display_harem(
+            client,
+            callback_query.message,
+            user_id,
+            page=0,
+            filter_rarity=None,
+            is_initial=False,
+            callback_query=callback_query,
+        )
     except Exception as e:
         print(f'Error in remove_filter callback: {e}')
 
@@ -259,6 +285,7 @@ async def harem_callback(client: Client, callback_query: CallbackQuery):
         if callback_query.from_user.id != user_id:
             await callback_query.answer(tr("It's not your Harem!", lang), show_alert=True)
             return
+        await callback_query.answer()
         await display_harem(client, callback_query.message, user_id, page, filter_rarity, is_initial=False, callback_query=callback_query, force_refresh_photo=False)
     except Exception as e:
         print(f'Error in harem callback: {e}')
@@ -275,7 +302,7 @@ async def harem_refresh_callback(client: Client, callback_query: CallbackQuery):
         if callback_query.from_user.id != user_id:
             await callback_query.answer(tr("It's not your Harem!", lang), show_alert=True)
             return
-        await callback_query.answer(tr('🔄 Refreshing your Dress-Up Avatar...', lang))
+        await callback_query.answer(tr('Refreshing your collection...', lang))
         await display_harem(client, callback_query.message, user_id, page, filter_rarity, is_initial=False, callback_query=callback_query, force_refresh_photo=True)
     except Exception as e:
         print(f'Error in harem_refresh callback: {e}')
@@ -293,9 +320,24 @@ async def hmode_handler(client: Client, message: Message):
             row = []
     if row:
         keyboard.append(row)
-    keyboard.append([InlineKeyboardButton('All', callback_data=f'set_rarity:{user_id}:None')])
+    keyboard.append([
+        premium_button(
+            tr('All rarities', lang),
+            emoji='GRID',
+            callback_data=f'set_rarity:{user_id}:None',
+        )
+    ])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await message.reply_text(tr('Select a rarity to filter your harem:', lang), reply_markup=reply_markup)
+    prompt = (
+        "╭━━〔 💎 <b>COLLECTION FILTER</b> 〕━━╮\n\n"
+        "<blockquote>Choose a rarity to focus your collection.\n"
+        "Your choice is saved for the next /harem view.</blockquote>"
+    )
+    await message.reply_text(
+        premium_text(tr(prompt, lang)),
+        reply_markup=reply_markup,
+        parse_mode=enums.ParseMode.HTML,
+    )
 
 @app.on_callback_query(filters.regex('^set_rarity'))
 async def set_rarity_callback(client: Client, callback_query: CallbackQuery):
@@ -308,10 +350,16 @@ async def set_rarity_callback(client: Client, callback_query: CallbackQuery):
             await callback_query.answer(tr("It's not your Harem!", lang), show_alert=True)
             return
         await user_collection.update_one({'id': user_id}, {'$set': {'filter_rarity': filter_rarity}}, upsert=True)
-        if filter_rarity:
-            await callback_query.message.edit_text(tr(f'Rarity filter set to: **{filter_rarity}**', lang))
-        else:
-            await callback_query.message.edit_text(tr('Rarity filter cleared. Showing all rarities.', lang))
-        await callback_query.answer(tr(f"Rarity filter set to {(filter_rarity if filter_rarity else 'All')}", lang), show_alert=True)
+        selected = filter_rarity or 'All'
+        await callback_query.answer(tr(f"Showing {selected} rarities", lang))
+        await display_harem(
+            client,
+            callback_query.message,
+            user_id,
+            page=0,
+            filter_rarity=filter_rarity,
+            is_initial=False,
+            callback_query=callback_query,
+        )
     except Exception as e:
         print(f'Error in set_rarity callback: {e}')

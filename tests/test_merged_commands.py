@@ -136,6 +136,17 @@ class MergedCommandTests(unittest.TestCase):
                 if emoji:
                     self.assertIn(emoji, emoji_keys)
 
+    def test_harem_and_profile_use_shared_rich_ui_without_timed_message_deletion(self):
+        harem = (WAIFU / "modules/harem.py").read_text(encoding="utf-8")
+        profile = (WAIFU / "modules/stats.py").read_text(encoding="utf-8")
+        for source in (harem, profile):
+            self.assertIn("premium_button", source)
+            self.assertIn("premium_text", source)
+        self.assertIn("edit_panel", harem)
+        self.assertIn("edit_panel", profile)
+        self.assertNotIn("asyncio.sleep(180)", harem)
+        self.assertIn("premium_button(\n                        tr('Next', lang)", harem)
+
     def test_help_uses_the_unified_waifu_command_names(self):
         help_data = waifu_help_data()
         help_text = "\\n".join(
@@ -166,7 +177,12 @@ class MergedCommandTests(unittest.TestCase):
 
     def test_waifu_premium_button_icons_exist_in_registry(self):
         keys = premium_emoji_keys()
-        for path in (WAIFU / "modules/start.py", WAIFU / "unit/aoi_lang.py"):
+        for path in (
+            WAIFU / "modules/start.py",
+            WAIFU / "modules/harem.py",
+            WAIFU / "modules/stats.py",
+            WAIFU / "unit/aoi_lang.py",
+        ):
             tree = ast.parse(path.read_text(encoding="utf-8"))
             for node in ast.walk(tree):
                 if not isinstance(node, ast.Call):

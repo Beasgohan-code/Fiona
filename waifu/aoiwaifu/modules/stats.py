@@ -2,11 +2,12 @@
 
 import html
 from pyrogram import Client, enums, filters
-from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from pyrogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 
 from aoiwaifu import STATS_IMG, app, collection, rarity_map, rarity_map2, user_collection
 from aoiwaifu.admin.blocklist import get_blocklisted_id_variants, is_user_blocklisted
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text
 
 
 async def get_user_stats(user_id: int, username: str = "", first_name: str = "Collector"):
@@ -112,15 +113,20 @@ def _build_profile_view(stats: dict, lang: str = "en") -> tuple[str, InlineKeybo
     keyboard = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton(
-                    f"🌸 Harem ({stats['character_count']})",
+                premium_button(
+                    f"Harem ({stats['character_count']})",
+                    emoji="USERS_GROUP",
                     switch_inline_query_current_chat=f"collection.{uid}",
                 ),
-                InlineKeyboardButton("🔄 Refresh", callback_data=f"profile_refresh:{uid}"),
+                premium_button(
+                    tr("Refresh", lang),
+                    emoji="REFRESH",
+                    callback_data=f"profile_refresh:{uid}",
+                ),
             ]
         ]
     )
-    return tr(caption, lang), keyboard
+    return premium_text(tr(caption, lang)), keyboard
 
 
 async def _resolve_target_user(client: Client, message: Message):
@@ -167,7 +173,10 @@ async def profile_and_stats_handler(client: Client, message: Message):
         target_user_id, username=target_username, first_name=target_first_name
     )
     if error or not stats:
-        await message.reply_text(tr(error or "Unable to load profile.", lang), parse_mode=enums.ParseMode.HTML)
+        await message.reply_text(
+            premium_text(tr(error or "Unable to load profile.", lang)),
+            parse_mode=enums.ParseMode.HTML,
+        )
         return
 
     caption, keyboard = _build_profile_view(stats, lang=lang)
@@ -179,12 +188,20 @@ async def profile_and_stats_handler(client: Client, message: Message):
             parse_mode=enums.ParseMode.HTML,
         )
     except Exception:
-        await message.reply_photo(
-            photo=STATS_IMG[0],
-            caption=caption,
-            reply_markup=keyboard,
-            parse_mode=enums.ParseMode.HTML,
-        )
+        try:
+            await message.reply_photo(
+                photo=STATS_IMG[0],
+                caption=caption,
+                reply_markup=keyboard,
+                parse_mode=enums.ParseMode.HTML,
+            )
+        except Exception:
+            await message.reply_text(
+                caption,
+                reply_markup=keyboard,
+                parse_mode=enums.ParseMode.HTML,
+                disable_web_page_preview=True,
+            )
 
 
 @app.on_callback_query(filters.regex(r"^profile_refresh:(\d+)$"))
@@ -197,13 +214,6 @@ async def profile_refresh_callback(client: Client, callback_query: CallbackQuery
         if error or not stats:
             return
         caption, keyboard = _build_profile_view(stats, lang=lang)
-        try:
-            await callback_query.message.edit_caption(
-                caption=caption,
-                reply_markup=keyboard,
-                parse_mode=enums.ParseMode.HTML,
-            )
-        except Exception:
-            pass
+        await edit_panel(callback_query.message, caption, keyboard)
     except Exception:
         pass
