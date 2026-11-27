@@ -147,6 +147,15 @@ class MergedCommandTests(unittest.TestCase):
         self.assertNotIn("asyncio.sleep(180)", harem)
         self.assertIn("premium_button(\n                        tr('Next', lang)", harem)
 
+    def test_missing_origin_chat_is_guarded_before_rich_send(self):
+        rich_msg = (MUSIC / "utils/rich_msg.py").read_text(encoding="utf-8")
+        autoplay = (MUSIC / "plugins/play/autoplay.py").read_text(encoding="utf-8")
+        send_body = rich_msg.split("async def send_rich(", 1)[1].split("async def edit_rich(", 1)[0]
+        self.assertIn("if chat_id == 0:", send_body)
+        self.assertIn("return None", send_body)
+        self.assertIn("if not original_chat_id:", autoplay)
+        self.assertIn("show_alert=True", autoplay)
+
     def test_major_waifu_cards_share_rich_text_and_premium_controls(self):
         modules = ("shop", "trade", "gift", "fav", "check", "guess", "rank", "leaderboard", "balance", "sips", "addchar", "referral")
         for module in modules:

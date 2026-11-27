@@ -247,7 +247,15 @@ async def play_suggested_song_cb(client, CallbackQuery: CallbackQuery, _):
     if not vidid:
         return await CallbackQuery.answer("Invalid song ID.", show_alert=True)
 
-    original_chat_id = CallbackQuery.message.chat.id if CallbackQuery.message else 0
+    callback_message = CallbackQuery.message
+    origin_chat = getattr(callback_message, "chat", None) if callback_message else None
+    original_chat_id = getattr(origin_chat, "id", None)
+    if not original_chat_id:
+        return await CallbackQuery.answer(
+            "Open the suggestions in a chat before starting a track.",
+            show_alert=True,
+        )
+    original_chat_id = int(original_chat_id)
     chat_id = original_chat_id
     try:
         cmode = await get_cmode(original_chat_id)

@@ -694,7 +694,11 @@ _ANCHORS: dict[int, tuple[int, float]] = {}
 
 
 def set_anchor(chat_id: int, message_id: int | None) -> None:
-    if message_id:
+    try:
+        chat_id = int(chat_id)
+    except (TypeError, ValueError):
+        return
+    if chat_id and message_id:
         _ANCHORS[chat_id] = (int(message_id), time.time())
 
 
@@ -853,6 +857,17 @@ async def send_rich(
     chat_id: int, html: str, reply_markup=None, reply_to: int | None = None
 ) -> int | None:
     """Send a normal compact Telegram photo/text message (replaces full-width rich message)."""
+    try:
+        chat_id = int(chat_id)
+    except (TypeError, ValueError):
+        log.warning("skip send_rich: invalid destination chat id %r", chat_id)
+        return None
+    if chat_id == 0:
+        # Inline callbacks can have no originating chat. Never send to peer 0;
+        # callers with a Message fallback can still reply through that object.
+        log.warning("skip send_rich: missing destination chat id")
+        return None
+
     from pyrogram.enums import ParseMode
     from pyrogram.errors import ChannelPrivate, ChatWriteForbidden
     from pyrogram.types import ReplyParameters
@@ -911,6 +926,14 @@ async def send_rich(
 
 async def edit_rich(chat_id: int, message_id: int, html: str, reply_markup=None) -> bool:
     """Edit a normal Telegram photo caption or text message cleanly."""
+    try:
+        chat_id = int(chat_id)
+        message_id = int(message_id)
+    except (TypeError, ValueError):
+        return False
+    if chat_id == 0 or message_id <= 0:
+        return False
+
     from pyrogram.enums import ParseMode
     from pyrogram.errors import ChannelPrivate, ChatWriteForbidden, MessageIdInvalid, MessageNotModified
 
