@@ -175,26 +175,31 @@ class MergedCommandTests(unittest.TestCase):
                     if keyword.arg == "emoji" and isinstance(keyword.value, ast.Constant):
                         self.assertIn(keyword.value.value, keys, f"{path.name}: {keyword.value.value}")
 
-    def test_join_log_failure_does_not_escape_the_member_handler(self):
-        source = (WAIFU / "modules/joinlog.py").read_text(encoding="utf-8")
+    def test_group_registry_and_event_log_failures_are_contained(self):
+        registry_source = (WAIFU / "modules/joinlog.py").read_text(encoding="utf-8")
         sender_source = (WAIFU / "unit/event_logger.py").read_text(encoding="utf-8")
-        tree = ast.parse(sender_source)
-        sender = next(
-            node
-            for node in tree.body
-            if isinstance(node, ast.AsyncFunctionDef) and node.name == "send_event_log"
-        )
-        self.assertTrue(any(isinstance(node, ast.Try) for node in ast.walk(sender)))
-        self.assertTrue(
-            any(
-                isinstance(node, ast.Return)
-                and isinstance(node.value, ast.Constant)
-                and node.value.value is False
-                for node in ast.walk(sender)
-            )
-        )
-        self.assertIn("send_event_log", source)
-        self.assertIn("active", source)
+        for source, function_names in (
+            (registry_source, {"mark_group_active", "mark_group_inactive"}),
+            (sender_source, {"send_event_log"}),
+        ):
+            tree = ast.parse(source)
+            helpers = [
+                node
+                for node in tree.body
+                if isinstance(node, ast.AsyncFunctionDef) and node.name in function_names
+            ]
+            self.assertEqual({node.name for node in helpers}, function_names)
+            for helper in helpers:
+                self.assertTrue(any(isinstance(node, ast.Try) for node in ast.walk(helper)))
+                self.assertTrue(
+                    any(
+                        isinstance(node, ast.Return)
+                        and isinstance(node.value, ast.Constant)
+                        and node.value.value is False
+                        for node in ast.walk(helper)
+                    )
+                )
+        self.assertIn("active", registry_source)
 
     def test_shared_start_alias_is_waifu_and_standard_start_is_music_router(self):
         start = (MUSIC / "plugins/bot/start.py").read_text(encoding="utf-8")

@@ -50,8 +50,10 @@ async def on_bot_added(_, message: Message):
     if not any(getattr(member, "id", None) == bot_id for member in (message.new_chat_members or [])):
         return
 
+    from aoiwaifu.modules.joinlog import mark_group_active
     from aoiwaifu.unit.event_logger import actor_details, send_event_logs
 
+    await mark_group_active(message.chat)
     adder = actor_details(message.from_user, fallback="Telegram or a group admin", label="Added by")
     try:
         member_count = await app.get_chat_members_count(message.chat.id)
@@ -91,8 +93,10 @@ async def on_bot_kicked(_, message: Message):
     if getattr(member, "id", None) != bot_id:
         return
 
+    from aoiwaifu.modules.joinlog import mark_group_inactive
     from aoiwaifu.unit.event_logger import actor_details, send_event_logs
 
+    await mark_group_inactive(message.chat.id)
     remover = actor_details(message.from_user, fallback="Telegram or a group admin", label="Removed by")
     try:
         await send_event_logs(

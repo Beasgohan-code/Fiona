@@ -79,6 +79,11 @@ class EventLoggerTests(unittest.TestCase):
         self.assertIn("LOGGER_ID", music_handler)
         self.assertIn('"active": False', waifu_handler)
         self.assertNotIn("send_log_message(GLOG", waifu_handler)
+        self.assertIn("mark_group_active(message.chat)", music_handler)
+        self.assertIn("mark_group_inactive(message.chat.id)", music_handler)
+        self.assertEqual(music_handler.count("filters.new_chat_members"), 1)
+        self.assertEqual(music_handler.count("filters.left_chat_member"), 1)
+        self.assertNotIn("@app.on_message", waifu_handler)
 
 
 if __name__ == "__main__":
