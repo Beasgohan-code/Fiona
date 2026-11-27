@@ -26,6 +26,11 @@ def rich_heading(title: str, emoji: str = "✨") -> str:
     return f"<b>{emoji} {title}</b>"
 
 
+def rich_quote(text: str) -> str:
+    """Render a safe Telegram blockquote, preserving allowed rich inline tags."""
+    return f"<blockquote>{rich_esc(text)}</blockquote>"
+
+
 def rich_table(headers, rows) -> str:
     """Render a compact, Telegram-safe table with clear row and column breaks.
 

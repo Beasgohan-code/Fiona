@@ -13,7 +13,7 @@ from pymongo import ReturnDocument
 from aoiwaifu import app, user_collection
 from aoiwaifu.admin.blocklist import is_user_blocklisted
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table, reply_notice
+from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_quote, reply_notice
 
 SPIN_COOLDOWN = timedelta(hours=24)
 SPIN_REWARDS = (50, 100, 250, 500, 1_000, 2_500)
@@ -54,7 +54,7 @@ async def daily_spin(client: Client, message: Message):
         minutes = remainder // 60
         card = rich_card(
             "Daily spin used",
-            f"Your next spin is ready in <b>{hours}h {minutes}m</b>.",
+            rich_quote(f"🕓 Your next spin is ready in <b>{hours}h {minutes}m</b>."),
             "⏳",
         )
         return await message.reply_text(premium_text(tr(card, lang)), parse_mode=enums.ParseMode.HTML)
@@ -68,18 +68,24 @@ async def daily_spin(client: Client, message: Message):
         return_document=ReturnDocument.AFTER,
     )
     if not updated:
-        card = rich_card("Spin already claimed", "A spin was recorded for your account. Please check again tomorrow.", "⏳")
+        card = rich_card(
+            "Spin already claimed",
+            rich_quote("A spin was recorded for your account. Check again tomorrow."),
+            "⏳",
+        )
         return await message.reply_text(premium_text(tr(card, lang)), parse_mode=enums.ParseMode.HTML)
 
     first_name = html.escape(message.from_user.first_name or "Collector")
     new_balance = int(updated.get("balance", 0) or 0)
-    body = rich_table(
-        ("PLAYER", "RESULT"),
-        [
-            (first_name, "🎉 Daily spin"),
-            ("Coins won", f"<b>+{reward:,}</b>"),
-            ("New balance", f"<code>{new_balance:,}</code>"),
-        ],
+    body = "\n\n".join(
+        (
+            rich_quote(f"🎉 <b>{first_name}</b>, the wheel chose you!"),
+            rich_quote(
+                f"🏆 Payout: <b>+{reward:,} coins</b>\n"
+                f"💰 Wallet balance: <code>{new_balance:,}</code>"
+            ),
+            "<i>Your next spin unlocks in 24 hours. Good luck next time!</i>",
+        )
     )
     await message.reply_text(
         premium_text(tr(rich_card("Daily spin", body, "🎰"), lang)),

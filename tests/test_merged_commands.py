@@ -200,11 +200,17 @@ class MergedCommandTests(unittest.TestCase):
         for source in list((WAIFU / "modules").glob("*.py")) + list((WAIFU / "admin").glob("*.py")):
             contents = source.read_text(encoding="utf-8")
             self.assertNotRegex(contents, forbidden, str(source))
-            self.assertNotIn("<blockquote>", contents, str(source))
+        spin = (WAIFU / "modules/spin.py").read_text(encoding="utf-8")
+        self.assertIn("rich_quote(", spin)
+        self.assertNotIn('("PLAYER", "RESULT")', spin)
         for locale in (WAIFU / "langs").glob("*.json"):
             data = json.loads(locale.read_text(encoding="utf-8"))
             self.assertNotRegex(json.dumps(data, ensure_ascii=False), forbidden, str(locale))
-            self.assertNotIn("<blockquote>", json.dumps(data, ensure_ascii=False), str(locale))
+            start_caption = data.get("start_private_caption", "")
+            self.assertFalse(
+                any("dressup" in line.lower() and line.lstrip().startswith("•") for line in start_caption.splitlines()),
+                f"Dress-Up promo bullet remains in {locale}",
+            )
 
     def test_profile_uses_generated_card_and_keeps_photo_fallback(self):
         profile = (WAIFU / "modules/stats.py").read_text(encoding="utf-8")
