@@ -1,4 +1,5 @@
 import ast
+import asyncio
 import json
 from datetime import date, timedelta
 import re
@@ -162,6 +163,51 @@ class MergedCommandTests(unittest.TestCase):
         self.assertIn("find_one_and_update", spin)
         self.assertIn("SPIN_COOLDOWN = timedelta(hours=24)", spin)
         self.assertNotIn("sqlite", spin.lower())
+
+    def test_empty_admin_exports_send_a_notice_and_temp_files_are_isolated(self):
+        import os
+        import tempfile
+
+        source_path = WAIFU / "admin/lists.py"
+        tree = ast.parse(source_path.read_text(encoding="utf-8"))
+        helper = next(
+            node for node in tree.body
+            if isinstance(node, ast.AsyncFunctionDef) and node.name == "_send_export_document"
+        )
+        notices = []
+
+        async def fake_notice(message, text):
+            notices.append(text)
+
+        namespace = {
+            "os": os,
+            "tempfile": tempfile,
+            "reply_notice": fake_notice,
+            "tr": lambda text, lang: text,
+        }
+        exec(compile(ast.Module(body=[helper], type_ignores=[]), str(source_path), "exec"), namespace)
+        send_export = namespace["_send_export_document"]
+
+        class FakeMessage:
+            def __init__(self):
+                self.sent_path = None
+                self.content = None
+
+            async def reply_document(self, document):
+                self.sent_path = document
+                self.content = Path(document).read_text(encoding="utf-8")
+                self.assert_nonempty = os.path.getsize(document) > 0
+
+        empty_message = FakeMessage()
+        asyncio.run(send_export(empty_message, [], "en", "Nothing to export.", "fiona-empty-"))
+        self.assertEqual(notices, ["Nothing to export."])
+        self.assertIsNone(empty_message.sent_path)
+
+        populated_message = FakeMessage()
+        asyncio.run(send_export(populated_message, ["Group One (-1001)", "Group Two (-1002)"], "en", "Empty.", "fiona-groups-"))
+        self.assertEqual(populated_message.content, "Group One (-1001)\nGroup Two (-1002)")
+        self.assertTrue(populated_message.assert_nonempty)
+        self.assertFalse(os.path.exists(populated_message.sent_path))
 
     def test_daily_reward_streak_is_persisted_and_localized(self):
         balance_path = WAIFU / "modules/balance.py"
