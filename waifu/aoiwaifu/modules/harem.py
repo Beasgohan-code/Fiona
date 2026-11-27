@@ -1,9 +1,10 @@
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card, rich_heading, rich_table, reply_notice
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card, rich_heading, reply_notice
 from aoiwaifu import *
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
 from pyrogram.errors import ChatAdminRequired, UserNotParticipant
+from collections import Counter
 from itertools import groupby
 import math
 from html import escape
@@ -133,7 +134,8 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                 return await message.reply_text(error_text, parse_mode=enums.ParseMode.HTML)
             await edit_panel(callback_query.message, error_text)
             return
-        characters = sorted(characters, key=lambda x: (x.get('anime', ''), x.get('id', '')))
+        characters = sorted(characters, key=lambda x: (str(x.get('anime', '')), str(x.get('id', ''))))
+        all_characters = characters
         if filter_rarity:
             filtered_characters = [c for c in characters if c.get('rarity') == filter_rarity]
             if not filtered_characters:
@@ -155,9 +157,10 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
             characters = filtered_characters
         total_characters = len(characters)
         amv_characters = len([c for c in characters if 'vid_url' in c])
-        character_counts = {k: len(list(v)) for k, v in groupby(characters, key=lambda x: str(x.get('id', '')))}
+        character_counts = Counter(str(character.get('id', '')) for character in characters)
         unique_characters = list({str(character.get('id')): character for character in characters}.values())
-        total_pages = max(1, math.ceil(len(unique_characters) / 15))
+        items_per_page = 10
+        total_pages = max(1, math.ceil(len(unique_characters) / items_per_page))
         if page < 0 or page >= total_pages:
             page = 0
         lang = await get_effective_lang(callback_query or message, user_id=user_id)
@@ -167,25 +170,28 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
         )
         if filter_rarity:
             harem_message += f"\n{t('harem_filtered_by', lang, rarity=escape(str(filter_rarity)))}"
-        current_characters = unique_characters[page * 15:(page + 1) * 15]
+        current_characters = unique_characters[page * items_per_page:(page + 1) * items_per_page]
         current_grouped_characters = {k: list(v) for k, v in groupby(current_characters, key=lambda x: x.get('anime', 'Unknown Anime'))}
         for anime, chars in current_grouped_characters.items():
             total_anime_chars = await collection.count_documents({'anime': anime})
+            owned_in_anime = len({
+                str(character.get('id'))
+                for character in all_characters
+                if character.get('anime', 'Unknown Anime') == anime
+            })
             harem_message += (
                 f"\n\n{rich_heading(escape(str(anime)), '⛩️')} "
-                f"<i>({len(chars)}/{total_anime_chars} in catalog)</i>\n"
+                f"<i>{owned_in_anime}/{total_anime_chars} collected</i>\n"
             )
-            rows = []
             for character in chars:
-                count = character_counts.get(str(character.get('id')), 1)
+                character_id = str(character.get('id', '?'))
+                count = character_counts.get(character_id, 1)
                 rarity_emoji = rarity_map2.get(character.get('rarity'), '❔')
-                rows.append((
-                    f"<code>{escape(str(character.get('id', '?')))}</code>",
-                    rarity_emoji,
-                    f"<b>{escape(str(character.get('name', 'Unknown Character')))}</b>",
-                    f"×{count}",
-                ))
-            harem_message += rich_table(('ID', 'RARITY', 'CHARACTER', 'OWNED'), rows)
+                harem_message += (
+                    f"◈ <code>{escape(character_id)}</code> {rarity_emoji} "
+                    f"<b>{escape(str(character.get('name', 'Unknown Character')))}</b> "
+                    f"×{count}\n"
+                )
         harem_message = rich_card(f'Collection · {escape(user_first_name)}', harem_message, '🎴')
         keyboard = [
             [

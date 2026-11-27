@@ -149,7 +149,10 @@ class MergedCommandTests(unittest.TestCase):
         self.assertIn("edit_panel", profile)
         self.assertNotIn("asyncio.sleep(180)", harem)
         self.assertIn("premium_button(\n                        tr('Next', lang)", harem)
-        self.assertIn("rich_table(('ID', 'RARITY', 'CHARACTER', 'OWNED'), rows)", harem)
+        self.assertIn("items_per_page = 10", harem)
+        self.assertIn("owned_in_anime", harem)
+        self.assertIn("×{count}", harem)
+        self.assertNotIn("rich_table(('ID', 'RARITY', 'CHARACTER', 'OWNED'), rows)", harem)
         self.assertIn("rich_table(\n            ('RARITY', 'CHARACTERS')", profile)
 
     def test_summon_compatible_commands_use_fiona_handlers_and_menu(self):
