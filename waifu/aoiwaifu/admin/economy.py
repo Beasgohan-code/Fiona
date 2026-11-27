@@ -6,7 +6,7 @@ from pyrogram.types import Message
 
 from aoiwaifu import app, require_power, user_collection
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import rich_card
+from aoiwaifu.unit.rich_ui import rich_card, reply_notice
 
 
 async def _get_balance(user_id: int) -> tuple[int, int]:
@@ -36,13 +36,13 @@ def _parse_add_amount(raw_val: str) -> int:
 async def kill_handler(client: Client, message: Message):
     lang = await get_effective_lang(message)
     if not message.reply_to_message or not message.reply_to_message.from_user:
-        await message.reply_text(tr("Please reply to a user's message to use the /kill command.", lang))
+        await reply_notice(message, tr("Please reply to a user's message to use the /kill command.", lang))
         return
 
     user_id = message.reply_to_message.from_user.id
     command_args = message.text.split()
     if len(command_args) < 2:
-        await message.reply_text(
+        await reply_notice(message,
             tr("Please specify an option: `c` to delete character, `f` to delete full data, or `b` to deduct balance.", lang)
         )
         return
@@ -51,10 +51,10 @@ async def kill_handler(client: Client, message: Message):
     try:
         if option == "f":
             await user_collection.delete_one({"id": user_id})
-            await message.reply_text(tr("The full data of the user has been deleted.", lang))
+            await reply_notice(message, tr("The full data of the user has been deleted.", lang))
         elif option == "c":
             if len(command_args) < 3:
-                await message.reply_text(tr("Please specify a character ID to remove.", lang))
+                await reply_notice(message, tr("Please specify a character ID to remove.", lang))
                 return
             char_id = command_args[2]
             user = await user_collection.find_one({"id": user_id})
@@ -62,40 +62,40 @@ async def kill_handler(client: Client, message: Message):
                 characters = user["characters"]
                 updated_characters = [c for c in characters if str(c.get("id")) != str(char_id)]
                 if len(updated_characters) == len(characters):
-                    await message.reply_text(
+                    await reply_notice(message,
                         tr(f"No character with ID {char_id} found in the user's collection.", lang)
                     )
                     return
                 await user_collection.update_one({"id": user_id}, {"$set": {"characters": updated_characters}})
-                await message.reply_text(
+                await reply_notice(message,
                     tr(f"Character with ID {char_id} has been removed from the user's collection.", lang)
                 )
             else:
-                await message.reply_text(tr("No characters found in the user's collection.", lang))
+                await reply_notice(message, tr("No characters found in the user's collection.", lang))
         elif option == "b":
             if len(command_args) < 3:
-                await message.reply_text(tr("Please specify an amount to deduct from balance.", lang))
+                await reply_notice(message, tr("Please specify an amount to deduct from balance.", lang))
                 return
             try:
                 amount = int(command_args[2])
             except ValueError:
-                await message.reply_text(tr("Invalid amount. Please enter a valid number.", lang))
+                await reply_notice(message, tr("Invalid amount. Please enter a valid number.", lang))
                 return
             user_data = await user_collection.find_one({"id": user_id}, {"balance": 1})
             if user_data and "balance" in user_data:
                 new_balance = max(0, int(user_data["balance"]) - amount)
                 await user_collection.update_one({"id": user_id}, {"$set": {"balance": new_balance}})
-                await message.reply_text(
+                await reply_notice(message,
                     tr(f"{amount} has been deducted from the user's balance. New balance: {new_balance}", lang)
                 )
             else:
-                await message.reply_text(tr("The user has no balance to deduct from.", lang))
+                await reply_notice(message, tr("The user has no balance to deduct from.", lang))
         else:
-            await message.reply_text(
+            await reply_notice(message,
                 tr("Invalid option. Use `c {id}` for character, `f` for full data, or `b {amount}` to deduct balance.", lang)
             )
     except Exception as e:
-        await message.reply_text(tr(f"An error occurred: {e}", lang))
+        await reply_notice(message, tr(f"An error occurred: {e}", lang))
 
 
 @app.on_message(filters.command("add"))
@@ -109,7 +109,7 @@ async def admin_add_currency_handler(client: Client, message: Message):
     lang = await get_effective_lang(message)
     args = message.command or []
     if len(args) < 3:
-        await message.reply_text(
+        await reply_notice(message,
             tr(
                 "⚡ <b>Admin Currency Command</b>\n\n"
                 "<b>Usage:</b>\n"
@@ -128,7 +128,7 @@ async def admin_add_currency_handler(client: Client, message: Message):
         if amount == 0:
             raise ValueError("Zero amount")
     except Exception:
-        await message.reply_text(
+        await reply_notice(message,
             tr("❌ Invalid value! Example: <code>/add c 10000</code> or <code>/add b 5000</code>", lang),
             parse_mode=enums.ParseMode.HTML,
         )
@@ -148,7 +148,7 @@ async def admin_add_currency_handler(client: Client, message: Message):
             uname = raw_target.lstrip("@")
             u_doc = await user_collection.find_one({"username": uname}, {"id": 1, "first_name": 1})
             if not u_doc:
-                await message.reply_text(tr(f"❌ User @{html.escape(uname)} not found in database.", lang))
+                await reply_notice(message, tr(f"❌ User @{html.escape(uname)} not found in database.", lang))
                 return
             target_id = int(u_doc["id"])
             target_name = u_doc.get("first_name") or f"@{uname}"
@@ -165,7 +165,7 @@ async def admin_add_currency_handler(client: Client, message: Message):
         )
         added_label = f"💰 +{amount:,} Coins & 🪙 +{amount:,} Tokens"
     else:
-        await message.reply_text(
+        await reply_notice(message,
             tr("❌ Unknown type! Use <code>c</code> for Coins or <code>b</code> for Tokens.", lang),
             parse_mode=enums.ParseMode.HTML,
         )
@@ -179,7 +179,7 @@ async def admin_add_currency_handler(client: Client, message: Message):
         f"💰 <b>Coins:</b> <code>{new_coins:,}</code>",
         f"🪙 <b>Tokens:</b> <code>{new_tokens:,}</code>",
     ))
-    await message.reply_text(
+    await reply_notice(message,
         tr(rich_card("Admin credit", body, "⚡"), lang),
         parse_mode=enums.ParseMode.HTML,
     )

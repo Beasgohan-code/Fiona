@@ -6,13 +6,14 @@ from pyrogram.types import Message
 
 from aoiwaifu import app, sudo_users as SUDO_USERS, top_global_groups_collection, user_collection
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
+from aoiwaifu.unit.rich_ui import reply_notice
 
 
 @app.on_message(filters.command("list"))
 async def send_users_document(client: Client, message: Message):
     lang = await get_effective_lang(message)
     if str(message.from_user.id) not in SUDO_USERS:
-        await message.reply_text(tr("Only for Sudo users.", lang))
+        await reply_notice(message, tr("Only for Sudo users.", lang))
         return
 
     lines = []
@@ -33,7 +34,7 @@ async def send_users_document(client: Client, message: Message):
 async def send_groups_document(client: Client, message: Message):
     lang = await get_effective_lang(message)
     if str(message.from_user.id) not in SUDO_USERS:
-        await message.reply_text(tr("Only for Sudo users.", lang))
+        await reply_notice(message, tr("Only for Sudo users.", lang))
         return
 
     lines = []

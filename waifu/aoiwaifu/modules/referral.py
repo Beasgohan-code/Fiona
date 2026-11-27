@@ -7,7 +7,7 @@ from datetime import datetime
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, CallbackQuery
 from pyrogram.errors import MessageNotModified
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card, reply_notice
 from aoiwaifu import app, user_collection, db, GLOG, get_effective_lang, t
 referrals_collection = db['referrals']
 REFERRAL_DOLLARS = 25
@@ -65,7 +65,7 @@ async def refer_command(client: Client, message):
     referrals_count = int(user_doc.get('referrals_count') or 0) if user_doc else 0
     bot_username = await _get_bot_username(client)
     if not bot_username:
-        return await message.reply_text('Referral links are unavailable until the bot username is configured.')
+        return await reply_notice(message, 'Referral links are unavailable until the bot username is configured.')
     lang = await get_effective_lang(message, user_id=user_id)
     caption = await build_referral_text(bot_username, user_id, referrals_count, lang=lang)
     keyboard = build_referral_keyboard(bot_username, user_id)
@@ -177,12 +177,24 @@ async def process_referral(client: Client, new_user, ref_arg: str, is_new_start:
     milestone_note = ''
     if new_count >= SECOND_CHAR_REFERRALS_REQUIRED:
         milestone_note = ''
-    notify_referrer_text = f'🎉 <b>New Referral Joined!</b>\n\n👤 <b>Invited User:</b> <a href="tg://user?id={new_user_id}"><b>{safe_new_name}</b></a> (<code>{new_user_id}</code>)\n📅 <b>Date:</b> <code>{date_str}</code>\n\n🎁 <b>Your Referral Bonus:</b>\n• 💵 <b>+${REFERRAL_DOLLARS} Waifu Dollars</b>\n• 💰 <b>+{REFERRAL_COINS:,} Coins</b>\n\n👥 <b>Total Friends Referred:</b> <code>{new_count} Users</code>{milestone_note}'
+    notify_referrer_text = premium_text(rich_card(
+        "New referral joined",
+        f'👤 <b>Invited user:</b> <a href="tg://user?id={new_user_id}"><b>{safe_new_name}</b></a> (<code>{new_user_id}</code>)\n'
+        f'📅 <b>Date:</b> <code>{date_str}</code>\n\n'
+        f'🎁 <b>Your referral bonus:</b>\n• 💵 <b>+${REFERRAL_DOLLARS} Waifu Dollars</b>\n'
+        f'• 💰 <b>+{REFERRAL_COINS:,} Coins</b>\n\n'
+        f'👥 <b>Total friends referred:</b> <code>{new_count} Users</code>{milestone_note}',
+        "🎉",
+    ))
     try:
         await client.send_message(chat_id=referrer_id, text=notify_referrer_text, parse_mode=enums.ParseMode.HTML)
     except Exception:
         pass
-    notify_new_user_text = f"""🎁 <b>Referral Connected!</b>\nYou joined Fiona via <a href="tg://user?id={referrer_id}"><b>{safe_ref_name}</b></a>'s referral link!"""
+    notify_new_user_text = premium_text(rich_card(
+        "Referral connected",
+        f'You joined Fiona via <a href="tg://user?id={referrer_id}"><b>{safe_ref_name}</b></a>\'s referral link!',
+        "🎁",
+    ))
     try:
         await client.send_message(chat_id=new_user_id, text=notify_new_user_text, parse_mode=enums.ParseMode.HTML)
     except Exception:

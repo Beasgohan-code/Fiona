@@ -10,8 +10,7 @@ from pyrogram.types import InlineKeyboardMarkup
 from aoiwaifu import CHARA_CHANNEL_ID, app as ZYRO, collection, db, rarity_map, require_power
 from aoiwaifu.admin.upload import find_available_id, upload_to_imgbb
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card
-
+from aoiwaifu.unit.rich_ui import edit_panel, notice_card, premium_button, premium_text, reply_notice, rich_card
 WRONG_FORMAT_TEXT = (
     "Wrong ❌ format...\n"
     "eg. /addchar muzan-kibutsuji Demon-slayer\n\n"
@@ -25,18 +24,18 @@ async def request_upload(client, message):
     lang = await get_effective_lang(message)
     reply = message.reply_to_message
     if not reply or not (reply.photo or reply.document):
-        return await message.reply_text(tr("Please reply to a photo or image document.", lang))
+        return await reply_notice(message, tr("Please reply to a photo or image document.", lang))
 
     if reply.document:
         mime = getattr(reply.document, "mime_type", "") or ""
         if not mime.startswith("image/"):
-            return await message.reply_text(tr("Only image files are supported.", lang))
+            return await reply_notice(message, tr("Only image files are supported.", lang))
 
     args = message.text.split()
     if len(args) != 3:
-        return await message.reply_text(tr(WRONG_FORMAT_TEXT, lang))
+        return await reply_notice(message, tr(WRONG_FORMAT_TEXT, lang))
 
-    processing_message = await message.reply(tr("⏳ Processing...", lang))
+    processing_message = await reply_notice(message, tr("⏳ Processing...", lang))
     character_name = args[1].replace("-", " ").title()
     anime = args[2].replace("-", " ").title()
     path = await reply.download()
@@ -84,9 +83,15 @@ async def request_upload(client, message):
             parse_mode="html",
             reply_markup=keyboard,
         )
-        await processing_message.edit(tr("✅ Your request has been submitted successfully!", lang))
+        await edit_panel(
+            processing_message,
+            notice_card(tr("✅ Your request has been submitted successfully!", lang)),
+        )
     except Exception as e:
-        await processing_message.edit(tr(f"❌ Request upload failed.\nError: {str(e)}", lang))
+        await edit_panel(
+            processing_message,
+            notice_card(tr(f"❌ Request upload failed.\nError: {str(e)}", lang)),
+        )
     finally:
         if path:
             try:

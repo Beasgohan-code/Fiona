@@ -2,6 +2,7 @@ from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_l
 from pyrogram import Client, filters
 from pyrogram.enums import ChatMemberStatus
 from aoiwaifu import group_user_totals_collection, group_ctimes, OWNER_ID, app, x, get_chat_lang, t
+from aoiwaifu.unit.rich_ui import reply_notice
 
 async def is_admin(client: Client, chat_id: int, user_id: int) -> bool:
     """
@@ -34,24 +35,24 @@ async def set_ctime(client, message):
 
     lang = await get_chat_lang(chat_id)
     if not (is_owner or is_admin_user):
-        await message.reply(t("ctime_admin_only", lang))
+        await reply_notice(message, t("ctime_admin_only", lang))
         return
 
     # Parse command argument
     try:
         ctime = int(message.command[1])
     except (IndexError, ValueError):
-        await message.reply(t("ctime_usage", lang))
+        await reply_notice(message, t("ctime_usage", lang))
         return
 
     # Validate ctime based on permissions
     if is_owner:
         if not 1 <= ctime <= 200:
-            await message.reply(t("ctime_owner_range", lang))
+            await reply_notice(message, t("ctime_owner_range", lang))
             return
     else:
         if not 80 <= ctime <= 200:
-            await message.reply(t("ctime_admin_range", lang))
+            await reply_notice(message, t("ctime_admin_range", lang))
             return
 
     # Update ctime in MongoDB
@@ -62,4 +63,4 @@ async def set_ctime(client, message):
     )
 
     group_ctimes[str(chat_id)] = ctime
-    await message.reply(t("ctime_success", lang, ctime=ctime))
+    await reply_notice(message, t("ctime_success", lang, ctime=ctime))

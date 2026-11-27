@@ -11,7 +11,7 @@ from pyrogram.types import Message
 from aoiwaifu import app, user_collection
 from aoiwaifu.admin.blocklist import is_user_blocklisted
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table
+from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table, reply_notice
 
 pay_in_flight = set()
 lock = {}
@@ -67,7 +67,7 @@ async def daily_gift(client: Client, message: Message):
     lang = await get_effective_lang(message)
     user_id = message.from_user.id
     if user_id in lock and time.time() - lock[user_id] < 5:
-        await message.reply_text(tr("⏰ Please wait before using this command again.", lang))
+        await reply_notice(message, tr("⏰ Please wait before using this command again.", lang))
         return
     lock[user_id] = time.time()
 
@@ -106,7 +106,7 @@ async def weekly_gift(client: Client, message: Message):
     lang = await get_effective_lang(message)
     user_id = message.from_user.id
     if user_id in lock and time.time() - lock[user_id] < 5:
-        await message.reply_text(tr("⏰ Please wait before using this command again.", lang))
+        await reply_notice(message, tr("⏰ Please wait before using this command again.", lang))
         return
     lock[user_id] = time.time()
 
@@ -170,12 +170,12 @@ async def pay(client: Client, message: Message):
     lang = await get_effective_lang(message)
     sender_id = message.from_user.id
     if await is_user_blocklisted(sender_id):
-        return await message.reply_text(tr("🚫 Your account is blocklisted. Payments are disabled.", lang))
+        return await reply_notice(message, tr("🚫 Your account is blocklisted. Payments are disabled.", lang))
     if sender_id in lock and time.time() - lock[sender_id] < 3:
-        await message.reply_text(tr("⏰ Please wait before sending another payment.", lang))
+        await reply_notice(message, tr("⏰ Please wait before sending another payment.", lang))
         return
     if sender_id in pay_in_flight:
-        await message.reply_text(tr("⏳ Your previous payment is still processing.", lang))
+        await reply_notice(message, tr("⏳ Your previous payment is still processing.", lang))
         return
 
     args = message.command or []
@@ -185,7 +185,7 @@ async def pay(client: Client, message: Message):
 
     if message.reply_to_message and message.reply_to_message.from_user:
         if len(args) < 2:
-            await message.reply_text(tr("Usage: Reply to a user with `/pay <amount>`", lang))
+            await reply_notice(message, tr("Usage: Reply to a user with `/pay <amount>`", lang))
             return
         recipient_id = message.reply_to_message.from_user.id
         recipient_name = message.reply_to_message.from_user.first_name or str(recipient_id)
@@ -200,19 +200,19 @@ async def pay(client: Client, message: Message):
             uname = target.lstrip("@")
             doc = await user_collection.find_one({"username": uname}, {"id": 1, "first_name": 1})
             if not doc:
-                await message.reply_text(tr("❌ Recipient not found.", lang))
+                await reply_notice(message, tr("❌ Recipient not found.", lang))
                 return
             recipient_id = int(doc["id"])
             recipient_name = doc.get("first_name") or f"@{uname}"
     else:
-        await message.reply_text(tr("Usage: `/pay <amount>` (reply) or `/pay <user_id/@username> <amount>`", lang))
+        await reply_notice(message, tr("Usage: `/pay <amount>` (reply) or `/pay <user_id/@username> <amount>`", lang))
         return
 
     if recipient_id == sender_id:
-        await message.reply_text(tr("❌ You cannot pay yourself.", lang))
+        await reply_notice(message, tr("❌ You cannot pay yourself.", lang))
         return
     if await is_user_blocklisted(recipient_id):
-        await message.reply_text(tr("🚫 Recipient is blocklisted and cannot receive payments.", lang))
+        await reply_notice(message, tr("🚫 Recipient is blocklisted and cannot receive payments.", lang))
         return
 
     try:
@@ -220,7 +220,7 @@ async def pay(client: Client, message: Message):
         if amount <= 0:
             raise ValueError
     except ValueError:
-        await message.reply_text(tr("❌ Please enter a valid positive amount.", lang))
+        await reply_notice(message, tr("❌ Please enter a valid positive amount.", lang))
         return
 
     pay_in_flight.add(sender_id)
@@ -232,7 +232,7 @@ async def pay(client: Client, message: Message):
             return_document=ReturnDocument.AFTER,
         )
         if not debited:
-            await message.reply_text(tr("❌ Insufficient balance.", lang))
+            await reply_notice(message, tr("❌ Insufficient balance.", lang))
             return
 
         await user_collection.update_one(
@@ -257,7 +257,16 @@ async def pay(client: Client, message: Message):
         try:
             await client.send_message(
                 recipient_id,
-                tr(f"💰 You received <code>{amount:,}</code> coins from {sender_name}!", lang),
+                premium_text(
+                    tr(
+                        rich_card(
+                            "Payment received",
+                            f"You received <b>{amount:,} coins</b> from {sender_name}.",
+                            "💰",
+                        ),
+                        lang,
+                    )
+                ),
                 parse_mode=enums.ParseMode.HTML,
             )
         except PeerIdInvalid:

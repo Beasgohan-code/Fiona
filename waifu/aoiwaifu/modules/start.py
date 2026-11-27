@@ -23,7 +23,6 @@ from aoiwaifu import (
     user_collection,
 )
 from aoiwaifu.unit.aoi_help import HELP_DATA
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card
 from aoiwaifu.unit.aoi_lang import (
     DEFAULT_LANG,
     build_language_keyboard,
@@ -35,6 +34,7 @@ from aoiwaifu.unit.aoi_lang import (
     t,
     tr,
 )
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card
 
 START_TIME = time.time()
 _start_media_cycle: list[str] = []

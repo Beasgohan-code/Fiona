@@ -13,8 +13,7 @@ from pymongo import ReturnDocument
 from aoiwaifu import app, user_collection
 from aoiwaifu.admin.blocklist import is_user_blocklisted
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table
-
+from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table, reply_notice
 
 SPIN_COOLDOWN = timedelta(hours=24)
 SPIN_REWARDS = (50, 100, 250, 500, 1_000, 2_500)
@@ -39,7 +38,7 @@ async def daily_spin(client: Client, message: Message):
     lang = await get_effective_lang(message)
     user_id = int(message.from_user.id)
     if await is_user_blocklisted(user_id):
-        return await message.reply_text(tr("🚫 Your account is not eligible for economy rewards.", lang))
+        return await reply_notice(message, tr("🚫 Your account is not eligible for economy rewards.", lang))
 
     # Ensure there is a document before doing the compare-and-set below.
     await user_collection.update_one(

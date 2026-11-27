@@ -4,7 +4,8 @@ from pyrogram import filters, enums
 from telegram import Update
 from telegram.ext import CommandHandler, CallbackContext
 from aoiwaifu import app, application, sudo_users, OWNER_ID
-from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table
+from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table, reply_notice
+
 
 START_TIME_PING = time.time()
 
@@ -18,7 +19,7 @@ def _format_uptime():
 async def pyro_ping(client, message):
     lang = await get_effective_lang(message)
     start_time = time.time()
-    msg = await message.reply_text(tr("🌸 <i>Pinging Fiona servers...</i>", lang), parse_mode=enums.ParseMode.HTML)
+    msg = await reply_notice(message, tr("🌸 <i>Pinging Fiona servers...</i>", lang), parse_mode=enums.ParseMode.HTML)
     elapsed_time = round((time.time() - start_time) * 1000, 2)
     response_text = rich_card(
         'Fiona service health',
@@ -37,7 +38,7 @@ async def pyro_ping(client, message):
 async def ping(update: Update, context: CallbackContext) -> None:
     lang = await get_effective_lang(update)
     start_time = time.time()
-    message = await update.message.reply_text(tr("🌸 <i>Pinging Fiona servers...</i>", lang), parse_mode="HTML")
+    message = await reply_notice(update.message, tr("🌸 <i>Pinging Fiona servers...</i>", lang), parse_mode="HTML")
     elapsed_time = round((time.time() - start_time) * 1000, 2)
     response_text = rich_card(
         'Fiona service health',
@@ -51,6 +52,6 @@ async def ping(update: Update, context: CallbackContext) -> None:
         ),
         '📶',
     )
-    await message.edit_text(tr(response_text, lang), parse_mode="HTML")
+    await message.edit_text(premium_text(tr(response_text, lang)), parse_mode="HTML")
 
 application.add_handler(CommandHandler("ping", ping))

@@ -3,9 +3,9 @@
 import html
 
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table
 from aoiwaifu import app, collection
 from pyrogram import filters, enums
+from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table
 
 
 @app.on_message(filters.command(["rarity", "rarities"]))

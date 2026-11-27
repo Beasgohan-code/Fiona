@@ -16,6 +16,7 @@ from telegram import Update
 from telegram.ext import CallbackContext, MessageHandler, filters
 from pyrogram import filters as pyro_filters
 import time
+from aoiwaifu.unit.rich_ui import reply_notice
 
 # Ensure Motor always resolves the currently running event loop even if only massage.py is updated
 try:
@@ -101,8 +102,10 @@ async def message_counter(update: Update, context: CallbackContext) -> None:
                     user_cooldowns[user_id] = now + 600
                     warned_users[user_id] = now
                     grp_lang = await get_chat_lang(chat.id)
-                    await message.reply_text(
-                        t("spam_warning", grp_lang, first_name=user.first_name or "User")
+                    await reply_notice(
+                        message,
+                        t("spam_warning", grp_lang, first_name=user.first_name or "User"),
+                        parse_mode="HTML",
                     )
                 return
         else:

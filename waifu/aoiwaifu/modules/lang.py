@@ -8,6 +8,7 @@ Provides:
 import html
 import json
 from pyrogram import Client, filters, enums
+from aoiwaifu.unit.rich_ui import edit_panel, premium_text, rich_card, reply_notice
 try:
     from pyrogram.enums import ChatMemberStatus
 except ImportError:
@@ -38,7 +39,7 @@ from aoiwaifu.unit.aoi_lang import (
     t,
 )
 from aoiwaifu.modules.start import generate_start_message
-from aoiwaifu.unit.rich_ui import edit_panel, premium_text, rich_card
+
 
 
 async def is_group_admin_or_owner(client: Client, chat_id: int, user_id: int) -> bool:
@@ -101,7 +102,7 @@ async def dm_lang_command(client: Client, message: Message):
         arg_code = message.command[1].strip().lower()
         if arg_code in SUPPORTED_LANG_CODES:
             new_lang = await set_user_lang(user_id, arg_code)
-            await message.reply_text(
+            await reply_notice(message,
                 t("lang_updated_dm", new_lang, lang_label=get_lang_label(new_lang)),
                 parse_mode=enums.ParseMode.HTML,
             )
@@ -125,14 +126,14 @@ async def group_settings_lang_command(client: Client, message: Message):
     cur_lang = await get_chat_lang(chat_id)
 
     if not await is_group_admin_or_owner(client, chat_id, user_id):
-        await message.reply_text(t("lang_admin_only", cur_lang), parse_mode=enums.ParseMode.HTML)
+        await reply_notice(message, t("lang_admin_only", cur_lang), parse_mode=enums.ParseMode.HTML)
         return
 
     if len(message.command) > 1:
         arg_code = message.command[1].strip().lower()
         if arg_code in SUPPORTED_LANG_CODES:
             new_lang = await set_chat_lang(chat_id, arg_code)
-            await message.reply_text(
+            await reply_notice(message,
                 t("lang_updated_group", new_lang, lang_label=get_lang_label(new_lang)),
                 parse_mode=enums.ParseMode.HTML,
             )

@@ -6,7 +6,8 @@ from pyrogram import enums, filters
 
 from aoiwaifu import ZYRO as app, collection, db, user_collection
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table
+from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table, reply_notice
+
 
 redeem_collection = db["redeem_codes"]
 redeem_locks = set()
@@ -17,7 +18,7 @@ async def redeem_character(client, message):
     lang = await get_effective_lang(message)
     args = message.command
     if len(args) < 2:
-        await message.reply_text(
+        await reply_notice(message,
             tr("Usage: <code>/redeem &lt;code&gt;</code>", lang),
             parse_mode=enums.ParseMode.HTML,
         )
@@ -26,7 +27,7 @@ async def redeem_character(client, message):
     redeem_code = args[1].strip()
     user_id = message.from_user.id
     if user_id in redeem_locks:
-        await message.reply_text(
+        await reply_notice(message,
             tr("⏳ Your redeem request is already processing. Please wait!", lang),
             parse_mode=enums.ParseMode.HTML,
         )
@@ -36,19 +37,19 @@ async def redeem_character(client, message):
     try:
         redeem_data = await redeem_collection.find_one({"code": redeem_code})
         if not redeem_data:
-            await message.reply_text(
+            await reply_notice(message,
                 tr("❌ Invalid or expired redeem code.", lang),
                 parse_mode=enums.ParseMode.HTML,
             )
             return
         if user_id in redeem_data.get("redeemed_by", []):
-            await message.reply_text(
+            await reply_notice(message,
                 tr("❌ You have already redeemed this code.", lang),
                 parse_mode=enums.ParseMode.HTML,
             )
             return
         if len(redeem_data.get("redeemed_by", [])) >= redeem_data.get("redeem_limit", 0):
-            await message.reply_text(
+            await reply_notice(message,
                 tr("❌ This redeem code has reached its limit.", lang),
                 parse_mode=enums.ParseMode.HTML,
             )
@@ -56,7 +57,7 @@ async def redeem_character(client, message):
 
         character = await collection.find_one({"id": redeem_data["character_id"]})
         if not character:
-            await message.reply_text(tr("❌ Character not found.", lang), parse_mode=enums.ParseMode.HTML)
+            await reply_notice(message, tr("❌ Character not found.", lang), parse_mode=enums.ParseMode.HTML)
             return
 
         claimed = await redeem_collection.find_one_and_update(
@@ -69,7 +70,7 @@ async def redeem_character(client, message):
             return_document=ReturnDocument.AFTER,
         )
         if not claimed:
-            await message.reply_text(
+            await reply_notice(message,
                 tr("❌ Code limit reached or already claimed!", lang),
                 parse_mode=enums.ParseMode.HTML,
             )

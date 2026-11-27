@@ -3,20 +3,20 @@ from aoiwaifu import app, collection as character_collection, user_collection
 from aoiwaifu.admin.blocklist import get_blocklisted_id_variants
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, CallbackQuery
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card
 from html import escape
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card, reply_notice
 
 @app.on_message(filters.command('check'))
 async def check_character(client, message):
     lang = await get_effective_lang(message)
     args = message.command
     if len(args) < 2:
-        await message.reply_text(tr('Please provide a Character ID: `/check <character_id>`', lang))
+        await reply_notice(message, tr('Please provide a Character ID: `/check <character_id>`', lang))
         return
     character_id = args[1]
     character = await character_collection.find_one({'id': character_id})
     if not character:
-        await message.reply_text(tr('Character not found.', lang))
+        await reply_notice(message, tr('Character not found.', lang))
         return
     keyboard = InlineKeyboardMarkup([[
         premium_button('Find collectors', emoji='USERS_GROUP', callback_data=f'whohaveit_{character_id}')

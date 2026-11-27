@@ -6,6 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime, timedelta
 import asyncio
 import logging
+from aoiwaifu.unit.rich_ui import reply_notice, edit_notice
 backup_logger = logging.getLogger('BACKUP')
 
 class AutoBackup:
@@ -150,14 +151,14 @@ async def manual_backup(client: Client, message: Message):
     """Manual backup command for admins"""
     lang = await get_effective_lang(message)
     try:
-        processing_msg = await message.reply_text(tr('🔄 Creating manual backup...', lang))
+        processing_msg = await reply_notice(message, tr('🔄 Creating manual backup...', lang))
         success = await backup_system.create_backup()
         if success:
-            await processing_msg.edit_text(tr('✅ Manual backup completed successfully!', lang))
+            await edit_notice(processing_msg, tr('✅ Manual backup completed successfully!', lang))
         else:
-            await processing_msg.edit_text(tr('❌ Manual backup failed! Check logs for details.', lang))
+            await edit_notice(processing_msg, tr('❌ Manual backup failed! Check logs for details.', lang))
     except Exception as e:
-        await message.reply_text(tr(f'❌ Error creating manual backup: {str(e)}', lang))
+        await reply_notice(message, tr(f'❌ Error creating manual backup: {str(e)}', lang))
 
 @app.on_message(filters.command('backupstatus'))
 @require_power('VIP')
@@ -171,9 +172,9 @@ async def backup_status(client: Client, message: Message):
             status_msg = f"📊 **Backup System Status**\n\n✅ **Last Backup:** {last_backup.strftime('%d/%m/%Y %H:%M:%S')}\n⏰ **Time Since:** {time_since}\n🔄 **Next Backup:** {('Soon' if time_since >= timedelta(hours=24) else 'In ' + str(timedelta(hours=24) - time_since))}\n📁 **Max Backups:** {backup_system.max_backups} days\n🔧 **Status:** Active"
         else:
             status_msg = f'📊 **Backup System Status**\n\n❌ **Last Backup:** No backups found\n🔄 **Next Backup:** Will create first backup soon\n📁 **Max Backups:** {backup_system.max_backups} days\n🔧 **Status:** Active'
-        await message.reply_text(tr(status_msg, lang))
+        await reply_notice(message, tr(status_msg, lang))
     except Exception as e:
-        await message.reply_text(tr(f'❌ Error checking backup status: {str(e)}', lang))
+        await reply_notice(message, tr(f'❌ Error checking backup status: {str(e)}', lang))
 
 @app.on_message(filters.command('listbackups'))
 @require_power('VIP')
@@ -184,7 +185,7 @@ async def list_backups(client: Client, message: Message):
         db_list = await backup_system.backup_client.list_database_names()
         backup_dbs = [db for db in db_list if db.startswith(f'{backup_system.db_name}_')]
         if not backup_dbs:
-            await message.reply_text(tr('📁 No backups found.', lang))
+            await reply_notice(message, tr('📁 No backups found.', lang))
             return
         backup_info = []
         for db_name in backup_dbs:
@@ -199,9 +200,9 @@ async def list_backups(client: Client, message: Message):
         for i, (backup_date, db_name) in enumerate(backup_info, 1):
             age = datetime.now() - backup_date
             backup_list += f"{i}. `{db_name}`\n   📅 {backup_date.strftime('%d/%m/%Y')}\n   ⏰ {age.days} days ago\n\n"
-        await message.reply_text(tr(backup_list, lang))
+        await reply_notice(message, tr(backup_list, lang))
     except Exception as e:
-        await message.reply_text(tr(f'❌ Error listing backups: {str(e)}', lang))
+        await reply_notice(message, tr(f'❌ Error listing backups: {str(e)}', lang))
 
 @app.on_message(filters.command('startbackup'))
 @require_power('OWNER')
@@ -209,12 +210,12 @@ async def start_backup_system_command(client: Client, message: Message):
     """Start the backup system manually (Owner only)"""
     lang = await get_effective_lang(message)
     try:
-        processing_msg = await message.reply_text(tr('🔄 Starting backup system...', lang))
+        processing_msg = await reply_notice(message, tr('🔄 Starting backup system...', lang))
         asyncio.create_task(backup_system.start_auto_backup())
-        await processing_msg.edit_text(tr('✅ Backup system started successfully!', lang))
+        await edit_notice(processing_msg, tr('✅ Backup system started successfully!', lang))
         backup_logger.info('Backup system started manually by owner')
     except Exception as e:
-        await message.reply_text(tr(f'❌ Error starting backup system: {str(e)}', lang))
+        await reply_notice(message, tr(f'❌ Error starting backup system: {str(e)}', lang))
         backup_logger.error(f'Error starting backup system: {e}')
 from aoiwaifu import *
 from pyrogram import Client, filters

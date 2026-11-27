@@ -6,6 +6,7 @@ from pyrogram import enums, filters
 
 from aoiwaifu import ZYRO as app, collection, db, require_power
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
+from aoiwaifu.unit.rich_ui import reply_notice
 
 redeem_collection = db["redeem_codes"]
 
@@ -16,7 +17,7 @@ async def generate_redeem_code(client, message):
     lang = await get_effective_lang(message)
     args = message.command
     if len(args) < 3:
-        await message.reply_text(
+        await reply_notice(message,
             tr("Usage: <code>/cgen &lt;character_id&gt; &lt;redeem_limit&gt;</code>", lang),
             parse_mode=enums.ParseMode.HTML,
         )
@@ -28,7 +29,7 @@ async def generate_redeem_code(client, message):
         if redeem_limit <= 0:
             raise ValueError
     except ValueError:
-        await message.reply_text(
+        await reply_notice(message,
             tr("❌ Invalid redeem limit. It must be a positive number.", lang),
             parse_mode=enums.ParseMode.HTML,
         )
@@ -36,7 +37,7 @@ async def generate_redeem_code(client, message):
 
     character = await collection.find_one({"id": character_id})
     if not character:
-        await message.reply_text(tr("❌ Character not found.", lang), parse_mode=enums.ParseMode.HTML)
+        await reply_notice(message, tr("❌ Character not found.", lang), parse_mode=enums.ParseMode.HTML)
         return
 
     redeem_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
@@ -58,7 +59,7 @@ async def generate_redeem_code(client, message):
         f"🔢 <b>Redeem Limit:</b> <code>{redeem_limit}</code>\n"
         f"🎟 <b>Redeem Code:</b> <code>{redeem_code}</code>"
     )
-    await message.reply_text(
+    await reply_notice(message,
         tr(f"✅ <b>Redeem code generated!</b>\n\n{char_info}", lang),
         parse_mode=enums.ParseMode.HTML,
     )

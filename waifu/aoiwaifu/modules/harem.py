@@ -1,5 +1,5 @@
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card, rich_heading, rich_table
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card, rich_heading, rich_table, reply_notice
 from aoiwaifu import *
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
@@ -42,20 +42,20 @@ async def pin_character_handler(client: Client, message: Message):
     if not message.from_user:
         return
     if len(message.command) < 2 or not message.command[1].isdigit():
-        return await message.reply_text(tr('Usage: /hpin <character_id>\nExample: /hpin 205', lang))
+        return await reply_notice(message, tr('Usage: /hpin <character_id>\nExample: /hpin 205', lang))
     user_id = message.from_user.id
     character_id = str(message.command[1])
     user = await user_collection.find_one({'id': user_id})
     if not user:
-        return await message.reply_text(tr('Your collection is empty.', lang))
+        return await reply_notice(message, tr('Your collection is empty.', lang))
     owned = any((isinstance(char, dict) and str(char.get('id')) == character_id for char in user.get('characters') or []))
     if not owned:
-        return await message.reply_text(tr("You don't own this character.", lang))
+        return await reply_notice(message, tr("You don't own this character.", lang))
     pinned = [str(cid) for cid in user.get('pinned_characters') or []]
     if character_id in pinned:
-        return await message.reply_text(tr(f'Character #{character_id} is already pinned.', lang))
+        return await reply_notice(message, tr(f'Character #{character_id} is already pinned.', lang))
     if len(pinned) >= 10:
-        return await message.reply_text(tr('You can pin a maximum of 10 characters. Use /hunpin <id> first.', lang))
+        return await reply_notice(message, tr('You can pin a maximum of 10 characters. Use /hunpin <id> first.', lang))
     pinned.append(character_id)
     await user_collection.update_one({'id': user_id}, {'$set': {'pinned_characters': pinned}})
     try:
@@ -63,7 +63,7 @@ async def pin_character_handler(client: Client, message: Message):
         user_collection_cache.pop(str(user_id), None)
     except Exception:
         pass
-    await message.reply_text(tr(f'📌 Character #{character_id} pinned. It will appear at the top of your inline collection.', lang))
+    await reply_notice(message, tr(f'📌 Character #{character_id} pinned. It will appear at the top of your inline collection.', lang))
 
 @app.on_message(filters.command('hunpin'))
 async def unpin_character_handler(client: Client, message: Message):
@@ -71,13 +71,13 @@ async def unpin_character_handler(client: Client, message: Message):
     if not message.from_user:
         return
     if len(message.command) < 2 or not message.command[1].isdigit():
-        return await message.reply_text(tr('Usage: /hunpin <character_id>\nExample: /hunpin 205', lang))
+        return await reply_notice(message, tr('Usage: /hunpin <character_id>\nExample: /hunpin 205', lang))
     user_id = message.from_user.id
     character_id = str(message.command[1])
     user = await user_collection.find_one({'id': user_id})
     pinned = [str(cid) for cid in user.get('pinned_characters') or []] if user else []
     if character_id not in pinned:
-        return await message.reply_text(tr(f'Character #{character_id} is not pinned.', lang))
+        return await reply_notice(message, tr(f'Character #{character_id} is not pinned.', lang))
     pinned.remove(character_id)
     await user_collection.update_one({'id': user_id}, {'$set': {'pinned_characters': pinned}})
     try:
@@ -85,7 +85,7 @@ async def unpin_character_handler(client: Client, message: Message):
         user_collection_cache.pop(str(user_id), None)
     except Exception:
         pass
-    await message.reply_text(tr(f'📌 Character #{character_id} unpinned.', lang))
+    await reply_notice(message, tr(f'📌 Character #{character_id} unpinned.', lang))
 
 @app.on_message(filters.command('pinlist'))
 async def pinlist_handler(client: Client, message: Message):
@@ -95,7 +95,7 @@ async def pinlist_handler(client: Client, message: Message):
     user = await user_collection.find_one({'id': message.from_user.id})
     pinned = [str(cid) for cid in user.get('pinned_characters') or []] if user else []
     if not pinned:
-        return await message.reply_text(tr("You haven't pinned any characters yet. Use /hpin <character_id>.", lang))
+        return await reply_notice(message, tr("You haven't pinned any characters yet. Use /hpin <character_id>.", lang))
     owned_by_id = {}
     for char in user.get('characters') or []:
         if isinstance(char, dict) and char.get('id') is not None:
@@ -108,7 +108,7 @@ async def pinlist_handler(client: Client, message: Message):
         else:
             lines.append(f'{index}. <code>#{escape(character_id)}</code>')
     lines.append(f'\n{len(pinned)}/10 pinned')
-    await message.reply_text(tr('\n'.join(lines), lang), parse_mode=enums.ParseMode.HTML)
+    await reply_notice(message, tr('\n'.join(lines), lang), parse_mode=enums.ParseMode.HTML)
 
 @app.on_message(filters.command(['harem', 'collection', 'claimlist']))
 async def harem_handler(client: Client, message: Message):

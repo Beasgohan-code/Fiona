@@ -7,7 +7,8 @@ from pyrogram.types import InlineKeyboardMarkup
 from pyrogram.enums import ParseMode
 from aoiwaifu import user_collection, ZYRO
 from aoiwaifu.admin.blocklist import is_user_blocklisted
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card, reply_notice
+
 pending_trades = {}
 lock = []
 
@@ -26,44 +27,44 @@ async def trade(client, message):
     lang = await get_effective_lang(message)
     sender_id = message.from_user.id
     if await is_user_blocklisted(sender_id):
-        return await message.reply_text(tr('🚫 Blocklisted users cannot trade characters.', lang))
+        return await reply_notice(message, tr('🚫 Blocklisted users cannot trade characters.', lang))
     if sender_id in lock:
-        await message.reply_text(tr('You already have a trade in progress. Please confirm or cancel it before starting a new trade.', lang), parse_mode=ParseMode.HTML)
+        await reply_notice(message, tr('You already have a trade in progress. Please confirm or cancel it before starting a new trade.', lang), parse_mode=ParseMode.HTML)
         return
     if not message.reply_to_message:
-        await message.reply_text(tr("You need to reply to a user's message to trade a character!", lang), parse_mode=ParseMode.HTML)
+        await reply_notice(message, tr("You need to reply to a user's message to trade a character!", lang), parse_mode=ParseMode.HTML)
         return
     receiver_id = message.reply_to_message.from_user.id
     if await is_user_blocklisted(receiver_id):
-        return await message.reply_text(tr('🚫 This user is blocklisted and cannot trade characters.', lang))
+        return await reply_notice(message, tr('🚫 This user is blocklisted and cannot trade characters.', lang))
     receiver_username = message.reply_to_message.from_user.username
     receiver_first_name = message.reply_to_message.from_user.first_name
     if sender_id == receiver_id:
-        await message.reply_text(tr("You can't trade a character with yourself!", lang), parse_mode=ParseMode.HTML)
+        await reply_notice(message, tr("You can't trade a character with yourself!", lang), parse_mode=ParseMode.HTML)
         return
     if receiver_id in lock:
-        await message.reply_text(tr(f'{message.reply_to_message.from_user.mention} is already in a trade. Please wait until their current trade is completed.', lang), parse_mode=ParseMode.HTML)
+        await reply_notice(message, tr(f'{message.reply_to_message.from_user.mention} is already in a trade. Please wait until their current trade is completed.', lang), parse_mode=ParseMode.HTML)
         return
     if len(message.command) != 3:
-        await message.reply_text(tr("You need to provide your character ID and the other user's character ID! Usage: /trade <my_char_id> <user_char_id>", lang), parse_mode=ParseMode.HTML)
+        await reply_notice(message, tr("You need to provide your character ID and the other user's character ID! Usage: /trade <my_char_id> <user_char_id>", lang), parse_mode=ParseMode.HTML)
         return
     sender_char_id, receiver_char_id = (message.command[1], message.command[2])
     sender = await user_collection.find_one({'id': sender_id})
     receiver = await user_collection.find_one({'id': receiver_id})
     if not sender or not receiver:
-        await message.reply_text(tr('One of the users is not found in the database!', lang), parse_mode=ParseMode.HTML)
+        await reply_notice(message, tr('One of the users is not found in the database!', lang), parse_mode=ParseMode.HTML)
         return
     sender_characters = sender.get('characters') or []
     receiver_characters = receiver.get('characters') or []
     if not isinstance(sender_characters, list) or not isinstance(receiver_characters, list):
-        return await message.reply_text(tr("⚠️ One user's character collection data is invalid. Please contact support.", lang), parse_mode=ParseMode.HTML)
+        return await reply_notice(message, tr("⚠️ One user's character collection data is invalid. Please contact support.", lang), parse_mode=ParseMode.HTML)
     sender_char = next((char for char in sender_characters if isinstance(char, dict) and str(char.get('id')) == str(sender_char_id)), None)
     if not sender_char:
-        await message.reply_text(tr(f"You don't have the character with ID <b>{sender_char_id}</b> in your collection!", lang), parse_mode=ParseMode.HTML)
+        await reply_notice(message, tr(f"You don't have the character with ID <b>{sender_char_id}</b> in your collection!", lang), parse_mode=ParseMode.HTML)
         return
     receiver_char = next((char for char in receiver_characters if isinstance(char, dict) and str(char.get('id')) == str(receiver_char_id)), None)
     if not receiver_char:
-        await message.reply_text(tr(f"{message.reply_to_message.from_user.mention} doesn't have the character with ID <b>{receiver_char_id}</b> in their collection!", lang), parse_mode=ParseMode.HTML)
+        await reply_notice(message, tr(f"{message.reply_to_message.from_user.mention} doesn't have the character with ID <b>{receiver_char_id}</b> in their collection!", lang), parse_mode=ParseMode.HTML)
         return
     trade_id = str(uuid.uuid4())
     lock.append(sender_id)

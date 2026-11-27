@@ -1,6 +1,7 @@
 """Admin character upload commands (/gupload, /upload, /u, /find) — ImgBB only."""
 
 import asyncio
+import html
 import os
 import requests
 from pyrogram import filters
@@ -14,6 +15,7 @@ from aoiwaifu import (
     require_power,
 )
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
+from aoiwaifu.unit.rich_ui import edit_notice, premium_text, reply_notice, rich_card
 
 IMGBB_UPLOAD_URL = "https://api.imgbb.com/1/upload"
 
@@ -99,7 +101,7 @@ def _get_upload_lock() -> asyncio.Lock:
 async def find_next_id_cmd(client, message):
     lang = await get_effective_lang(message)
     available_id = await find()
-    await message.reply_text(tr(f"Next available character ID: `{available_id}`", lang))
+    await reply_notice(message, tr(f"Next available character ID: `{available_id}`", lang))
 
 
 @ZYRO.on_message(filters.command(["gupload", "u", "upload"]))
@@ -107,7 +109,7 @@ async def find_next_id_cmd(client, message):
 async def ul_main(client, message):
     lang = await get_effective_lang(message)
     if _get_upload_lock().locked():
-        await message.reply_text(
+        await reply_notice(message,
             tr("Another upload is in progress. Please wait until it is completed.", lang)
         )
         return
@@ -115,7 +117,7 @@ async def ul_main(client, message):
     async with _get_upload_lock():
         reply = message.reply_to_message
         if not reply or not (reply.photo or reply.document):
-            await message.reply_text(
+            await reply_notice(message,
                 tr("Please reply to a photo or image document (ImgBB only).", lang)
             )
             return
@@ -123,14 +125,14 @@ async def ul_main(client, message):
         if reply.document:
             mime = getattr(reply.document, "mime_type", "") or ""
             if not mime.startswith("image/"):
-                await message.reply_text(
+                await reply_notice(message,
                     tr("Only image files are supported for ImgBB upload.", lang)
                 )
                 return
 
         args = message.text.split()
         if len(args) != 4:
-            await message.reply_text(tr(WRONG_FORMAT_TEXT, lang))
+            await reply_notice(message, tr(WRONG_FORMAT_TEXT, lang))
             return
 
         character_name = args[1].replace("-", " ").title()
@@ -138,18 +140,18 @@ async def ul_main(client, message):
         try:
             rarity = int(args[3])
         except ValueError:
-            await message.reply_text(tr(WRONG_FORMAT_TEXT, lang))
+            await reply_notice(message, tr(WRONG_FORMAT_TEXT, lang))
             return
 
         if rarity not in rarity_map:
-            await message.reply_text(
+            await reply_notice(message,
                 tr(f"Invalid rarity value. Choose a number from 1 to {len(rarity_map)}.", lang)
             )
             return
 
         rarity_text = rarity_map[rarity]
         available_id = await find_available_id()
-        processing_message = await message.reply(tr("⏳ Uploading image to ImgBB...", lang))
+        processing_message = await reply_notice(message, tr("⏳ Uploading image to ImgBB...", lang))
         path = await reply.download()
 
         try:
@@ -166,31 +168,35 @@ async def ul_main(client, message):
                 await client.send_photo(
                     chat_id=CHARA_CHANNEL_ID,
                     photo=file_url,
-                    caption=tr(
-                        f"Character Name: {character_name}\n"
-                        f"Anime Name: {anime}\n"
-                        f"Rarity: {rarity_text}\n"
-                        f"ID: {available_id}\n"
-                        f"Added by [{message.from_user.first_name}](tg://user?id={message.from_user.id})",
-                        lang,
-                    ),
+                    caption=premium_text(tr(rich_card(
+                        "Character added",
+                        f"<b>Name:</b> {html.escape(character_name)}\n"
+                        f"<b>Anime:</b> {html.escape(anime)}\n"
+                        f"<b>Rarity:</b> {html.escape(str(rarity_text))}\n"
+                        f"<b>ID:</b> <code>{available_id}</code>\n"
+                        f"<b>Added by:</b> <a href=\"tg://user?id={message.from_user.id}\">"
+                        f"{html.escape(message.from_user.first_name or 'Admin')}</a>",
+                        "📥",
+                    ), lang)),
+                    parse_mode="html",
                 )
 
             await collection.insert_one(character)
-            await processing_message.edit_text(
-                tr(
-                    f"✅ Character added!\n"
-                    f"➲ Added by: [{message.from_user.first_name}](tg://user?id={message.from_user.id})\n"
-                    f"➥ Name: {character_name}\n"
-                    f"➥ Anime: {anime}\n"
-                    f"➥ Character ID: {available_id}\n"
-                    f"➥ Rarity: {rarity_text}",
-                    lang,
-                )
+            await edit_notice(
+                processing_message,
+                f"<b>Name:</b> {html.escape(character_name)}\n"
+                f"<b>Anime:</b> {html.escape(anime)}\n"
+                f"<b>Character ID:</b> <code>{available_id}</code>\n"
+                f"<b>Rarity:</b> {html.escape(str(rarity_text))}",
+                emoji="✅",
+                title="Character added",
             )
         except Exception as e:
-            await processing_message.edit_text(
-                tr(f"❌ Character Upload Unsuccessful.\nError: {str(e)}", lang)
+            await edit_notice(
+                processing_message,
+                f"Upload failed.\n{str(e)}",
+                emoji="❌",
+                title="Character upload",
             )
         finally:
             if path:

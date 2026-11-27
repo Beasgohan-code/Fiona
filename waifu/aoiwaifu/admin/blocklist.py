@@ -6,6 +6,7 @@ from pyrogram.types import Message
 
 from aoiwaifu import OWNER_ID, app, db, require_power
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
+from aoiwaifu.unit.rich_ui import reply_notice
 
 user_blocklist_collection = db["user_blocklist"]
 
@@ -61,11 +62,11 @@ async def add_user_blocklist(client, message: Message):
     lang = await get_effective_lang(message)
     user_id = _parse_user_id(message)
     if user_id is None:
-        return await message.reply_text(tr("❌ Invalid user ID.\nUsage: /blocklist user_id", lang))
+        return await reply_notice(message, tr("❌ Invalid user ID.\nUsage: /blocklist user_id", lang))
     if user_id == OWNER_ID:
-        return await message.reply_text(tr("❌ The bot owner cannot be blocklisted.", lang))
+        return await reply_notice(message, tr("❌ The bot owner cannot be blocklisted.", lang))
     if await is_user_blocklisted(user_id):
-        return await message.reply_text(
+        return await reply_notice(message,
             tr(f"ℹ️ User <code>{user_id}</code> is already on the blocklist.", lang),
             parse_mode=enums.ParseMode.HTML,
         )
@@ -80,7 +81,7 @@ async def add_user_blocklist(client, message: Message):
         },
         upsert=True,
     )
-    await message.reply_text(
+    await reply_notice(message,
         tr(
             f"🚫 User <code>{user_id}</code> has been blocklisted.\n"
             f"They won't appear in rankings or send/receive payments, gifts, or trades.",
@@ -96,16 +97,16 @@ async def remove_user_blocklist(client, message: Message):
     lang = await get_effective_lang(message)
     user_id = _parse_user_id(message)
     if user_id is None:
-        return await message.reply_text(tr("❌ Invalid user ID.\nUsage: /removeblocklist user_id", lang))
+        return await reply_notice(message, tr("❌ Invalid user ID.\nUsage: /removeblocklist user_id", lang))
     result = await user_blocklist_collection.delete_many(
         {"$or": [{"_id": user_id}, {"_id": str(user_id)}, {"user_id": user_id}, {"user_id": str(user_id)}]}
     )
     if not result.deleted_count:
-        return await message.reply_text(
+        return await reply_notice(message,
             tr(f"ℹ️ User <code>{user_id}</code> is not on the blocklist.", lang),
             parse_mode=enums.ParseMode.HTML,
         )
-    await message.reply_text(
+    await reply_notice(message,
         tr(f"✅ User <code>{user_id}</code> has been removed from the blocklist.", lang),
         parse_mode=enums.ParseMode.HTML,
     )

@@ -20,7 +20,7 @@ from aoiwaifu import (
     user_guess_progress,
 )
 from aoiwaifu.unit.aoi_lang import get_effective_lang, t, tr
-from aoiwaifu.unit.rich_ui import premium_button, premium_text, rich_card
+from aoiwaifu.unit.rich_ui import premium_button, premium_text, rich_card, reply_notice
 
 
 @app.on_message(filters.command(["guess", "protecc", "collect", "grab", "hunt", "summon"]))
@@ -30,13 +30,13 @@ async def guess(client: Client, message: Message):
     lang = await get_effective_lang(message, chat_id=chat_id, user_id=user_id)
 
     if await db["blocked_character_drop_groups"].find_one({"_id": chat_id}):
-        await message.reply_text(t("guess_disabled_group", lang))
+        await reply_notice(message, t("guess_disabled_group", lang))
         return
 
     today = datetime.utcnow().date()
     if await check_cooldown(user_id):
         remaining_time = await get_remaining_cooldown(user_id)
-        await message.reply_text(t("guess_cooldown", lang, remaining_time=remaining_time))
+        await reply_notice(message, t("guess_cooldown", lang, remaining_time=remaining_time))
         return
 
     if (
@@ -44,19 +44,19 @@ async def guess(client: Client, message: Message):
         or chat_id not in last_characters
         or chat_id in first_correct_guesses
     ):
-        await message.reply_text(
+        await reply_notice(message,
             tr("❌ No active character to catch right now. Keep chatting in the group!", lang),
             parse_mode=enums.ParseMode.HTML,
         )
         return
 
     if last_characters[chat_id].get("ranaway", False):
-        await message.reply_text(t("guess_ran_away", lang))
+        await reply_notice(message, t("guess_ran_away", lang))
         return
 
     guess_text = " ".join(message.command[1:]).lower() if len(message.command) > 1 else ""
     if "()" in guess_text or "&" in guess_text.lower():
-        await message.reply_text(t("guess_invalid_chars", lang))
+        await reply_notice(message, t("guess_invalid_chars", lang))
         return
 
     name_parts = last_characters[chat_id]["name"].lower().split()
@@ -137,4 +137,4 @@ async def guess(client: Client, message: Message):
             ]])
             await message.reply_text(premium_text(tr(incorrect_text, lang)), reply_markup=keyboard, parse_mode=enums.ParseMode.HTML)
         else:
-            await message.reply_text(tr(incorrect_text, lang), parse_mode=enums.ParseMode.HTML)
+            await reply_notice(message, tr(incorrect_text, lang), parse_mode=enums.ParseMode.HTML)

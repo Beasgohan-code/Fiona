@@ -18,6 +18,7 @@ from aoiwaifu import OWNER_ID, SUDO
 from aoiwaifu import app, db, require_power
 from functools import wraps
 from aoiwaifu.unit.aoi_parse_fix import SudoUsersHybrid
+from aoiwaifu.unit.rich_ui import reply_notice
 
 sudo_users = SudoUsersHybrid(db['sudo_users'], SUDO, OWNER_ID)
 ALL_POWERS = ['add_character', 'delete_character', 'update_character', 'approve_request', 'approve_inventory_request', 'VIP']
@@ -30,10 +31,10 @@ async def add_sudo(client, message):
     replied_user_id = message.reply_to_message.from_user.id
     existing_user = await sudo_users.find_one({'_id': replied_user_id})
     if existing_user:
-        await message.reply_text(tr(f'User `{replied_user_id}` is already a sudo.', lang))
+        await reply_notice(message, tr(f'User `{replied_user_id}` is already a sudo.', lang))
         return
     await sudo_users.update_one({'_id': replied_user_id}, {'$set': {'powers': {'add_character': True}}}, upsert=True)
-    await message.reply_text(tr(f"User `{replied_user_id}` has been added as a sudo with 'add_character' power.", lang))
+    await reply_notice(message, tr(f"User `{replied_user_id}` has been added as a sudo with 'add_character' power.", lang))
 
 
 @app.on_message(filters.command('sremovesudo'))
@@ -45,14 +46,14 @@ async def remove_sudo(client, message):
     elif len(message.command) > 1 and message.command[1].isdigit():
         user_id = int(message.command[1])
     else:
-        await message.reply_text(tr('❌ Please reply to a user or provide a valid user ID.', lang))
+        await reply_notice(message, tr('❌ Please reply to a user or provide a valid user ID.', lang))
         return
     existing_user = await sudo_users.find_one({'_id': user_id})
     if not existing_user:
-        await message.reply_text(tr(f'⚠️ User `{user_id}` is not a sudo.', lang))
+        await reply_notice(message, tr(f'⚠️ User `{user_id}` is not a sudo.', lang))
         return
     await sudo_users.delete_one({'_id': user_id})
-    await message.reply_text(tr(f'✅ User [{user_id}](tg://user?id={user_id}) has been removed from sudo.', lang))
+    await reply_notice(message, tr(f'✅ User [{user_id}](tg://user?id={user_id}) has been removed from sudo.', lang))
 
 
 @app.on_message(filters.command('seditsudo') & filters.reply)
@@ -62,7 +63,7 @@ async def edit_sudo(client, message):
     replied_user_id = message.reply_to_message.from_user.id
     user_data = await sudo_users.find_one({'_id': replied_user_id})
     if not user_data:
-        await message.reply_text(tr('This user is not a sudo.', lang))
+        await reply_notice(message, tr('This user is not a sudo.', lang))
         return
     buttons = []
     powers = user_data.get('powers', {})
@@ -71,7 +72,7 @@ async def edit_sudo(client, message):
         buttons.append([InlineKeyboardButton(f'{power}', callback_data='noop'), InlineKeyboardButton(f'{current_status}', callback_data=f'toggle_{replied_user_id}_{power}')])
     buttons.append([InlineKeyboardButton('Closed', callback_data='close_keyboard')])
     keyboard = InlineKeyboardMarkup(buttons)
-    await message.reply_text(tr(f'Edit powers for `{replied_user_id}`:', lang), reply_markup=keyboard)
+    await reply_notice(message, tr(f'Edit powers for `{replied_user_id}`:', lang), reply_markup=keyboard)
 
 
 @app.on_callback_query(filters.regex('^toggle_(\\d+)_(\\w+)$'))
@@ -131,7 +132,7 @@ def require_power(required_power):
                 return await func(client, message, *args, **kwargs)
             user_data = await sudo_users.find_one({'_id': user_id})
             if not user_data or not user_data.get('powers', {}).get(required_power, False):
-                await message.reply_text(tr(f'You do not have the `{required_power}` power required to use this command.', lang))
+                await reply_notice(message, tr(f'You do not have the `{required_power}` power required to use this command.', lang))
                 return
             return await func(client, message, *args, **kwargs)
         return wrapper
@@ -142,11 +143,11 @@ def require_power(required_power):
 async def sudo_list(client, message):
     lang = await get_effective_lang(message)
     if message.from_user.id != OWNER_ID:
-        await message.reply_text(tr('You do not have permission to use this command.', lang))
+        await reply_notice(message, tr('You do not have permission to use this command.', lang))
         return
     users = await sudo_users.find().to_list(length=None)
     if not users:
-        await message.reply_text(tr('There are no sudo users.', lang))
+        await reply_notice(message, tr('There are no sudo users.', lang))
         return
     sudo_list_text = '🛠 **Sudo Users List:**\n\n'
     for user in users:
@@ -157,4 +158,4 @@ async def sudo_list(client, message):
         except Exception:
             first_name = 'Unknown'
         sudo_list_text += f'➤ [{first_name}](tg://user?id={user_id}) (`{user_id}`)\n'
-    await message.reply_text(tr(sudo_list_text, lang))
+    await reply_notice(message, tr(sudo_list_text, lang))

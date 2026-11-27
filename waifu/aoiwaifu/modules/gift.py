@@ -17,7 +17,7 @@ from pyrogram.types import InlineKeyboardMarkup
 from pyrogram.enums import ParseMode
 from aoiwaifu import user_collection, ZYRO
 from aoiwaifu.admin.blocklist import is_user_blocklisted
-from aoiwaifu.unit.rich_ui import premium_button, premium_text, rich_card, edit_panel
+from aoiwaifu.unit.rich_ui import premium_button, premium_text, rich_card, edit_panel, reply_notice
 
 pending_gifts = {}
 
@@ -34,38 +34,38 @@ async def gift(client, message):
     lang = await get_effective_lang(message)
     sender_id = message.from_user.id
     if await is_user_blocklisted(sender_id):
-        return await message.reply_text(tr('🚫 Blocklisted users cannot send or receive character gifts.', lang))
+        return await reply_notice(message, tr('🚫 Blocklisted users cannot send or receive character gifts.', lang))
     for _sender_id, _ in pending_gifts.keys():
         if _sender_id == sender_id:
-            await message.reply_text(tr('You already have a gift processing. Please confirm or cancel it before sending another gift.', lang), parse_mode=ParseMode.HTML)
+            await reply_notice(message, tr('You already have a gift processing. Please confirm or cancel it before sending another gift.', lang), parse_mode=ParseMode.HTML)
             return
     if not message.reply_to_message:
-        await message.reply_text(tr("You need to reply to a user's message to gift a character!", lang), parse_mode=ParseMode.HTML)
+        await reply_notice(message, tr("You need to reply to a user's message to gift a character!", lang), parse_mode=ParseMode.HTML)
         return
     receiver_user = message.reply_to_message.from_user
     receiver_id = receiver_user.id
     if getattr(receiver_user, 'is_bot', False):
-        return await message.reply_text(tr('❌ <b>Not Allowed!</b> You cannot gift characters to a bot account.', lang), parse_mode=ParseMode.HTML)
+        return await reply_notice(message, tr('❌ <b>Not Allowed!</b> You cannot gift characters to a bot account.', lang), parse_mode=ParseMode.HTML)
     if await is_user_blocklisted(receiver_id):
-        return await message.reply_text(tr('🚫 This user is blocklisted and cannot receive character gifts.', lang))
+        return await reply_notice(message, tr('🚫 This user is blocklisted and cannot receive character gifts.', lang))
     receiver_username = message.reply_to_message.from_user.username
     receiver_first_name = message.reply_to_message.from_user.first_name
     if sender_id == receiver_id:
-        await message.reply_text(tr("You can't gift a character to yourself!", lang), parse_mode=ParseMode.HTML)
+        await reply_notice(message, tr("You can't gift a character to yourself!", lang), parse_mode=ParseMode.HTML)
         return
     if len(message.command) != 2:
-        await message.reply_text(tr('You need to provide a character ID!', lang), parse_mode=ParseMode.HTML)
+        await reply_notice(message, tr('You need to provide a character ID!', lang), parse_mode=ParseMode.HTML)
         return
     character_id = message.command[1]
     sender = await user_collection.find_one({'id': sender_id})
     if not sender:
-        return await message.reply_text(tr('⚠️ Your profile was not found. Use /waifu first, then try /gift again.', lang))
+        return await reply_notice(message, tr('⚠️ Your profile was not found. Use /waifu first, then try /gift again.', lang))
     sender_characters = sender.get('characters') or []
     if not isinstance(sender_characters, list):
-        return await message.reply_text(tr('⚠️ Your character collection data is invalid. Please contact support.', lang))
+        return await reply_notice(message, tr('⚠️ Your character collection data is invalid. Please contact support.', lang))
     character = next((char for char in sender_characters if isinstance(char, dict) and str(char.get('id')) == str(character_id)), None)
     if not character:
-        await message.reply_text(tr("You don't have this character in your collection!", lang), parse_mode=ParseMode.HTML)
+        await reply_notice(message, tr("You don't have this character in your collection!", lang), parse_mode=ParseMode.HTML)
         return
     pending_gifts[sender_id, receiver_id] = {
         'character': character,

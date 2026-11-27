@@ -3,8 +3,8 @@ from pyrogram import Client, filters
 from pyrogram.enums import ParseMode
 from pyrogram.types import Message
 from aoiwaifu.unit.aoi_inline import get_all_characters
-from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table
 from aoiwaifu import app
+from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table
 
 @app.on_message(filters.command('total'))
 async def total_characters(client: Client, message: Message):

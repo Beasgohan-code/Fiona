@@ -4,6 +4,7 @@ import asyncio
 import requests
 from pyrogram import filters
 from aoiwaifu import ZYRO, collection, require_power, GLOG
+from aoiwaifu.unit.rich_ui import reply_notice
 UPLOAD_API = 'https://api.imgbb.com/1/upload'
 
 def upload_to_imgbb(file_path: str) -> str:
@@ -59,8 +60,8 @@ async def reupload_handler(client, message):
     lang = await get_effective_lang(message)
     args = message.text.split()[1:]
     if not args:
-        return await message.reply_text(tr('❌ **Wrong format!**\n\nUsage:\n`/reupload 60`\n`/reupload 30 60 61 100`', lang))
-    status_msg = await message.reply_text(tr(f'⏳ Processing **{len(args)}** character(s)…', lang))
+        return await reply_notice(message, tr('❌ **Wrong format!**\n\nUsage:\n`/reupload 60`\n`/reupload 30 60 61 100`', lang))
+    status_msg = await reply_notice(message, tr(f'⏳ Processing **{len(args)}** character(s)…', lang))
     results = []
     success = 0
     fail = 0

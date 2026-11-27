@@ -8,6 +8,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from aoiwaifu import app, user_collection, require_power, db, application
 from aoiwaifu.admin.blocklist import is_user_blocklisted
+from aoiwaifu.unit.rich_ui import reply_notice
 transfer_in_progress = False
 active_transfer = None
 processing_locks = set()
@@ -47,33 +48,33 @@ async def transfer_collection(client: Client, message: Message):
     global transfer_in_progress, active_transfer
     args = message.command[1:]
     if len(args) != 2:
-        return await message.reply_text(tr('Incorrect format. Use: `/transfer user_id owner_id`', lang))
+        return await reply_notice(message, tr('Incorrect format. Use: `/transfer user_id owner_id`', lang))
     user_id = args[0]
     owner_id = args[1]
     if not user_id.isdigit() or not owner_id.isdigit():
-        return await message.reply_text(tr('Please provide valid numeric IDs.', lang))
+        return await reply_notice(message, tr('Please provide valid numeric IDs.', lang))
     if user_id == owner_id:
-        return await message.reply_text(tr('User ID and Owner ID must be different.', lang))
+        return await reply_notice(message, tr('User ID and Owner ID must be different.', lang))
     if is_transfer_active_and_valid():
-        return await message.reply_text(tr(f"⚠️ A transfer is already in progress (requested by user ID `{active_transfer['requester_id']}`). Please complete or cancel it first, or wait for it to expire.", lang))
+        return await reply_notice(message, tr(f"⚠️ A transfer is already in progress (requested by user ID `{active_transfer['requester_id']}`). Please complete or cancel it first, or wait for it to expire.", lang))
     user = await user_collection.find_one({'id': {'$in': [int(user_id), str(user_id)]}})
     if not user:
-        return await message.reply_text(tr('User not found.', lang))
+        return await reply_notice(message, tr('User not found.', lang))
     owner = await user_collection.find_one({'id': {'$in': [int(owner_id), str(owner_id)]}})
     if not owner:
-        return await message.reply_text(tr('Owner not found.', lang))
+        return await reply_notice(message, tr('Owner not found.', lang))
     if await is_user_blocklisted(int(user_id)) or await is_user_blocklisted(int(owner_id)):
-        return await message.reply_text(tr('🚫 Character transfers to or from a blocklisted user are disabled.', lang))
+        return await reply_notice(message, tr('🚫 Character transfers to or from a blocklisted user are disabled.', lang))
     user_chars = user.get('characters', [])
     if not user_chars:
-        return await message.reply_text(tr(f'❌ User `{user_id}` has no characters to transfer.', lang))
+        return await reply_notice(message, tr(f'❌ User `{user_id}` has no characters to transfer.', lang))
     from_id = message.from_user.id
     transfer_id = generate_transfer_id()
     transfer_in_progress = True
     active_transfer = {'transfer_id': transfer_id, 'user_id': user_id, 'owner_id': owner_id, 'requester_id': from_id, 'timestamp': time.time()}
     text = f'⚠️ **Confirm Character Transfer?**\n\n👤 From: `{user_id}` (has {len(user_chars)} characters)\n➡️ To: `{owner_id}`\n🆔 Transfer ID: `{transfer_id}`\n\nClick the appropriate button below to proceed or cancel. This prompt will expire in 60 seconds.'
     keyboard = InlineKeyboardMarkup([[InlineKeyboardButton('✅ Confirm Transfer', callback_data=f'confirm_tr:{transfer_id}'), InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_tr:{transfer_id}')]])
-    await message.reply_text(tr(text, lang), reply_markup=keyboard)
+    await reply_notice(message, tr(text, lang), reply_markup=keyboard)
 
 @app.on_callback_query(filters.regex('^confirm_tr:(\\w+)$'))
 async def confirm_transfer_callback(client: Client, callback_query: CallbackQuery):
@@ -141,23 +142,23 @@ async def back_transfer(client: Client, message: Message):
     lang = await get_effective_lang(message)
     args = message.command[1:]
     if len(args) != 1:
-        return await message.reply_text(tr('Incorrect format. Use: `/backtransfer <transfer_id>`', lang))
+        return await reply_notice(message, tr('Incorrect format. Use: `/backtransfer <transfer_id>`', lang))
     transfer_id = args[0]
     log = await transfer_logs.find_one({'_id': transfer_id})
     if not log:
-        return await message.reply_text(tr(f'❌ Transfer ID `{transfer_id}` not found in database.', lang))
+        return await reply_notice(message, tr(f'❌ Transfer ID `{transfer_id}` not found in database.', lang))
     if log.get('status') == 'reverted':
-        return await message.reply_text(tr(f'❌ Transfer `{transfer_id}` has already been reverted.', lang))
+        return await reply_notice(message, tr(f'❌ Transfer `{transfer_id}` has already been reverted.', lang))
     elapsed = time.time() - log['timestamp']
     if elapsed > 3600:
         hours_elapsed = elapsed / 3600.0
-        return await message.reply_text(tr(f'❌ Transfer `{transfer_id}` was done {hours_elapsed:.1f} hours ago.\nRollback is only valid for up to 1 hour.', lang))
+        return await reply_notice(message, tr(f'❌ Transfer `{transfer_id}` was done {hours_elapsed:.1f} hours ago.\nRollback is only valid for up to 1 hour.', lang))
     user_id = log['user_id']
     owner_id = log['owner_id']
     transferred_chars = log['characters']
     owner_db = await user_collection.find_one({'id': {'$in': [int(owner_id), str(owner_id)]}})
     if not owner_db:
-        return await message.reply_text(tr(f'❌ Receiver owner `{owner_id}` document not found in DB. Cannot revert.', lang))
+        return await reply_notice(message, tr(f'❌ Receiver owner `{owner_id}` document not found in DB. Cannot revert.', lang))
 
     def get_char_id(char):
         if isinstance(char, dict):
@@ -187,4 +188,4 @@ async def back_transfer(client: Client, message: Message):
             first_name = f'User {user_id}'
         await user_collection.insert_one({'id': int(user_id), 'username': username, 'first_name': first_name, 'characters': transferred_chars})
     await transfer_logs.update_one({'_id': transfer_id}, {'$set': {'status': 'reverted'}})
-    await message.reply_text(tr(f'✅ **Transfer Reverted Successfully!**\n\n🆔 **Transfer ID:** `{transfer_id}`\n👤 Returned `{reverted_count}` characters back to original user `{user_id}`.\n➡️ Removed from user `{owner_id}`.', lang))
+    await reply_notice(message, tr(f'✅ **Transfer Reverted Successfully!**\n\n🆔 **Transfer ID:** `{transfer_id}`\n👤 Returned `{reverted_count}` characters back to original user `{user_id}`.\n➡️ Removed from user `{owner_id}`.', lang))

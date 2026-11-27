@@ -162,6 +162,36 @@ class MergedCommandTests(unittest.TestCase):
         self.assertIn("SPIN_COOLDOWN = timedelta(hours=24)", spin)
         self.assertNotIn("sqlite", spin.lower())
 
+    def test_plain_waifu_replies_use_the_shared_richgram_notice(self):
+        wrapped = 0
+        edited = 0
+        for directory in (WAIFU / "modules", WAIFU / "admin"):
+            for path in directory.glob("*.py"):
+                source = path.read_text(encoding="utf-8")
+                tree = ast.parse(source)
+                for node in ast.walk(tree):
+                    if not isinstance(node, ast.Call):
+                        continue
+                    if isinstance(node.func, ast.Name) and node.func.id == "reply_notice":
+                        wrapped += 1
+                    if isinstance(node.func, ast.Name) and node.func.id == "edit_notice":
+                        edited += 1
+                    if isinstance(node.func, ast.Attribute) and node.func.attr in {"reply_text", "edit_text", "reply"}:
+                        payload = node.args[0] if node.args else None
+                        if (
+                            not any(keyword.arg == "parse_mode" for keyword in node.keywords)
+                            and isinstance(payload, ast.Call)
+                            and isinstance(payload.func, ast.Name)
+                            and payload.func.id in {"tr", "t"}
+                        ):
+                            self.fail(f"Unstyled {node.func.attr} in {path.name}:{node.lineno}")
+        self.assertGreaterEqual(wrapped, 150)
+        self.assertGreaterEqual(edited, 10)
+        ui = (WAIFU / "unit/rich_ui.py").read_text(encoding="utf-8")
+        self.assertIn("def notice_card(", ui)
+        self.assertIn("rich_esc(body)", ui)
+        self.assertIn("async def reply_notice(", ui)
+
     def test_collection_ui_uses_open_rich_layouts_without_box_art(self):
         ui = (WAIFU / "unit/rich_ui.py").read_text(encoding="utf-8")
         self.assertIn("bullet separators", ui)

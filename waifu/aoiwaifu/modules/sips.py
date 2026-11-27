@@ -5,7 +5,7 @@ import re
 
 from aoiwaifu import app, collection, rarity_map2 as rarity_map
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card, reply_notice
 from pyrogram import filters
 from pyrogram.enums import ParseMode
 from pyrogram.types import InlineKeyboardMarkup
@@ -17,7 +17,7 @@ async def handle_search(client, message, query=None, page=1, is_callback=False):
         if not query:
             args = message.command
             if len(args) < 2:
-                await message.reply_text(tr("Please provide a character name. Usage: /sips {character name}", lang))
+                await reply_notice(message, tr("Please provide a character name. Usage: /sips {character name}", lang))
                 return
             query = " ".join(args[1:]).strip()
         page = max(1, int(page))

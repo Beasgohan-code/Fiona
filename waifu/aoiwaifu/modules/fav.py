@@ -3,24 +3,24 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, CallbackQuery
 from pymongo import MongoClient
 from aoiwaifu import app, user_collection
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card
 import html
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card, reply_notice
 
 @app.on_message(filters.command('fav'))
 async def fav_command(client, message):
     lang = await get_effective_lang(message)
     user_id = message.from_user.id
     if len(message.command) < 2:
-        await message.reply_text(tr('Please provide a character ID. ❌', lang))
+        await reply_notice(message, tr('Please provide a character ID. ❌', lang))
         return
     character_id = message.command[1]
     user = await user_collection.find_one({'id': user_id})
     if not user:
-        await message.reply_text(tr('You have not guessed any characters yet. ❌', lang))
+        await reply_notice(message, tr('You have not guessed any characters yet. ❌', lang))
         return
     character = next((c for c in user.get('characters', []) if isinstance(c, dict) and str(c.get('id')) == str(character_id)), None)
     if not character:
-        await message.reply_text(tr('This character is not in your collection. ❌', lang))
+        await reply_notice(message, tr('This character is not in your collection. ❌', lang))
         return
     if 'vid_url' in character:
         keyboard = InlineKeyboardMarkup([[
@@ -37,7 +37,7 @@ async def fav_command(client, message):
         caption = premium_text(rich_card('Set favorite', f"Make <b>{html.escape(str(character.get('name', 'Unknown')))}</b> your featured character?", '💖'))
         await message.reply_photo(photo=character['img_url'], caption=tr(caption, lang), parse_mode='html', reply_markup=keyboard)
     else:
-        await message.reply_text(tr('This character has no media (image or video) associated with it. ❌', lang))
+        await reply_notice(message, tr('This character has no media (image or video) associated with it. ❌', lang))
 
 @app.on_callback_query(filters.regex('fav_yes_(.+?)_(\\d+)'))
 async def fav_yes(client, callback_query: CallbackQuery):
@@ -51,11 +51,11 @@ async def fav_yes(client, callback_query: CallbackQuery):
         return
     user = await user_collection.find_one({'id': user_id})
     if not user:
-        await callback_query.message.reply_text(tr('User not found. ❌', lang))
+        await reply_notice(callback_query.message, tr('User not found. ❌', lang))
         return
     character = next((c for c in user.get('characters', []) if isinstance(c, dict) and str(c.get('id')) == str(character_id)), None)
     if not character:
-        await callback_query.message.reply_text(tr('Character not found in your collection. ❎', lang))
+        await reply_notice(callback_query.message, tr('Character not found in your collection. ❎', lang))
         return
     user['favorites'] = [character_id]
     await user_collection.update_one({'id': user_id}, {'$set': {'favorites': user['favorites']}})

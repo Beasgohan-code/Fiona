@@ -15,7 +15,7 @@ import asyncio
 import html
 from pyrogram import Client, filters, types as t_types
 from pyrogram.types import InlineKeyboardMarkup
-from aoiwaifu.unit.rich_ui import premium_button, premium_text, rich_card, rich_table
+from aoiwaifu.unit.rich_ui import premium_button, premium_text, rich_card, rich_table, reply_notice
 from datetime import datetime, timedelta
 from aoiwaifu import ZYRO as bot
 from aoiwaifu import user_collection, collection, user_guess_progress, SUPPORT_CHAT_ID as chat, SUPPORT_CHAT
@@ -75,7 +75,7 @@ async def mclaim(_, message: t_types.Message):
             parse_mode='html',
         )
     if user_id in claim_lock:
-        await message.reply_text(tr('Your claim request is already being processed. Please wait.', lang))
+        await reply_notice(message, tr('Your claim request is already being processed. Please wait.', lang))
         return
     claim_lock[user_id] = True
     try:
@@ -123,7 +123,7 @@ async def mclaim(_, message: t_types.Message):
                     continue
                 except Exception:
                     pass
-            await message.reply_text(tr(caption, lang), parse_mode='html')
+            await reply_notice(message, tr(caption, lang), parse_mode='html')
     except Exception as e:
         print(f'Error in mclaim command: {e}')
         await message.reply_text(
