@@ -14,8 +14,9 @@ HELP_DATA = {
             "Manage and browse your character collection:\n\n"
             "• `/harem`, `/collection`, or `/claimlist` — View your collected characters\n"
             "• `/hmode` — Filter your harem by rarity\n"
-            "• `/fav <id>` — Set your favorite character\n"
-            "• `/hpin <id>` / `/hunpin <id>` / `/pinlist` — Pin or unpin collection characters. Group-message pinning uses `/pin` and `/unpin`."
+            "• `/fav <id>` — Set your featured profile character\n"
+            "• `/pincharacter <id>` / `/unpincharacter <id>` / `/pinnedcharacters` — Manage pinned collection characters (aliases: `/hpin`, `/hunpin`, `/pinlist`)\n"
+            "• Group-message pinning uses the separate admin commands `/pin` and `/unpin`."
         ),
     },
     "profile": {

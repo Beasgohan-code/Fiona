@@ -36,13 +36,13 @@ async def fetch_user_characters(user_id):
         return (None, 'No valid characters found in your collection.')
     return (characters, None)
 
-@app.on_message(filters.command('hpin'))
+@app.on_message(filters.command(['pincharacter', 'hpin']))
 async def pin_character_handler(client: Client, message: Message):
     lang = await get_effective_lang(message)
     if not message.from_user:
         return
     if len(message.command) < 2 or not message.command[1].isdigit():
-        return await reply_notice(message, tr('Usage: /hpin <character_id>\nExample: /hpin 205', lang))
+        return await reply_notice(message, tr('Usage: /pincharacter <character_id>\nExample: /pincharacter 205', lang))
     user_id = message.from_user.id
     character_id = str(message.command[1])
     user = await user_collection.find_one({'id': user_id})
@@ -55,7 +55,7 @@ async def pin_character_handler(client: Client, message: Message):
     if character_id in pinned:
         return await reply_notice(message, tr(f'Character #{character_id} is already pinned.', lang))
     if len(pinned) >= 10:
-        return await reply_notice(message, tr('You can pin a maximum of 10 characters. Use /hunpin <id> first.', lang))
+        return await reply_notice(message, tr('You can pin a maximum of 10 characters. Use /unpincharacter <id> first.', lang))
     pinned.append(character_id)
     await user_collection.update_one({'id': user_id}, {'$set': {'pinned_characters': pinned}})
     try:
@@ -65,13 +65,13 @@ async def pin_character_handler(client: Client, message: Message):
         pass
     await reply_notice(message, tr(f'📌 Character #{character_id} pinned. It will appear at the top of your inline collection.', lang))
 
-@app.on_message(filters.command('hunpin'))
+@app.on_message(filters.command(['unpincharacter', 'hunpin']))
 async def unpin_character_handler(client: Client, message: Message):
     lang = await get_effective_lang(message)
     if not message.from_user:
         return
     if len(message.command) < 2 or not message.command[1].isdigit():
-        return await reply_notice(message, tr('Usage: /hunpin <character_id>\nExample: /hunpin 205', lang))
+        return await reply_notice(message, tr('Usage: /unpincharacter <character_id>\nExample: /unpincharacter 205', lang))
     user_id = message.from_user.id
     character_id = str(message.command[1])
     user = await user_collection.find_one({'id': user_id})
@@ -87,7 +87,7 @@ async def unpin_character_handler(client: Client, message: Message):
         pass
     await reply_notice(message, tr(f'📌 Character #{character_id} unpinned.', lang))
 
-@app.on_message(filters.command('pinlist'))
+@app.on_message(filters.command(['pinnedcharacters', 'pinlist']))
 async def pinlist_handler(client: Client, message: Message):
     lang = await get_effective_lang(message)
     if not message.from_user:
@@ -95,7 +95,7 @@ async def pinlist_handler(client: Client, message: Message):
     user = await user_collection.find_one({'id': message.from_user.id})
     pinned = [str(cid) for cid in user.get('pinned_characters') or []] if user else []
     if not pinned:
-        return await reply_notice(message, tr("You haven't pinned any characters yet. Use /hpin <character_id>.", lang))
+        return await reply_notice(message, tr("You haven't pinned any characters yet. Use /pincharacter <character_id>.", lang))
     owned_by_id = {}
     for char in user.get('characters') or []:
         if isinstance(char, dict) and char.get('id') is not None:

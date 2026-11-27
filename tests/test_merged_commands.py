@@ -154,11 +154,13 @@ class MergedCommandTests(unittest.TestCase):
 
     def test_summon_compatible_commands_use_fiona_handlers_and_menu(self):
         registered = set(commands_in_tree(WAIFU, is_music=False))
-        for name in ("spin", "achievements", "ach", "badges", "me", "hstats", "rarities", "server", "search", "claimlist", "summon", "streak", "panel"):
+        for name in ("spin", "achievements", "ach", "badges", "me", "hstats", "rarities", "server", "search", "claimlist", "summon", "streak", "panel", "pincharacter", "unpincharacter", "pinnedcharacters", "hpin", "hunpin", "pinlist", "fav"):
             self.assertIn(name, registered)
         private_names = {name for name, _ in PRIVATE_COMMANDS}
-        for name in ("spin", "achievements", "me", "hstats", "rarity", "server", "search", "claimlist", "summon", "streak"):
+        for name in ("spin", "achievements", "me", "hstats", "rarity", "server", "search", "claimlist", "summon", "streak", "pincharacter", "unpincharacter", "pinnedcharacters"):
             self.assertIn(name, private_names)
+        for legacy_name in ("hpin", "hunpin", "pinlist"):
+            self.assertNotIn(legacy_name, private_names)
         spin = (WAIFU / "modules/spin.py").read_text(encoding="utf-8")
         self.assertIn("find_one_and_update", spin)
         self.assertIn("SPIN_COOLDOWN = timedelta(hours=24)", spin)
@@ -332,8 +334,11 @@ class MergedCommandTests(unittest.TestCase):
             for key, value in entry.items()
             if key == "HELP" or key.startswith("HELP_")
         )
-        self.assertIn("`/hpin <id>`", help_text)
-        self.assertIn("`/hunpin <id>`", help_text)
+        self.assertIn("`/pincharacter <id>`", help_text)
+        self.assertIn("`/unpincharacter <id>`", help_text)
+        self.assertIn("`/pinnedcharacters`", help_text)
+        self.assertIn("`/hpin`", help_text)
+        self.assertIn("`/hunpin`", help_text)
         self.assertNotIn("`/pin <id>`", help_text)
         self.assertNotIn("`/stats`", help_text)
         self.assertNotIn("`/eval`", help_text)
