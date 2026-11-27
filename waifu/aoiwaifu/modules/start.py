@@ -15,7 +15,6 @@ from pyrogram import enums, filters
 from pyrogram.types import CallbackQuery, InlineKeyboardMarkup
 
 from aoiwaifu import (
-    GLOG,
     OWNER_USERNAME,
     START_MEDIA,
     SUPPORT_CHAT,
@@ -298,20 +297,6 @@ async def start_private_command(client, message):
                 pass
 
     media = random.choice(START_MEDIA)
-    if GLOG and user:
-        try:
-            await app.send_message(
-                chat_id=GLOG,
-                text=(
-                    f"🌸 {getattr(user, 'mention', user.first_name)} started the bot.\n\n"
-                    f"<b>User ID:</b> <code>{user.id}</code>\n"
-                    f"<b>Username:</b> @{user.username}"
-                ),
-                parse_mode=enums.ParseMode.HTML,
-            )
-        except Exception:
-            pass
-
     if user and (not lang_already_set) and (not await has_user_set_lang(user.id)):
         prompt_caption, prompt_markup = build_dm_first_start_lang_prompt()
         await send_media_message(message, media, prompt_caption, prompt_markup)

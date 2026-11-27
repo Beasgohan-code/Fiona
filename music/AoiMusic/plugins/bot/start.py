@@ -15,7 +15,7 @@ import config
 from config import BANNED_USERS, START_IMG_URL
 from config.config import OWNER_ID
 from strings import command, get_string
-from AoiMusic import Platform, app
+from AoiMusic import LOGGER, Platform, app
 from AoiMusic.misc import SUDOERS, _boot_
 from AoiMusic.plugins.bot.help import paginate_modules
 from AoiMusic.plugins.play.playlist import del_plist_msg
@@ -78,7 +78,26 @@ def _logger_user(user) -> str:
 @LanguageStart
 async def start_comm(client, message: Message, _):
     chat_id = message.chat.id
-    await add_served_user(message.from_user.id)
+    is_first_start = await add_served_user(message.from_user.id)
+    if is_first_start:
+        try:
+            from aoiwaifu import GLOG
+            from aoiwaifu.unit.event_logger import actor_details, send_event_logs
+
+            destinations = [GLOG]
+            if config.LOGGER_ID and await is_on_off(config.LOG):
+                destinations.append(config.LOGGER_ID)
+            await send_event_logs(
+                client,
+                destinations,
+                "<b>🌱 New user started Fiona</b>\n\n"
+                + actor_details(message.from_user, label="User"),
+                logger_name="Fiona.UserEvents",
+            )
+        except Exception as exc:
+            LOGGER("Fiona.UserEvents").warning(
+                "New-user event logging failed (%s).", type(exc).__name__
+            )
     if len(message.text.split()) > 1:
         name = message.text.split(None, 1)[1]
         # Shared deep-link router: collection referrals and the home-card button

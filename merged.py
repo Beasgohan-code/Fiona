@@ -7,6 +7,8 @@ import asyncio
 import importlib
 import os
 import sys
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -113,6 +115,7 @@ async def run() -> None:
     from AoiMusic.utils.premium_emoji import patch_pyrogram_premium_emoji
     from pyrogram import idle
     from AoiMusic.core.keep_alive import set_ready, start_server, stop_server
+    from aoiwaifu.unit.event_logger import send_event_logs
 
     if not config.STRING_SESSIONS:
         raise RuntimeError("Music voice playback requires at least one STRING_SESSIONS assistant session.")
@@ -131,6 +134,8 @@ async def run() -> None:
     trim_task = None
     health_server = None
     heartbeat_task = None
+    runtime_started_at = time.monotonic()
+    service_ready = False
     try:
         health_server = start_server()
         heartbeat_task = asyncio.create_task(_health_heartbeat(), name="fiona-health-heartbeat")
@@ -170,10 +175,31 @@ async def run() -> None:
             LOGGER("Fiona").warning("Could not update Telegram command menus (%s).", type(exc).__name__)
 
         set_ready(True)
+        service_ready = True
         LOGGER("Fiona").info("Fiona is online: music, group tools, and character collection share one bot.")
+        await send_event_logs(
+            app,
+            [aoiwaifu.GLOG, config.LOGGER_ID],
+            "<b>🟢 Fiona started</b>\n"
+            "Music, group management, and Waifu features are online.\n"
+            f"<b>Time (UTC):</b> {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}",
+            logger_name="Fiona.Lifecycle",
+        )
         await idle()
     finally:
         set_ready(False)
+        if service_ready:
+            uptime = max(0, int(time.monotonic() - runtime_started_at))
+            hours, remainder = divmod(uptime, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            await send_event_logs(
+                app,
+                [aoiwaifu.GLOG, config.LOGGER_ID],
+                "<b>🔴 Fiona stopping</b>\n"
+                f"<b>Uptime:</b> {hours}h {minutes}m {seconds}s\n"
+                f"<b>Time (UTC):</b> {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}",
+                logger_name="Fiona.Lifecycle",
+            )
         if heartbeat_task:
             heartbeat_task.cancel()
             await asyncio.gather(heartbeat_task, return_exceptions=True)

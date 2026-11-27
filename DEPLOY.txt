@@ -50,15 +50,23 @@ instead of failing the command. If you set START_MEDIA in Render, replace dead
 or protected URLs with stable public HTTPS media URLs. START_MEDIA accepts a
 comma-separated list of image, GIF, or MP4 URLs.
 
+FIONA EVENT LOGGING
+-------------------
+Set GLOG to the shared audit destination. Fiona sends startup/shutdown, first-
+time private user starts, and bot group-added/group-left events there. If
+LOGGER_ID is also configured, lifecycle events are sent there too; membership
+and first-user events are also sent there while the Music LOG switch is enabled.
+If both IDs point to the same chat, Fiona de-duplicates the notification.
+
 FIXING `PEER_ID_INVALID` FOR GLOG
 ---------------------------------
 This error means Telegram could not resolve the configured log chat, or Fiona
 cannot access it. In Render Environment, check that GLOG is the correct chat ID
 (usually a `-100...` channel/supergroup ID). Add Fiona to that group/channel;
 for a channel, grant permission to post. A public channel username such as
-`@channelname` can also be used. After changing GLOG or access, redeploy. The
-join-log handler now catches failed log sends and warns instead of crashing the
-new-member handler, but it cannot make an inaccessible destination valid.
+`@channelname` can also be used. After changing GLOG or access, redeploy. Event
+log delivery is best-effort and failures are recorded locally without stopping
+bot commands or group-membership handling.
 
 YOUTUBE COOKIES (OPTIONAL)
 --------------------------

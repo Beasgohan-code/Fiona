@@ -1,127 +1,73 @@
-from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
-import random
-from datetime import datetime
+"""Keep Waifu's active-group registry in sync with bot membership events."""
+from datetime import datetime, timezone
+
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from aoiwaifu import user_collection, app, db, GLOG, LOGGER
+
+from aoiwaifu import app, db, LOGGER
+from aoiwaifu.unit.event_logger import send_event_log
 
 game_active_groups_col = db["game_active_groups"]
 
 
 async def send_log_message(chat_id: int | str | None, message: str) -> bool:
-    """Send a log message without letting a stale or invalid peer break handlers."""
-    target = str(chat_id or "").strip()
-    if not target:
-        return False
-
-    # Render commonly supplies channel IDs as strings; normalize numeric IDs,
-    # while still allowing public @usernames as a configured destination.
-    numeric_target = target[1:].isdigit() if target.startswith("-") else target.isdigit()
-    if numeric_target:
-        target = int(target)
-        if target == 0:
-            return False
-
-    try:
-        await app.send_message(chat_id=target, text=message)
-        return True
-    except Exception as exc:
-        LOGGER("Waifu.JoinLog").warning(
-            "Could not send group log to %r (%s). Check GLOG and make sure Fiona "
-            "has joined the destination chat and can post there.",
-            target,
-            type(exc).__name__,
-        )
-        return False
+    """Backward-compatible best-effort logger for Waifu modules."""
+    return await send_event_log(app, chat_id, message, logger_name="Waifu.JoinLog")
 
 
 @app.on_message(filters.new_chat_members)
 async def on_new_chat_members(client: Client, message: Message):
-    """Handle new chat members joining the chat."""
-    lang = await get_effective_lang(message)
+    """Mark a group active when Fiona itself is added; ignore regular joins."""
     bot_user = await client.get_me()
+    if not any(
+        getattr(user, "id", None) == bot_user.id
+        for user in (message.new_chat_members or [])
+    ):
+        return
 
-    # Check if the bot is one of the new members
-    if bot_user.id in [user.id for user in message.new_chat_members]:
-        added_by = message.from_user.mention if message.from_user else "ᴜɴᴋɴᴏᴡɴ ᴜsᴇʀ"
-        chat_title = message.chat.title
-        chat_id = message.chat.id
-        chat_username = f"@{message.chat.username}" if message.chat.username else "ᴩʀɪᴠᴀᴛ"
-
-        try:
-            await game_active_groups_col.update_one(
-                {"chat_id": int(chat_id)},
-                {
-                    "$set": {
-                        "chat_id": int(chat_id),
-                        "chat_title": chat_title or f"Chat {chat_id}",
-                        "active": True,
-                        "updated_at": datetime.utcnow().isoformat(),
-                    }
-                },
-                upsert=True,
-            )
-        except Exception:
-            pass
-
-        # Construct the log message
-        log_message = (
-            f"#newgoroup\n\n"
-            f"chat name : {chat_title}\n"
-            f"username : {chat_username}\n"
-            f"added by : {added_by}"
+    chat_id = int(message.chat.id)
+    try:
+        await game_active_groups_col.update_one(
+            {"chat_id": chat_id},
+            {
+                "$set": {
+                    "chat_id": chat_id,
+                    "chat_title": message.chat.title or f"Chat {chat_id}",
+                    "chat_username": getattr(message.chat, "username", None),
+                    "active": True,
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                }
+            },
+            upsert=True,
         )
-
-        # Send the log message
-        await send_log_message(GLOG, log_message)
-
-        # Check if the group has less than 100 members
-        chat_members_count = await client.get_chat_members_count(chat_id)
-        if chat_members_count < 1:
-            leave_message = (
-                f"#leftgroup\n\n"
-                f"chat name : {chat_title}\n"
-                f"chat username : {chat_username}\n"
-                f"reason : Group has less than 1 members"
-            )
-            await send_log_message(chat_id, leave_message)
-            await client.leave_chat(chat_id)
-            leave_message = (
-                f"#leftgroup\n\n"
-                f"chat name : {chat_title}\n"
-                f"chat username : {chat_username}\n"
-                f"reason : Group has less than 40 members"
-            )
-            await send_log_message(GLOG, leave_message)
+    except Exception as exc:
+        LOGGER("Waifu.JoinLog").warning(
+            "Could not mark group %s active (%s).", chat_id, type(exc).__name__
+        )
 
 
 @app.on_message(filters.left_chat_member)
-async def on_left_chat_member(_, message: Message):
-    """Handle the bot leaving the chat."""
-    lang = await get_effective_lang(message)
-    bot_user = await app.get_me()
+async def on_left_chat_member(client: Client, message: Message):
+    """Mark a group inactive when Fiona itself is removed or leaves."""
+    left_member = message.left_chat_member
+    if not left_member:
+        return
+    bot_user = await client.get_me()
+    if getattr(left_member, "id", None) != bot_user.id:
+        return
 
-    # Check if the bot is the one that left
-    if bot_user.id == message.left_chat_member.id:
-        removed_by = message.from_user.mention if message.from_user else "ᴜɴᴋɴᴏᴡɴ ᴜsᴇʀ"
-        chat_title = message.chat.title
-        chat_id = message.chat.id
-        chat_username = f"@{message.chat.username}" if message.chat.username else "ᴘʀɪᴠᴀᴛᴇ ᴄʜᴀᴛ"
-
-        try:
-            await game_active_groups_col.update_one(
-                {"chat_id": int(chat_id)},
-                {"$set": {"active": False, "updated_at": datetime.utcnow().isoformat()}},
-            )
-        except Exception:
-            pass
-
-        # Construct the log message
-        log_message = (
-            f"#leftgroup \n\n"
-            f"chat name : {chat_title}\n"
-            f"chat username : {chat_username}\n"
-            f"remove by : {removed_by}\n"
+    chat_id = int(message.chat.id)
+    try:
+        await game_active_groups_col.update_one(
+            {"chat_id": chat_id},
+            {
+                "$set": {
+                    "active": False,
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                }
+            },
         )
-
-        await send_log_message(GLOG, log_message)
+    except Exception as exc:
+        LOGGER("Waifu.JoinLog").warning(
+            "Could not mark group %s inactive (%s).", chat_id, type(exc).__name__
+        )
