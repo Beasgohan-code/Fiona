@@ -5,6 +5,9 @@ and to button icons. Existing emoji IDs remain in the standard registry and
 are used whenever a fallback is not included here.
 """
 
+import json
+from pathlib import Path
+
 CUSTOM_EMOJI_ENTRIES = [
     ('✅', '5084979757905347540'),
     ('💜', '5084974483685507801'),
@@ -161,12 +164,31 @@ def normalize_emoji(value: str) -> str:
     return str(value).replace("\ufe0f", "")
 
 
-# Keep every pair, including repeated fallback glyphs, while selecting the
-# first listed custom document as the deterministic Unicode lookup default.
+# Additional source packs are kept as data files so every supplied ID stays
+# represented, even when several distinct IDs share the same fallback glyph.
+CUSTOM_EMOJI_LATEST_ENTRIES = []
+for _pack_file in (
+    "emoji_pack_summon.json",
+    "emoji_pack_rijif.json",
+    "emoji_pack_news.json",
+):
+    _pack_path = Path(__file__).with_name(_pack_file)
+    _loaded_entries = json.loads(_pack_path.read_text(encoding="utf-8"))
+    CUSTOM_EMOJI_LATEST_ENTRIES.extend(_loaded_entries)
+    CUSTOM_EMOJI_ENTRIES.extend(_loaded_entries)
+
+# Keep every pair, including repeated fallback glyphs. Direct Unicode lookup
+# prefers the newest supplied packs; stable generated keys expose every ID.
 CUSTOM_EMOJI_ENTRIES = [
     (normalize_emoji(emoji), emoji_id)
     for emoji, emoji_id in CUSTOM_EMOJI_ENTRIES
 ]
+CUSTOM_EMOJI_LATEST_ENTRIES = [
+    (normalize_emoji(emoji), emoji_id)
+    for emoji, emoji_id in CUSTOM_EMOJI_LATEST_ENTRIES
+]
 CUSTOM_EMOJI_IDS = {}
+for _emoji, _emoji_id in CUSTOM_EMOJI_LATEST_ENTRIES:
+    CUSTOM_EMOJI_IDS.setdefault(_emoji, _emoji_id)
 for _emoji, _emoji_id in CUSTOM_EMOJI_ENTRIES:
     CUSTOM_EMOJI_IDS.setdefault(_emoji, _emoji_id)

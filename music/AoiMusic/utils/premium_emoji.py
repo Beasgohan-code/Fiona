@@ -193,9 +193,11 @@ for _index, (_glyph, _custom_id) in enumerate(CUSTOM_EMOJI_ENTRIES, start=1):
     _suffix = "_".join(f"{ord(char):X}" for char in _glyph)
     _custom_key = f"CUSTOM_{_suffix}_{_index}"
     PREMIUM_EMOJIS[_custom_key] = (_custom_id, _glyph)
-    # Direct fallback glyph aliases make rich text and buttons use the
-    # supplied pack automatically, without changing their plain Unicode fallback.
-    PREMIUM_EMOJIS.setdefault(_glyph, (_custom_id, _glyph))
+
+# Direct glyph keys follow the newest supplemental pack's preferred mapping;
+# generated CUSTOM_* keys above still preserve every repeated-fallback ID.
+for _glyph, _custom_id in CUSTOM_EMOJI_IDS.items():
+    PREMIUM_EMOJIS[_glyph] = (_custom_id, _glyph)
 
 # Existing semantic keys (e.g. CHECK_CIRCLE, FIRE_STREAK) also resolve to
 # the supplied pack when they share its fallback glyph. All original Unicode

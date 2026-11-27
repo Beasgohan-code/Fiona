@@ -16,18 +16,19 @@ class CustomEmojiPackTests(unittest.TestCase):
         cls.entries = cls.pack["CUSTOM_EMOJI_ENTRIES"]
 
     def test_all_custom_ids_are_numeric_and_fallbacks_are_unicode(self):
-        self.assertGreaterEqual(len(self.entries), 100)
+        self.assertEqual(len(self.entries), 507)
         self.assertTrue(all(value.isdigit() for _, value in self.entries))
         self.assertTrue(all(key and key == self.pack["normalize_emoji"](key) for key, _ in self.entries))
 
     def test_supplied_fallback_mappings(self):
         expected = {
-            "✅": "5084979757905347540",
+            "⭐": "6212881347141181453",
+            "✅": "6212749607609310928",
             "💜": "5084974483685507801",
-            "👻": "5082478549340783285",
-            "⚡": "5085022089103016925",
-            "🎵": "5172447776205702031",
-            "🔍": "5258274739041883702",
+            "👻": "6215238098775711325",
+            "⚡": "5042334757040423886",
+            "🎵": "5463107823946717464",
+            "🔍": "5039649904264217620",
             "📂": "5341492148468465410",
         }
         for fallback, emoji_id in expected.items():
@@ -42,10 +43,16 @@ class CustomEmojiPackTests(unittest.TestCase):
         self.assertIn("custom_id = CUSTOM_EMOJI_IDS.get(key)", rich_msg)
 
     def test_distinct_same_fallback_ids_are_kept(self):
-        # Two heart variants in the supplied data have separate IDs and remain
-        # independently addressable, even though they render similarly.
-        self.assertEqual(self.ids["♥"], "5100657930429006538")
-        self.assertEqual(self.ids["❤"], "5118454879039259395")
+        # Multiple star IDs remain available as entries; direct rendering uses
+        # the first ID in the newest supplied pack as the deterministic default.
+        star_ids = [emoji_id for glyph, emoji_id in self.entries if glyph == "⭐"]
+        self.assertGreaterEqual(len(star_ids), 5)
+        self.assertEqual(star_ids[0], "5116163917713769254")
+        self.assertEqual(self.ids["⭐"], "6212881347141181453")
+        # The same heart fallback from multiple packs keeps every ID.
+        heart_ids = {emoji_id for glyph, emoji_id in self.entries if glyph == "❤"}
+        self.assertIn("5118454879039259395", heart_ids)
+        self.assertIn("5040072842578756396", heart_ids)
 
 
 if __name__ == "__main__":
