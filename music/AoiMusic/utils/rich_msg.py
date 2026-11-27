@@ -19,6 +19,7 @@ import httpx
 from pyrogram import ContinuePropagation
 
 from AoiMusic.utils.premium import _DB_EMOJI_FALLBACK
+from AoiMusic.utils.custom_emoji_pack import CUSTOM_EMOJI_IDS, normalize_emoji
 
 import logging
 
@@ -54,9 +55,13 @@ _CHOSEN: dict = {}
 
 
 def pick_id(em: str) -> str | None:
-    key = em.replace("\ufe0f", "")
+    key = normalize_emoji(em)
     if key in _CHOSEN:
         return _CHOSEN[key]
+    custom_id = CUSTOM_EMOJI_IDS.get(key)
+    if custom_id:
+        _CHOSEN[key] = custom_id
+        return custom_id
     ids = (_EMOJI_DB.get(key) or {}).get("ids") or []
     cid = None
     if ids:

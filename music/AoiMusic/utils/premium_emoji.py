@@ -19,12 +19,18 @@ from typing import Any, Dict, Optional, Tuple
 from pyrogram import enums
 from pyrogram.types import InlineKeyboardButton
 
+from AoiMusic.utils.custom_emoji_pack import (
+    CUSTOM_EMOJI_ENTRIES,
+    CUSTOM_EMOJI_IDS,
+    normalize_emoji,
+)
+
 logger = logging.getLogger(__name__)
 
 # Invisible 0px non-whitespace character so icon-only buttons render ONLY the centered premium emoji
 BLANK_BTN_TEXT = "\u2060"
 
-# All 59 configured Telegram Premium Custom Emoji IDs: key -> (emoji_id, fallback_emoji)
+# Core and supplemental Telegram Custom Emoji IDs: key -> (emoji_id, fallback_emoji)
 PREMIUM_EMOJIS: Dict[str, Tuple[str, str]] = {
     # --- Canonical Musiciconis Pack Keys (99 unique icons) ---
     "PLAY": ("6066663132623807248", "▶️"),
@@ -180,6 +186,26 @@ PREMIUM_EMOJIS: Dict[str, Tuple[str, str]] = {
     "TOP_ICON": ("6069147178499056826", "🏆"),
 }
 
+# Expose every supplied ID under a stable semantic key, while also allowing
+# callers to pass the fallback glyph directly to pe()/pbtn(). Distinct IDs
+# that share a Unicode fallback remain addressable through their stable keys.
+for _index, (_glyph, _custom_id) in enumerate(CUSTOM_EMOJI_ENTRIES, start=1):
+    _suffix = "_".join(f"{ord(char):X}" for char in _glyph)
+    _custom_key = f"CUSTOM_{_suffix}_{_index}"
+    PREMIUM_EMOJIS[_custom_key] = (_custom_id, _glyph)
+    # Direct fallback glyph aliases make rich text and buttons use the
+    # supplied pack automatically, without changing their plain Unicode fallback.
+    PREMIUM_EMOJIS.setdefault(_glyph, (_custom_id, _glyph))
+
+# Existing semantic keys (e.g. CHECK_CIRCLE, FIRE_STREAK) also resolve to
+# the supplied pack when they share its fallback glyph. All original Unicode
+# fallbacks remain unchanged, and every individual supplied ID has its own key.
+for _key, (_old_id, _fallback) in list(PREMIUM_EMOJIS.items()):
+    if not _key.startswith("CUSTOM_"):
+        _custom_id = CUSTOM_EMOJI_IDS.get(normalize_emoji(_fallback))
+        if _custom_id:
+            PREMIUM_EMOJIS[_key] = (_custom_id, _fallback)
+
 _TG_EMOJI_OPEN_RE = re.compile(
     r"""<tg-emoji\s+emoji-id=(?:"|')?(\d+)(?:"|')?\s*>""",
     re.IGNORECASE,
@@ -214,6 +240,8 @@ def _detect_ikb_capabilities() -> None:
 def eid(key: str) -> str:
     """Return the raw custom emoji ID string for a registry key (or pass-through numeric ID)."""
     entry = PREMIUM_EMOJIS.get(key)
+    if entry is None and isinstance(key, str):
+        entry = PREMIUM_EMOJIS.get(normalize_emoji(key))
     if entry:
         return entry[0]
     if isinstance(key, int) or (isinstance(key, str) and key.isdigit()):
@@ -224,12 +252,16 @@ def eid(key: str) -> str:
 def fallback(key: str) -> str:
     """Return the fallback standard emoji for a registry key."""
     entry = PREMIUM_EMOJIS.get(key)
+    if entry is None and isinstance(key, str):
+        entry = PREMIUM_EMOJIS.get(normalize_emoji(key))
     return entry[1] if entry else ""
 
 
 def tg_emoji(key: str, custom_fallback: Optional[str] = None) -> str:
     """Return an HTML <tg-emoji emoji-id="...">fallback</tg-emoji> tag for text/captions."""
     entry = PREMIUM_EMOJIS.get(key)
+    if entry is None and isinstance(key, str):
+        entry = PREMIUM_EMOJIS.get(normalize_emoji(key))
     if entry:
         emoji_id, fb = entry
         return f'<tg-emoji emoji-id="{emoji_id}">{custom_fallback or fb}</tg-emoji>'
