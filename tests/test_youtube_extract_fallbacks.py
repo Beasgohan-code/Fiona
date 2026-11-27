@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 YOUTUBE_FILE = ROOT / "music/AoiMusic/platforms/Youtube.py"
 
 
-def load_extract_helper(fake_ytdl):
+def load_extract_helper(fake_ytdl, runtimes=None):
     tree = ast.parse(YOUTUBE_FILE.read_text(encoding="utf-8"))
     helper = next(
         node
@@ -16,7 +16,7 @@ def load_extract_helper(fake_ytdl):
     )
     namespace = {
         "copy": copy,
-        "get_available_runtimes": lambda: [],
+        "get_available_runtimes": lambda: list(runtimes or []),
         "_get_youtube_dl": lambda: fake_ytdl,
         "_log": lambda *args, **kwargs: None,
     }
@@ -57,6 +57,41 @@ class YouTubeExtractFallbackTests(unittest.TestCase):
             source = ast.get_source_segment(YOUTUBE_FILE.read_text(encoding="utf-8"), method)
             self.assertIn("return_options=True", source, method.name)
             self.assertIn("_get_youtube_dl()(download_opts)", source, method.name)
+
+    def test_runtime_fallback_uses_ytdlp_option_shape_without_duplicate_probe(self):
+        seen_runtimes = []
+
+        class RuntimeYoutubeDL:
+            def __init__(self, options):
+                self.options = options
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_):
+                return False
+
+            def extract_info(self, link, download=False):
+                runtime = self.options.get("js_runtimes")
+                seen_runtimes.append(runtime)
+                if runtime == {"bun": {}}:
+                    return {"id": "runtime123", "ext": "m4a"}
+                raise Exception("runtime did not solve the YouTube challenge")
+
+        helper = load_extract_helper(RuntimeYoutubeDL, runtimes=["node", "bun"])
+        info, chosen = helper(
+            "https://youtube.com/watch?v=runtime123",
+            {
+                "format": "bestaudio/best",
+                "js_runtimes": {"node": {}},
+                "extractor_args": {"youtube": {"player_client": ["tv_samsung"]}},
+            },
+            return_options=True,
+        )
+
+        self.assertEqual(info["id"], "runtime123")
+        self.assertEqual(chosen["js_runtimes"], {"bun": {}})
+        self.assertEqual(seen_runtimes, [{"node": {}}, {"bun": {}}])
 
     def test_client_fallback_returns_the_effective_options_for_download(self):
         seen_clients = []

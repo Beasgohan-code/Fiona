@@ -431,18 +431,20 @@ def extract_info_with_fallback(link, opts, return_options=False):
     extracted it. Otherwise the later download can silently re-run the original
     failing format/client selection and discard the successful fallback.
     """
-    runtimes = get_available_runtimes() or [None]
-    attempts = []
+    runtimes = get_available_runtimes()
+    attempts = [("default", copy.deepcopy(opts))]
     for runtime in runtimes:
         attempt_opts = copy.deepcopy(opts)
-        if runtime:
-            attempt_opts["js_runtime"] = runtime
-        attempts.append((runtime or "default", attempt_opts))
+        attempt_opts["js_runtimes"] = {runtime: {}}
+        # _base_ydl_opts already enables the preferred runtime. Don't spend a
+        # second full extraction on an identical option set.
+        if attempt_opts != opts:
+            attempts.append((f"runtime-{runtime}", attempt_opts))
 
     fallback_opts = copy.deepcopy(opts)
     fallback_opts["format"] = "18/best/worst"
-    if runtimes and runtimes[0]:
-        fallback_opts["js_runtime"] = runtimes[0]
+    if runtimes:
+        fallback_opts["js_runtimes"] = {runtimes[0]: {}}
     attempts.append(("progressive-18", fallback_opts))
 
     # YouTube can expose different format ladders to different clients. Retry
@@ -456,8 +458,8 @@ def extract_info_with_fallback(link, opts, return_options=False):
         youtube_args = extractor_args.setdefault("youtube", {})
         youtube_args["player_client"] = [client]
         client_opts["format"] = "best/bestvideo+bestaudio/worst"
-        if runtimes and runtimes[0]:
-            client_opts["js_runtime"] = runtimes[0]
+        if runtimes:
+            client_opts["js_runtimes"] = {runtimes[0]: {}}
         attempts.append((f"client-{client}", client_opts))
 
     errors = []
@@ -508,8 +510,8 @@ def extract_info_with_fallback(link, opts, return_options=False):
         if client:
             youtube_args = raw_opts.setdefault("extractor_args", {}).setdefault("youtube", {})
             youtube_args["player_client"] = [client]
-        if runtimes and runtimes[0]:
-            raw_opts["js_runtime"] = runtimes[0]
+        if runtimes:
+            raw_opts["js_runtimes"] = {runtimes[0]: {}}
         label = f"raw-formats-{client or 'default'}"
         try:
             _log("info", "extract_info_with_fallback: probing raw formats via %s", label)
