@@ -146,6 +146,8 @@ class MergedCommandTests(unittest.TestCase):
         self.assertIn("edit_panel", profile)
         self.assertNotIn("asyncio.sleep(180)", harem)
         self.assertIn("premium_button(\n                        tr('Next', lang)", harem)
+        self.assertIn("rich_table(('ID', 'RARITY', 'CHARACTER', 'OWNED'), rows)", harem)
+        self.assertIn("rich_table(\n            ('RARITY', 'CHARACTERS')", profile)
 
     def test_missing_origin_chat_is_guarded_before_rich_send(self):
         rich_msg = (MUSIC / "utils/rich_msg.py").read_text(encoding="utf-8")

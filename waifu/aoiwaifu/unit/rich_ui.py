@@ -21,11 +21,34 @@ def premium_button(text: str, emoji: str, **kwargs):
     return pbtn(text=text, emoji=emoji, **kwargs)
 
 
+def rich_heading(title: str, emoji: str = "✨") -> str:
+    """Render a strong, parse-mode-safe heading for Richgram-style panels."""
+    return f"<b>{emoji} {title}</b>"
+
+
+def rich_table(headers, rows) -> str:
+    """Render a compact, Telegram-safe table with clear row and column breaks.
+
+    Telegram's Bot API doesn't accept HTML <table> tags, so the table is
+    expressed with a bold header and pipe-separated rows inside the card.
+    Cell values may contain trusted HTML such as <code> or <b> tags.
+    """
+    header = "  │  ".join(str(cell) for cell in headers)
+    lines = [f"<b>{header}</b>"]
+    for row in rows:
+        lines.append("  │  ".join(str(cell) for cell in row))
+    return "\n".join(lines)
+
+
 def rich_card(title: str, body: str, emoji: str = "✨") -> str:
-    """Wrap a short HTML body in Fiona's consistent Telegram card treatment."""
+    """Wrap a short HTML body in Fiona's boxed Telegram card treatment."""
     title = str(title or "Fiona")
     body = str(body or "")
-    return f"<b>{emoji} {title}</b>\n<blockquote>{body}</blockquote>"
+    return (
+        f"╭━━〔 {rich_heading(title, emoji)} 〕━━╮\n"
+        f"<blockquote>{body}</blockquote>\n"
+        "╰━━━━━━━━━━━━━━━━━━╯"
+    )
 
 
 async def edit_panel(message, text: str, reply_markup=None) -> bool:

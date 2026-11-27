@@ -1,5 +1,5 @@
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_heading, rich_table
 from aoiwaifu import *
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
@@ -168,11 +168,21 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
         current_grouped_characters = {k: list(v) for k, v in groupby(current_characters, key=lambda x: x.get('anime', 'Unknown Anime'))}
         for anime, chars in current_grouped_characters.items():
             total_anime_chars = await collection.count_documents({'anime': anime})
-            harem_message += f'\n⛩️ <b>{escape(str(anime))}</b> <i>({len(chars)}/{total_anime_chars})</i>\n'
+            harem_message += (
+                f"\n\n{rich_heading(escape(str(anime)), '⛩️')} "
+                f"<i>({len(chars)}/{total_anime_chars} in catalog)</i>\n"
+            )
+            rows = []
             for character in chars:
                 count = character_counts.get(str(character.get('id')), 1)
                 rarity_emoji = rarity_map2.get(character.get('rarity'), '❔')
-                harem_message += f"  ✦ ⌠{rarity_emoji}⌡ <code>{escape(str(character.get('id', '?')))}</code> <b>{escape(str(character.get('name', 'Unknown Character')))}</b> (x{count})\n"
+                rows.append((
+                    f"<code>{escape(str(character.get('id', '?')))}</code>",
+                    rarity_emoji,
+                    f"<b>{escape(str(character.get('name', 'Unknown Character')))}</b>",
+                    f"×{count}",
+                ))
+            harem_message += rich_table(('ID', 'RARITY', 'CHARACTER', 'OWNED'), rows)
         harem_message += '</blockquote>\n╰━━━━━━━━━━━━━━━━━━╯'
         keyboard = [
             [

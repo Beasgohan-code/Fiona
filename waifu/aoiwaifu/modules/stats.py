@@ -7,7 +7,7 @@ from pyrogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 from aoiwaifu import STATS_IMG, app, collection, rarity_map, rarity_map2, user_collection
 from aoiwaifu.admin.blocklist import get_blocklisted_id_variants, is_user_blocklisted
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_heading, rich_table
 
 
 async def get_user_stats(user_id: int, username: str = "", first_name: str = "Collector"):
@@ -101,11 +101,14 @@ def _build_profile_view(stats: dict, lang: str = "en") -> tuple[str, InlineKeybo
 
     non_zero_rarities = [(rarity, count) for rarity, count in stats["rarity_counts"].items() if count > 0]
     if non_zero_rarities:
-        caption += "\n\n💎 <b>RARITY BREAKDOWN</b>\n"
-        for idx, (rarity, count) in enumerate(non_zero_rarities):
-            branch = "└" if idx == len(non_zero_rarities) - 1 else "├"
-            emoji = rarity_map2.get(rarity, "❍")
-            caption += f"{branch} {emoji} {html.escape(str(rarity))}: <b>{count:,}</b>\n"
+        caption += f"\n\n{rich_heading('RARITY BREAKDOWN', '💎')}\n"
+        caption += rich_table(
+            ('RARITY', 'CHARACTERS'),
+            [
+                (f"{rarity_map2.get(rarity, '❍')} {html.escape(str(rarity))}", f"<b>{count:,}</b>")
+                for rarity, count in non_zero_rarities
+            ],
+        )
 
     caption += "</blockquote>\n╰━━━━━━━━━━━━━━━━━━━━━━╯"
 
