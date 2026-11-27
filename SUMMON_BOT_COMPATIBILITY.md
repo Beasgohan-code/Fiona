@@ -12,7 +12,8 @@ are not copied wholesale.
 | `/start`, `/ping`, `/help`, `/menu`, `/commands` | `/start`, `/ping`, `/help`, `/menu`, `/commands` |
 | `/balance`, `/bal`, `/daily` | `/balance`, `/bal`, `/daily` and `/dailygift` |
 | `/spin` | `/spin` — Fiona-sized daily coin rewards; one atomic 24-hour claim per user |
-| `/collection`, `/harem`, `/claimlist` | `/harem`, `/collection`, `/claimlist` |
+| `/collection`, `/harem`, `/claimlist` | `/harem`, `/collection`, `/claimlist`; accepts an optional case-insensitive anime-title fragment, keeps it while paging, and shows per-anime progress percentages plus duplicate-copy totals |
+| Fiona collection pins | `/pincharacter`, `/unpincharacter`, `/pinnedcharacters` (legacy aliases `/hpin`, `/hunpin`, `/pinlist`); the pinned list provides owner-scoped one-tap unpin controls |
 | `/check`, `/info` | `/check` |
 | `/search`, `/find` | `/search`, `/sips` or the bot's inline search |
 | `/summon`, `/guess` | `/summon`, `/guess` and related Fiona catch aliases |
@@ -21,7 +22,7 @@ are not copied wholesale.
 | `/stats`, `/server` | `/server` or `/st` for community totals; `/stats` remains the music statistics command |
 | `/profile`, `/hstats`, `/me` | `/profile`, `/hstats`, `/me` |
 | `/achievements`, `/ach`, `/badges` | `/achievements` and aliases; milestones are derived from Fiona's Mongo user data |
-| Rarity catalog | `/rarity` and `/rarities`; reads every rarity currently present in Fiona's character catalog, rather than hard-coding a separate 18-rarity list |
+| Rarity catalog | Fiona's canonical upload/shop/spawn/filter options follow Summon-bot's rarity order and names, with rarity 15 customized to `🔞 Ecchi` at the user's request; `/rarity` and `/rarities` show the configured options plus a grouped legacy count, without deleting catalog characters or user collection entries |
 | `/claim`, `/hclaim`, `/redeem` | Fiona's `/claim`, `/hclaim`, `/redeem` |
 | `/transfer`, `/addchar`, `/update`, `/reupload` | Fiona's `/transfer`, `/addchar`, `/gupdate`, `/reupload` |
 | `/ban`, `/unban`, `/warn` | Existing Fiona group moderation commands |
@@ -50,6 +51,27 @@ thin aliases to unrelated Fiona commands:
   and `/redeem` flows.
 - `/font`/`/style`, `/premium`/`/unpremium`, `/nguess`, `/restart`, and
   database-specific `/savegroup` tooling.
+
+## ShizuMusic YouTube downloader/playback adaptation
+
+Reference reviewed: `Badmunda05/ShizuMusic` at commit
+`83def61f73de7efd8c19cf451cf2937886c74652`. Fiona adapts its documented
+`GET /download` contract rather than copying ShizuMusic's whole Telegram bot:
+
+- Configure `SHIZUMUSIC_API_URL` and `SHIZUMUSIC_API_KEY` privately. Legacy
+  `API_URL`/`API_BASE`/`YT_API_URL` and `API_KEY`/`YT_API_KEY` aliases map to
+  this provider, not Aoi Hosting's different API.
+- Standard audio/video downloads and voice-chat playback try ShizuMusic first,
+  cache validated media under `downloads/shizumusic/`, then fall back to the
+  separate Aoi Hosting API (if configured) and Fiona's existing yt-dlp client
+  fallback ladder.
+- Playback uses the downloaded local file for stable voice-chat reads. Fiona
+  retains direct yt-dlp URL resolution when no API file is available.
+- ShizuMusic's endpoint only accepts `type=audio|video`, so Fiona keeps
+  format-specific downloads on its existing yt-dlp path rather than silently
+  ignoring the user's selected format.
+- Credentials are not committed or logged. The downloader rejects text/JSON
+  error responses and incomplete files before caching them.
 
 ## Videl1 / Videl0 keep-alive adaptation
 

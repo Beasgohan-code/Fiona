@@ -18,7 +18,7 @@ def leaderboard_buttons(active_button=None):
         ('top_group', 'Groups', 'USERS_GROUP'),
         ('mtop', 'Coins', 'COIN'),
         ('tokens', 'Tokens', 'WALLET'),
-        ('diwali', 'Diwali', 'STAR'),
+        ('amv', 'AMV', 'STAR'),
     ]
     buttons = [
         premium_button(
@@ -162,18 +162,18 @@ async def tokens_callback(client, callback_query):
     caption += '\n<i>Your dollar balance is stored safely in your wallet 💎</i>'
     await update_caption(callback_query, caption, 'tokens')
 
-@Client.on_callback_query(filters.regex('^diwali$'))
-async def diwali_callback(client, callback_query):
+@Client.on_callback_query(filters.regex('^amv$'))
+async def amv_callback(client, callback_query):
     lang = await get_effective_lang(callback_query)
     blocked_ids = await get_blocklisted_id_variants()
-    cursor = user_collection.aggregate([{'$project': {'_id': 0, 'id': 1, 'first_name': 1, 'username': 1, 'diwali_count': {'$size': {'$filter': {'input': {'$ifNull': ['$characters', []]}, 'as': 'character', 'cond': {'$eq': ['$$character.rarity', 'Diwali 🪔']}}}}}}, {'$match': {'diwali_count': {'$gt': 0}, 'id': {'$nin': blocked_ids}}}, {'$sort': {'diwali_count': -1, 'id': 1}}, {'$limit': 10}])
+    cursor = user_collection.aggregate([{'$project': {'_id': 0, 'id': 1, 'first_name': 1, 'username': 1, 'amv_count': {'$size': {'$filter': {'input': {'$ifNull': ['$characters', []]}, 'as': 'character', 'cond': {'$eq': ['$$character.rarity', '🎥 AMV Edition']}}}}}}, {'$match': {'amv_count': {'$gt': 0}, 'id': {'$nin': blocked_ids}}}, {'$sort': {'amv_count': -1, 'id': 1}}, {'$limit': 10}])
     leaderboard_data = await cursor.to_list(length=10)
-    caption = leaderboard_header('DIWALI COLLECTION', 'Top collectors of Diwali characters 🪔')
+    caption = leaderboard_header('AMV COLLECTION', 'Top collectors of AMV Edition characters 🎥')
     if not leaderboard_data:
-        caption += '🌸 <i>No Diwali characters collected yet. Be the first!</i>\n'
+        caption += '🌸 <i>No AMV Edition characters collected yet. Be the first!</i>\n'
     else:
         resolved_names = await asyncio.gather(*[resolve_user_display_name(client, u.get('id'), u.get('first_name'), u.get('username')) for u in leaderboard_data])
         for rank, (user, name) in enumerate(zip(leaderboard_data, resolved_names), start=1):
-            caption += add_rank_line(rank, name, user.get('diwali_count', 0), user.get('id'), 'Diwali characters')
-    caption += '\n<i>Collect more Diwali characters to reach the top! ✨</i>'
-    await update_caption(callback_query, caption, 'diwali')
+            caption += add_rank_line(rank, name, user.get('amv_count', 0), user.get('id'), 'AMV characters')
+    caption += '\n<i>Collect more AMV Edition characters to reach the top! ✨</i>'
+    await update_caption(callback_query, caption, 'amv')

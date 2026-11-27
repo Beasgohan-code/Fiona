@@ -66,8 +66,32 @@ INSTANT_PLAY = getenv("INSTANT_PLAY", "True")
 VOTE_SKIP_LIMIT = int(getenv("VOTE_SKIP_LIMIT", "3"))
 PROXY_URL = getenv("PROXY_URL", "").strip()
 YT_COOKIES = getenv("YT_COOKIES", "").strip()
-MEDIA_API_URL = getenv("MEDIA_API_URL", "").strip()
-MEDIA_API_KEY = getenv("MEDIA_API_KEY", "").strip()
+def _first_nonempty_env(*names, default=""):
+    """Read the first populated alias for an optional integration setting."""
+    for name in names:
+        value = getenv(name, "")
+        if value and value.strip():
+            return value.strip()
+    return default
+
+
+# Aoi Hosting's JSON/stream API has its own explicit variables.
+MEDIA_API_URL = _first_nonempty_env(
+    "MEDIA_API_URL", "MEDIA_API_BASE",
+    default="https://host-repository.vercel.app",
+)
+MEDIA_API_KEY = _first_nonempty_env("MEDIA_API_KEY")
+
+# ShizuMusic's downloader is a different contract: GET /download with
+# url=<video id>, type=audio|video, and api_key=<key> query parameters.
+# Keep the aliases here so ShizuMusic deployments can be used without
+# incorrectly sending them to Aoi Hosting's /api/audio/{id} endpoints.
+SHIZUMUSIC_API_URL = _first_nonempty_env(
+    "SHIZUMUSIC_API_URL", "API_URL", "API_BASE", "YT_API_URL"
+)
+SHIZUMUSIC_API_KEY = _first_nonempty_env(
+    "SHIZUMUSIC_API_KEY", "API_KEY", "YT_API_KEY"
+)
 
 # --- Voice Chat Timed Lyrics ---
 VC_LYRICS = getenv("VC_LYRICS", "True")

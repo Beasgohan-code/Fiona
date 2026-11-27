@@ -110,7 +110,7 @@ async def approve_upload(client, callback_query):
     if not upload_data:
         return await callback_query.answer(tr("Request already processed or not found.", lang), show_alert=True)
 
-    rarity_text = rarity_map.get(rarity_key, "🟢 Common")
+    rarity_text = rarity_map.get(rarity_key, rarity_map[1])
     available_id = await find_available_id()
     character = {
         "name": upload_data["name"],

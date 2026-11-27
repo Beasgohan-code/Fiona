@@ -15,7 +15,7 @@ HELP_DATA = {
             "• `/harem [anime]` / `/collection [anime]` / `/claimlist [anime]` — View all characters or filter by anime title\n"
             "• `/hmode` — Filter your harem by rarity\n"
             "• `/fav <id>` — Set your featured profile character\n"
-            "• `/pincharacter <id>` / `/unpincharacter <id>` / `/pinnedcharacters` — Manage pinned collection characters (aliases: `/hpin`, `/hunpin`, `/pinlist`)\n"
+            "• `/pincharacter <id>` / `/unpincharacter <id>` / `/pinnedcharacters` — Manage pinned collection characters; `/pinnedcharacters` includes one-tap unpin buttons (aliases: `/hpin`, `/hunpin`, `/pinlist`)\n"
             "• Group-message pinning uses the separate admin commands `/pin` and `/unpin`."
         ),
     },
@@ -23,7 +23,7 @@ HELP_DATA = {
         "HELP_NAME": "Profile",
         "HELP": (
             "View collector stats and rankings:\n\n"
-            "• `/profile`, `/me`, or `/hstats` — View your collector profile, rank, and rarity breakdown\n"
+            "• `/profile`, `/me`, or `/hstats` — View your visual profile, featured favourite, collection progress, daily streak, and rarity breakdown\n"
             "• `/rank` or `/top` — View global top collectors\n"
             "• `/achievements` — Track collection, rarity, coin, and referral milestones\n"
             "• `/ctop` — Top collectors in the current group\n"

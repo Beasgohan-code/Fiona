@@ -8,15 +8,36 @@ from pyrogram.enums import ParseMode
 from aoiwaifu import *
 from pymongo import ReturnDocument
 from aoiwaifu.unit.rich_ui import premium_button, premium_text, rich_card
+from aoiwaifu.unit.aoi_rarity import RARITY_NAMES
 user_shop_state = {}
 shop_claim_locks = set()
 SHOP_IMAGE_URL = WAIFU_SHOP_IMAGE
-RARITY_PRICE = {'Frequent 🫧': 1000, 'Superior 🎋': 3000, 'Elite 🪸': 8000, 'Pookie 🐣': 20000, 'Majestic 👑': 25000, 'Mythical 🧜\u200d♀️': 70000, 'DIY 🎨': 70000, 'Angelic 🪄': 100000, 'Galactic 🌌': 150000, 'Phantom 🧌': 200000, 'Imaginative 🍀': 300000, 'Exclusive \U0001fa8e': 350000, 'Habitual 👘': 500000, 'Winter ☃️': 25000, "Valentine's 💕": 25000, 'Summer 🏜️': 25000, 'Chibi 🎀': 5000, 'Cosplay 🗿': 40000, 'Rainy 🌧️': 25000, 'Seasonal 🍁': 25000}
-SHOP_RARITIES = [('Frequent 🫧', '🫧'), ('Superior 🎋', '🎋'), ('Elite 🪸', '🪸'), ('Majestic 👑', '👑'), ('Summer 🏜️', '🏜️')]
+# Summon-bot's configured purchase prices, keyed by Fiona's canonical rarity names.
+RARITY_PRICE = {
+    "⚪ Common": 15000,
+    "🔵 Rare": 25000,
+    "💮 Special Edition": 50000,
+    "⭐ Legendary": 90000,
+    "🛸 Mythic Edition": 150000,
+    "💝 Valentine Edition": 250000,
+    "🏖️ Summer Edition": 250000,
+    "🌧️ Rainy Edition": 250000,
+    "🎃 Halloween Edition": 350000,
+    "🎄 Christmas Edition": 350000,
+    "❄️ Winter Edition": 400000,
+    "🎇 New Year Edition": 450000,
+    "🎍 Festival Edition": 550000,
+    "🎥 AMV Edition": 100000,
+    "🔞 Ecchi": 650000,
+    "🌌 Celestial Edition": 1000000,
+    "💎 Luxury Edition": 1500000,
+    "🔮 Limited Edition": 2000000,
+}
+SHOP_RARITIES = [(rarity, rarity.split(maxsplit=1)[0]) for rarity in RARITY_NAMES]
 
 def build_shop_keyboard() -> InlineKeyboardMarkup:
     buttons = [
-        premium_button(rarity.split()[0], emoji='STAR', callback_data=f'xeno_{i}')
+        premium_button(rarity.split(maxsplit=1)[1], emoji='STAR', callback_data=f'xeno_{i}')
         for i, (rarity, _) in enumerate(SHOP_RARITIES)
     ]
     keyboard = [buttons[i:i + 3] for i in range(0, len(buttons), 3)]

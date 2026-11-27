@@ -30,8 +30,10 @@ from AoiMusic.utils.formatters import seconds_to_min, time_to_seconds
 from AoiMusic.utils.notify import notify_owner
 
 _LOG_TAG = "Youtube"
-_YT_SEARCH_TIMEOUT = 10
+_YT_SEARCH_TIMEOUT = 8
+_YT_SEARCH_TOTAL_BUDGET = 30
 _YT_DLP_TIMEOUT = 60
+_YT_EXTRACT_TOTAL_BUDGET = 60
 _YT_SUBPROCESS_TIMEOUT = 60
 _YT_STREAM_CHECK_TIMEOUT = 8
 
@@ -68,7 +70,9 @@ def _query_variants(q: str) -> list:
             if v not in seen:
                 seen.add(v)
                 out.append(v)
-    return [q] + out
+    # Search the original plus at most three trims: more sequential queries
+    # add latency without meaningfully improving a normal music search.
+    return ([q] + out)[:4]
 
 
 def yt_dlp_binary():
@@ -255,6 +259,18 @@ _WPC_BROWSER_ARGS = {"no_sandbox": True}
 _POT_PROVIDERS = ["wpc"]
 
 
+def _media_api_stream_url(payload):
+    """Read the API's stream_url/url response variants or report its error."""
+    if not isinstance(payload, dict):
+        raise RuntimeError("Music API returned an invalid JSON response")
+    if not payload.get("ok"):
+        raise RuntimeError(str(payload.get("error") or "Music API request failed"))
+    stream_url = payload.get("stream_url") or payload.get("url")
+    if not stream_url:
+        raise RuntimeError("Music API response did not include a stream URL")
+    return str(stream_url)
+
+
 def _wpc_extractor_args():
     """WPC extractor args dict, or None when no browser is available.
 
@@ -424,6 +440,18 @@ def _js_runtime_opt():
     return {"js_runtimes": {runtimes[0]: {}}} if runtimes else {}
 
 
+def _bounded_youtube_probe_options(opts, extractor_retries=1):
+    """Bound per-request time and retries so failed client ladders fail fast."""
+    bounded = copy.deepcopy(opts)
+    try:
+        configured_timeout = float(bounded.get("socket_timeout", 12))
+    except (TypeError, ValueError):
+        configured_timeout = 12
+    bounded["socket_timeout"] = min(configured_timeout, 12)
+    bounded["extractor_retries"] = max(1, min(int(extractor_retries), 2))
+    return bounded
+
+
 def extract_info_with_fallback(link, opts, return_options=False):
     """Try runtime, format, and player-client fallbacks for a YouTube URL.
 
@@ -464,7 +492,16 @@ def extract_info_with_fallback(link, opts, return_options=False):
 
     errors = []
     last_error = None
-    for label, attempt_opts in attempts:
+    probe_deadline = time.monotonic() + _YT_EXTRACT_TOTAL_BUDGET
+    for attempt_index, (label, attempt_opts) in enumerate(attempts):
+        if time.monotonic() >= probe_deadline:
+            errors.append(f"overall extraction budget ({_YT_EXTRACT_TOTAL_BUDGET}s) exhausted")
+            _log("warning", "extract_info_with_fallback: stopping after %ss probe budget", _YT_EXTRACT_TOTAL_BUDGET)
+            break
+        attempt_opts = _bounded_youtube_probe_options(
+            attempt_opts,
+            extractor_retries=2 if attempt_index == 0 else 1,
+        )
         try:
             _log("info", "extract_info_with_fallback: trying %s", label)
             with _get_youtube_dl()(attempt_opts) as ydl:
@@ -505,6 +542,9 @@ def extract_info_with_fallback(link, opts, return_options=False):
         raw_clients = [None]
 
     for client in raw_clients:
+        if time.monotonic() >= probe_deadline:
+            errors.append(f"raw-format probes skipped after {_YT_EXTRACT_TOTAL_BUDGET}s budget")
+            break
         raw_opts = copy.deepcopy(opts)
         raw_opts.pop("format", None)
         if client:
@@ -512,6 +552,7 @@ def extract_info_with_fallback(link, opts, return_options=False):
             youtube_args["player_client"] = [client]
         if runtimes:
             raw_opts["js_runtimes"] = {runtimes[0]: {}}
+        raw_opts = _bounded_youtube_probe_options(raw_opts)
         label = f"raw-formats-{client or 'default'}"
         try:
             _log("info", "extract_info_with_fallback: probing raw formats via %s", label)
@@ -636,6 +677,17 @@ class YouTube:
         self._media_url_locks: dict[tuple[str, str], asyncio.Lock] = {}
         self._download_locks: dict[tuple[str, str], asyncio.Lock] = {}
         self._http_session: aiohttp.ClientSession | None = None
+        shizu_url = (getattr(config, "SHIZUMUSIC_API_URL", "") or "").strip()
+        shizu_key = (getattr(config, "SHIZUMUSIC_API_KEY", "") or "").strip()
+        if shizu_url and shizu_key:
+            _log("info", "ShizuMusic download API enabled (credentials are not logged)")
+        api_base = (getattr(config, "MEDIA_API_URL", "") or "").strip().rstrip("/")
+        api_key = (getattr(config, "MEDIA_API_KEY", "") or "").strip()
+        if api_base and api_key:
+            _log("info", "Aoi media API playback enabled (credentials are not logged)")
+        elif not (shizu_url and shizu_key):
+            missing = "MEDIA_API_URL" if not api_base else "MEDIA_API_KEY"
+            _log("warning", "Aoi media API playback disabled: %s is empty", missing)
 
     async def exists(self, link: str, videoid: bool | str = None):
         if videoid:
@@ -956,7 +1008,9 @@ class YouTube:
             raise RuntimeError("MEDIA_API_URL or MEDIA_API_KEY is not configured")
 
         vid = self._extract_video_id(video_id) or str(video_id).strip()
-        mtype = "video" if str(media_type).lower() == "video" else "audio"
+        mtype = str(media_type or "audio").strip().lower()
+        if mtype not in {"audio", "video", "live"}:
+            raise ValueError("media_type must be 'audio', 'video', or 'live'")
         cache_key = (vid, mtype)
 
         now = time.monotonic()
@@ -1010,12 +1064,7 @@ class YouTube:
                                 continue
                             raise last_err
                         data = await resp.json(content_type=None)
-                        if not isinstance(data, dict) or not data.get("ok") or not data.get("url"):
-                            raise RuntimeError(
-                                (data.get("error") if isinstance(data, dict) else None)
-                                or f"Music API unexpected response (HTTP {resp.status})"
-                            )
-                        stream_url = str(data["url"])
+                        stream_url = _media_api_stream_url(data)
                         try:
                             expires_in = int(data.get("expires_in") or 300)
                         except (TypeError, ValueError):
@@ -1037,18 +1086,84 @@ class YouTube:
         mtype = "video" if str(media_type).lower() == "video" else "audio"
         self._media_url_cache.pop((vid, mtype), None)
 
-    async def _api_download(self, link: str, media_type: str = "audio") -> str | None:
-        """Download MP3/MP4 directly via the Aoi Hosting Music API into downloads/.
+    async def _shizumusic_api_download(self, video_id: str, media_type: str = "audio") -> str | None:
+        """Download via ShizuMusic's documented GET /download API contract."""
+        api_base = (getattr(config, "SHIZUMUSIC_API_URL", "") or "").strip().rstrip("/")
+        api_key = (getattr(config, "SHIZUMUSIC_API_KEY", "") or "").strip()
+        if not api_base or not api_key:
+            return None
 
-        Uses a persistent keep-alive session and 1-hop ?redirect=1 download when
-        no cached stream URL is present, matching ~230ms curl throughput.
-        """
+        mtype = "video" if str(media_type).lower() == "video" else "audio"
+        ext = "mp4" if mtype == "video" else "mp3"
+        output_dir = os.path.join("downloads", "shizumusic")
+        os.makedirs(output_dir, exist_ok=True)
+        out_path = os.path.join(output_dir, f"{video_id}.{ext}")
+        if os.path.exists(out_path) and os.path.getsize(out_path) >= 10240:
+            return out_path
+
+        cache_key = (f"shizumusic:{video_id}", mtype)
+        lock = self._download_locks.setdefault(cache_key, asyncio.Lock())
+        async with lock:
+            if os.path.exists(out_path) and os.path.getsize(out_path) >= 10240:
+                return out_path
+            part_path = out_path + ".part"
+            try:
+                session = await self._get_http_session()
+                timeout = aiohttp.ClientTimeout(total=900, connect=10, sock_read=90)
+                async with session.get(
+                    f"{api_base}/download",
+                    params={"url": video_id, "type": mtype, "api_key": api_key},
+                    timeout=timeout,
+                    allow_redirects=True,
+                ) as response:
+                    if response.status != 200:
+                        _log("warning", "ShizuMusic download API returned HTTP %s", response.status)
+                        return None
+                    content_type = (response.content_type or "").lower()
+                    if (
+                        content_type in {"application/json", "text/html"}
+                        or content_type.startswith("text/")
+                        or content_type.endswith("+json")
+                    ):
+                        _log("warning", "ShizuMusic download API returned an error document, not media")
+                        return None
+                    with open(part_path, "wb") as output:
+                        async for chunk in response.content.iter_chunked(131072):
+                            if chunk:
+                                output.write(chunk)
+                if os.path.exists(part_path) and os.path.getsize(part_path) >= 10240:
+                    os.replace(part_path, out_path)
+                    _log("info", "ShizuMusic API downloaded %s (%s)", video_id, mtype)
+                    return out_path
+                _log("warning", "ShizuMusic API returned an empty or incomplete media file for %s", video_id)
+            except Exception as exc:
+                # Do not include the request URL here: ShizuMusic authenticates
+                # with an API key in its query string.
+                _log("warning", "ShizuMusic download API failed for %s (%s)", video_id, type(exc).__name__)
+            finally:
+                try:
+                    if os.path.exists(part_path):
+                        os.remove(part_path)
+                except OSError:
+                    pass
+        return None
+
+    async def _api_download(self, link: str, media_type: str = "audio") -> str | None:
+        """Try ShizuMusic's downloader first, then the Aoi Hosting media API."""
+        vid = self._extract_video_id(link)
+        if not vid:
+            return None
+
+        shizu_url = (getattr(config, "SHIZUMUSIC_API_URL", "") or "").strip()
+        shizu_key = (getattr(config, "SHIZUMUSIC_API_KEY", "") or "").strip()
+        if shizu_url and shizu_key:
+            shizu_path = await self._shizumusic_api_download(vid, media_type)
+            if shizu_path:
+                return shizu_path
+
         api_key = (getattr(config, "MEDIA_API_KEY", "") or "").strip()
         api_base = (getattr(config, "MEDIA_API_URL", "") or "").strip().rstrip("/")
         if not api_key or not api_base:
-            return None
-        vid = self._extract_video_id(link)
-        if not vid:
             return None
         mtype = "video" if str(media_type).lower() == "video" else "audio"
         ext = "mp4" if mtype == "video" else "mp3"
@@ -1087,6 +1202,18 @@ class YouTube:
                                 self._media_url_cache.pop(cache_key, None)
                             _log("warning", "Aoi Music API file fetch HTTP %s for %s (cached=%s)", resp.status, vid, used_cache)
                             if used_cache and attempt == 0:
+                                continue
+                            return None
+                        if resp.content_type == "application/json" or resp.content_type.endswith("+json"):
+                            payload = await resp.json(content_type=None)
+                            stream_url = _media_api_stream_url(payload)
+                            try:
+                                expires_in = int(payload.get("expires_in") or 300)
+                            except (TypeError, ValueError):
+                                expires_in = 300
+                            ttl = max(30, min(expires_in - 15, 300))
+                            self._media_url_cache[cache_key] = (stream_url, time.monotonic() + ttl)
+                            if attempt == 0:
                                 continue
                             return None
                         # Cache the final redirected URL for any subsequent reuse
@@ -1512,19 +1639,35 @@ class YouTube:
                     except Exception:
                         pass
                 raise track_err
-        api_details = await self._api_search(link, t0)
-        if api_details:
-            return api_details
         try:
             _log("info", "track() search query, trying VideosSearch...")
             # Word-trim ladder: a half-remembered line often has no exact
             # YouTube match, but chopping it down does ("aaye haaye jawani
             # le doobi" -> "jawani le doobi").
+            search_deadline = time.monotonic() + _YT_SEARCH_TOTAL_BUDGET
             for variant in _query_variants(link):
-                results = VideosSearch(variant, limit=1, timeout=_YT_SEARCH_TIMEOUT)
-                search_result = await asyncio.wait_for(
-                    results.next(), timeout=_YT_SEARCH_TIMEOUT + 5
-                )
+                remaining = search_deadline - time.monotonic()
+                if remaining <= 0:
+                    _log("warning", "track() search budget exhausted for: %s", link[:80])
+                    break
+                request_timeout = min(_YT_SEARCH_TIMEOUT, max(1, remaining - 1))
+                try:
+                    results = VideosSearch(variant, limit=1, timeout=request_timeout)
+                    search_result = await asyncio.wait_for(
+                        results.next(), timeout=request_timeout + 1
+                    )
+                except Exception:
+                    if variant == link:
+                        # Keep the configured media API as a true fallback for
+                        # transient YouTube search errors too, not just empty
+                        # results, before yt-dlp's slower extractor path runs.
+                        try:
+                            api_details = await self._api_search(link, t0)
+                            if api_details:
+                                return api_details
+                        except Exception as api_err:
+                            _log("warning", "media API search fallback failed: %s", api_err)
+                    raise
                 items = search_result.get("result", [])
                 if items:
                     if variant != link:
@@ -1535,6 +1678,17 @@ class YouTube:
                             variant[:60],
                         )
                     break
+                if variant == link:
+                    # Match ShizuMusic's fast path: a normal query gets one
+                    # direct YouTube search first. The optional media API stays
+                    # available as a fallback, but a slow/misconfigured API no
+                    # longer delays every successful YouTube search.
+                    try:
+                        api_details = await self._api_search(link, t0)
+                        if api_details:
+                            return api_details
+                    except Exception as api_err:
+                        _log("warning", "media API search fallback failed: %s", api_err)
             else:
                 _log("warning", "track() VideosSearch empty for all %d query variants, falling back to _track()", len(_query_variants(link)))
                 return await self._track(link)
@@ -1607,6 +1761,8 @@ class YouTube:
             "quiet": True,
             "extract_flat": "in_playlist",
             "extractor_args": extractor_args,
+            "socket_timeout": 10,
+            "extractor_retries": 1,
             **_proxy_dict(),
             **_cookie_dict(),
             "remote_components": ["ejs:github"],
@@ -1620,7 +1776,7 @@ class YouTube:
                     if info_dict:
                         details = info_dict["entries"][0] if info_dict.get("entries") else info_dict
                 else:
-                    variants = _query_variants(q)
+                    variants = _query_variants(q)[:2]
                     for variant in variants:
                         info_dict = ydl.extract_info(f"ytsearch: {variant}", download=False)
                         if info_dict and info_dict.get("entries"):
@@ -1926,12 +2082,20 @@ class YouTube:
             return file_path
 
         try:
-            # Primary fast-path: Aoi Hosting Music API download (MP3 / MP4)
-            if (getattr(config, "MEDIA_API_KEY", "") or "").strip():
+            # API fast path: ShizuMusic first when configured, then Aoi Hosting.
+            if not (songaudio or songvideo or format_id) and (
+                (
+                    (getattr(config, "SHIZUMUSIC_API_URL", "") or "").strip()
+                    and (getattr(config, "SHIZUMUSIC_API_KEY", "") or "").strip()
+                ) or (
+                    (getattr(config, "MEDIA_API_URL", "") or "").strip()
+                    and (getattr(config, "MEDIA_API_KEY", "") or "").strip()
+                )
+            ):
                 api_mtype = "video" if (video or songvideo) else "audio"
                 api_file = await self._api_download(link, media_type=api_mtype)
                 if api_file:
-                    _log("info", "download() COMPLETED via Aoi Music API in %.1fs -> %s", time.monotonic() - t0, api_file)
+                    _log("info", "download() completed via configured media API in %.1fs -> %s", time.monotonic() - t0, api_file)
                     return api_file, True
 
             if songvideo:

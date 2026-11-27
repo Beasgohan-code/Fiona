@@ -35,3 +35,7 @@ services:
         value: "300"
       - key: KEEP_ALIVE_PING_TIMEOUT
         value: "10"
+      - key: MEDIA_API_URL
+        value: https://host-repository.vercel.app
+      - key: MEDIA_API_KEY
+        sync: false

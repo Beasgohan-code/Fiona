@@ -36,30 +36,27 @@ async def delete_message(chat_id, message_id, context):
         print(f"Error deleting message: {e}")
 
 
-# Enabled rarity weights are normalized across the active drop pool.
+# Relative spawn weights mirror Summon-bot's default chance distribution.
+# Fiona normalizes these against the rarities available in the catalog.
 RARITY_WEIGHTS = {
-    "Frequent 🫧": (45.0, True),
-    "Superior 🎋": (22.0, True),
-    "Elite 🪸": (13.0, True),
-    "Pookie 🐣": (6.0, True),
-    "Majestic 👑": (4.5, True),
-    "Mythical 🧜‍♀️": (3.2, True),
-    "DIY 🎨": (2.2, True),
-    "Angelic 🪄": (1.5, True),
-    "Galactic 🌌": (1.0, True),
-    "Phantom 🧌": (0.7, True),
-    "Imaginative 🍀": (0.4, False),
-    "Exclusive 🪎": (0.8, False),
-    "Habitual 👘": (0.6, False),
-    "Winter ☃️": (2.0, False),
-    "Valentine's 💕": (2.0, False),
-    "Summer 🏜️": (3.0, False),
-    "Chibi 🎀": (0.3, True),
-    "Cosplay 🗿": (0.2, True),
-    "Rainy 🌧️": (2.0, False),
-    "Seasonal 🍁": (2.0, False),
-    "Diwali 🪔": (2.0, False),
-    "Censored 💋": (0.0, False),
+    "⚪ Common": (4500.0, True),
+    "🔵 Rare": (2500.0, True),
+    "💮 Special Edition": (1200.0, True),
+    "⭐ Legendary": (600.0, True),
+    "🛸 Mythic Edition": (300.0, True),
+    "💝 Valentine Edition": (50.0, True),
+    "🏖️ Summer Edition": (50.0, True),
+    "🌧️ Rainy Edition": (50.0, True),
+    "🎃 Halloween Edition": (50.0, True),
+    "🎄 Christmas Edition": (50.0, True),
+    "❄️ Winter Edition": (50.0, True),
+    "🎇 New Year Edition": (50.0, True),
+    "🎍 Festival Edition": (40.0, True),
+    "🎥 AMV Edition": (100.0, True),
+    "🔞 Ecchi": (100.0, True),
+    "🌌 Celestial Edition": (40.0, True),
+    "💎 Luxury Edition": (30.0, True),
+    "🔮 Limited Edition": (20.0, True),
 }
 
 

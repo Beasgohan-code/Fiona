@@ -500,6 +500,12 @@ async def play_commnd(
                 pass
             return await mystic.edit_text(_["play_3"])
         streamtype = "youtube"
+    try:
+        if isinstance(details, dict):
+            found_title = str(details.get("title") or "your track")[:80]
+            await mystic.edit_text(f"🎵 Found: {found_title}\n⏳ Preparing playback and checking available audio sources…")
+    except Exception:
+        LOGGER(_PLAY_LOG).debug("Could not update track-found status", exc_info=True)
     if str(playmode) == "Direct":
         if plist_type:
             pass
@@ -624,6 +630,7 @@ async def play_commnd(
                             details["duration_min"],
                         ),
                         slider_rows,
+                        thumbnail=details.get("thumb"),
                     ),
                 ):
                     return await mystic.edit_text(_["general_6"])
@@ -643,7 +650,7 @@ async def play_commnd(
                 )
                 if not await send_rich(
                     message.chat.id,
-                    play_card_html(_, cap, track_rows),
+                    play_card_html(_, cap, track_rows, thumbnail=img),
                 ):
                     return await mystic.edit_text(_["general_6"])
                 await mystic.delete()

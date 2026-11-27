@@ -16,10 +16,10 @@ class DockerDeploymentTests(unittest.TestCase):
         self.assertIn("USER fiona", dockerfile)
         self.assertIn("ffmpeg", dockerfile)
 
-    def test_example_configuration_has_no_fake_external_service_url(self):
+    def test_example_configuration_keeps_media_api_key_private(self):
         env_example = (ROOT / ".env.example").read_text(encoding="utf-8")
-        self.assertIn("MEDIA_API_URL=\n", env_example)
-        self.assertNotIn("host-repository.vercel.app", env_example)
+        self.assertIn("MEDIA_API_URL=https://host-repository.vercel.app", env_example)
+        self.assertIn("MEDIA_API_KEY=\n", env_example)
         self.assertNotIn("t.me/your_", env_example)
 
     def test_compose_runs_one_service_with_runtime_env_file(self):

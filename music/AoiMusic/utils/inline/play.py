@@ -13,6 +13,7 @@ from AoiMusic.utils.rich_msg import (
     rich_button_row,
     rich_esc,
     rich_heading,
+    rich_img,
     rich_md,
 )
 from AoiMusic.utils.premium import (
@@ -317,8 +318,9 @@ def slider_markup_rich(_, videoid, user_id, query, query_type, channel, fplay):
     return rows
 
 
-def play_card_html(_, text_md, markup_rows):
-    body = rich_heading(f"{pemoji('🎼')} Search Results", level=3)
+def play_card_html(_, text_md, markup_rows, thumbnail=None):
+    body = rich_img(thumbnail) if thumbnail else ""
+    body += rich_heading(f"{pemoji('🎼')} Search Results", level=3)
     body += f'<blockquote>{rich_md(text_md)}</blockquote>'
     body += markup_rows
     return body

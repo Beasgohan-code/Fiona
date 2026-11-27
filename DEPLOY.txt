@@ -87,6 +87,16 @@ for a channel, grant permission to post. A public channel username such as
 log delivery is best-effort and failures are recorded locally without stopping
 bot commands or group-membership handling.
 
+YOUTUBE MEDIA API (OPTIONAL)
+----------------------------
+Fiona can use the configured media API before falling back to yt-dlp. The
+merged config defaults MEDIA_API_URL to the supplied Vercel API base; override
+it if you use another endpoint. Set MEDIA_API_KEY as a private environment
+secret (for Render, add it in the service Environment settings; render.yaml
+marks it `sync: false`). The API may return either `stream_url` or `url` in its
+successful JSON response. Never put the API key in source control or chat. If a
+key has been shared, rotate it at the provider and configure the replacement.
+
 YOUTUBE COOKIES (OPTIONAL)
 --------------------------
 The bot can use YouTube cookies to access videos that require a signed-in
@@ -100,7 +110,10 @@ Redeploy after adding or replacing the secret file. Fiona copies the read-only
 secret into a private writable runtime file before yt-dlp uses it, since yt-dlp
 may refresh its cookie jar. Do not chmod or edit the Render secret itself.
 Cookie files can expire and may need re-exporting. Cookies are optional; leave
-YT_COOKIES empty if you do not need authenticated YouTube playback.
+YT_COOKIES empty if you do not need authenticated YouTube playback. The merged
+requirements install Node.js 22 for yt-dlp's JavaScript challenge solver; do not
+remove the pinned `nodejs-wheel` dependency unless another supported JS runtime
+is installed and available on PATH.
 
 The container runs as the non-root fiona user. MongoDB holds bot data; local
 cache/download files are container-local and may be discarded on replacement.

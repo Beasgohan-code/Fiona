@@ -1,6 +1,8 @@
 import ast
+import importlib.util
 import random
 import unittest
+from io import BytesIO
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -57,6 +59,39 @@ class ImageAssetTests(unittest.TestCase):
         start = (ROOT / "waifu/aoiwaifu/modules/start.py").read_text(encoding="utf-8")
         self.assertIn('[os.getenv("PHOTO_URL_1", "").strip() or WAIFU_START_IMAGE, WAIFU_COLLECTION_IMAGE]', config)
         self.assertGreaterEqual(start.count("pick_start_media()"), 3)
+
+    def test_profile_card_renders_the_generated_background_and_favorite_portrait(self):
+        try:
+            from PIL import Image
+        except ImportError:
+            self.skipTest("Pillow is an application dependency and is not installed in this test environment")
+
+        module_path = ROOT / "waifu/aoiwaifu/unit/profile_card.py"
+        spec = importlib.util.spec_from_file_location("fiona_profile_card_test", module_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        portrait = BytesIO()
+        Image.new("RGB", (160, 160), "#ee80cc").save(portrait, format="PNG")
+        card = module.build_profile_card(
+            {
+                "first_name": "Fiona Collector",
+                "username": "fiona",
+                "user_id": 1234,
+                "rank": 7,
+                "character_count": 28,
+                "unique_character_count": 24,
+                "total_characters": 500,
+                "progress_percentage": 4.8,
+                "balance": 12000,
+                "tokens": 90,
+                "featured_character": {"name": "Featured Hero", "anime": "Example Series"},
+            },
+            featured_image=portrait.getvalue(),
+        )
+        with Image.open(card) as rendered:
+            self.assertEqual(rendered.size, (1200, 630))
+            self.assertEqual(rendered.format, "PNG")
 
 
 if __name__ == "__main__":

@@ -120,7 +120,13 @@ def _prefetch_next(chat_id):
 
     async def _warm():
         try:
-            if (getattr(config, "MEDIA_API_KEY", "") or "").strip():
+            if (
+                (getattr(config, "MEDIA_API_URL", "") or "").strip()
+                and (getattr(config, "MEDIA_API_KEY", "") or "").strip()
+            ) or (
+                (getattr(config, "SHIZUMUSIC_API_URL", "") or "").strip()
+                and (getattr(config, "SHIZUMUSIC_API_KEY", "") or "").strip()
+            ):
                 mtype = "video" if video else "audio"
                 path = await Platform.youtube._api_download(vidid, media_type=mtype)
                 if path:
@@ -132,6 +138,35 @@ def _prefetch_next(chat_id):
             pass
 
     _prefetch_tasks[chat_id] = asyncio.create_task(_warm())
+
+
+async def _update_play_status(mystic, text):
+    """Best-effort progress update; status failures must not stop playback."""
+    if mystic is None:
+        return
+    try:
+        updated = await mystic.edit_text(text)
+        if updated is False:
+            slog.debug("[%s] could not update playback status", _STREAM_LOG)
+    except Exception as exc:
+        slog.debug("[%s] playback status edit failed: %s", _STREAM_LOG, exc)
+
+
+async def _await_with_progress(awaitable, mystic, label, interval=20):
+    """Await a slow media operation while keeping its status card informative."""
+    task = asyncio.ensure_future(awaitable)
+    started = _time.monotonic()
+    try:
+        while True:
+            done, _ = await asyncio.wait({task}, timeout=interval)
+            if done:
+                return task.result()
+            elapsed = max(1, int(_time.monotonic() - started))
+            await _update_play_status(mystic, f"⏳ {label}… ({elapsed}s)")
+    except BaseException:
+        if not task.done():
+            task.cancel()
+        raise
 
 
 async def _api_stream_url(vidid, video):
@@ -195,13 +230,25 @@ async def play_youtube_source(vidid, video, mystic, play, instant=True):
     """Fastest & most reliable playback path: local 1-hop API download for BOTH
     audio (MP3) and video (MP4), avoiding remote FFmpeg probe/Range failures
     during /vplay, /skip, and Autoplay."""
-    has_api = bool((getattr(config, "MEDIA_API_KEY", "") or "").strip())
+    has_aoi_api = bool(
+        (getattr(config, "MEDIA_API_URL", "") or "").strip()
+        and (getattr(config, "MEDIA_API_KEY", "") or "").strip()
+    )
+    has_shizumusic_api = bool(
+        (getattr(config, "SHIZUMUSIC_API_URL", "") or "").strip()
+        and (getattr(config, "SHIZUMUSIC_API_KEY", "") or "").strip()
+    )
+    has_api = has_aoi_api or has_shizumusic_api
     mtype = "video" if video else "audio"
-
     # Primary fast-path: download MP3/MP4 locally from Music API (0ms if cached/prefetched),
     # then play directly from local disk so FFmpeg never fails on remote MP4 probing or /skip!
     if has_api:
-        api_path = await Platform.youtube._api_download(vidid, media_type=mtype)
+        await _update_play_status(mystic, "💠 Resolving a fast media-API source…")
+        api_path = await _await_with_progress(
+            Platform.youtube._api_download(vidid, media_type=mtype),
+            mystic,
+            f"Fetching {mtype} from the media API",
+        )
         if api_path:
             try:
                 await play(api_path)
@@ -223,20 +270,26 @@ async def play_youtube_source(vidid, video, mystic, play, instant=True):
 
     if instant:
         permalink = None
-        if has_api and video:
-            permalink = await _api_stream_url(vidid, video)
+        if has_aoi_api:
+            await _update_play_status(mystic, "🎧 Trying the media API's direct stream…")
+            permalink = await _await_with_progress(
+                _api_stream_url(vidid, video),
+                mystic,
+                "Resolving the direct media stream",
+            )
             if permalink:
                 try:
                     await play(permalink)
                     return permalink
                 except (*MEDIA_ERRORS, aiohttp.ClientError, OSError) as exc:
                     slog.warning(
-                        "Media API video stream fallback failed for %s (%s: %s) -> evicting cache",
+                        "Media API %s stream fallback failed for %s (%s: %s) -> evicting cache",
+                        mtype,
                         vidid,
                         type(exc).__name__,
                         exc,
                     )
-                    Platform.youtube.invalidate_media_url(vidid, "video")
+                    Platform.youtube.invalidate_media_url(vidid, mtype)
         if not permalink:
             try:
                 ok, direct = await Platform.youtube.stream_url(
@@ -251,11 +304,25 @@ async def play_youtube_source(vidid, video, mystic, play, instant=True):
                         return direct
                     except MEDIA_ERRORS as exc:
                         slog.warning("Direct playback failed for %s (%s)", vidid, type(exc).__name__)
+    await _update_play_status(
+        mystic,
+        "🎵 The media API did not provide a playable source; trying YouTube's downloader…"
+        if has_api else "🎵 Preparing the track with YouTube's downloader…",
+    )
     try:
-        path, _ = await Platform.youtube.download(vidid, mystic, videoid=True, video=video)
+        path, _ = await _await_with_progress(
+            Platform.youtube.download(vidid, mystic, videoid=True, video=video),
+            mystic,
+            "Preparing the track with YouTube's downloader",
+        )
     except Exception as exc:
         slog.exception("[%s] YouTube download failed for vidid=%s", _STREAM_LOG, vidid)
-        raise AssistantErr(_youtube_download_error_hint(exc)) from exc
+        error_hint = _youtube_download_error_hint(exc)
+        if has_api:
+            error_hint += " The configured download API was also attempted; check the preceding ShizuMusic/Aoi API warnings for its failure reason."
+        else:
+            error_hint += " No media download API is configured; set SHIZUMUSIC_API_URL/SHIZUMUSIC_API_KEY or MEDIA_API_URL/MEDIA_API_KEY privately in the deployment environment."
+        raise AssistantErr(error_hint) from exc
     try:
         await play(path)
     except MEDIA_ERRORS as exc:
@@ -270,16 +337,19 @@ _MEDIA_API_URL = config.MEDIA_API_URL
 def _play_source_tag(stream_link) -> str | None:
     """Which pipe actually fuels this track — the card prints it "via".
 
-    A media-API permalink (…/stream/<id>) means the AoiMusic Api served the
-    stream; anything else (googlevideo URL or a downloaded file) came through
-    the bot's own yt-dlp. Telegram/soundcloud/saavn entries carry no tag here:
+    An Aoi media permalink (…/stream/<id>) or a local ShizuMusic download is
+    labeled by its provider; anything else (googlevideo URL or a downloaded
+    file) came through the bot's own yt-dlp. Telegram/soundcloud/saavn entries carry no tag here:
     the panel falls back to a file-prefix label for those.
     """
     if stream_link is None:
         return None
     s = str(stream_link)
-    if (_MEDIA_API_URL and s.startswith(str(_MEDIA_API_URL).rstrip("/"))) or (
-        (getattr(config, "MEDIA_API_KEY", "") or "").strip() and s.startswith("downloads/")
+    if s.startswith("downloads/shizumusic/"):
+        return "ShizuMusic API"
+    if (
+        (_MEDIA_API_URL and s.startswith(str(_MEDIA_API_URL).rstrip("/")))
+        or ((getattr(config, "MEDIA_API_KEY", "") or "").strip() and s.startswith("downloads/"))
     ):
         return "AoiMusic Api"
     return "YouTube"

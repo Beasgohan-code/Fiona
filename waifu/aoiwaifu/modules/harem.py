@@ -49,6 +49,70 @@ def _filter_collection_by_anime(characters, query):
     ]
 
 
+async def _fetch_catalog_anime_counts(anime_titles):
+    """Count catalog characters for several anime titles with one query."""
+    anime_titles = list(dict.fromkeys(anime_titles))
+    if not anime_titles:
+        return {}
+    cursor = collection.aggregate([
+        {'$match': {'anime': {'$in': anime_titles}}},
+        {'$group': {'_id': '$anime', 'count': {'$sum': 1}}},
+    ])
+    counts = await cursor.to_list(length=None)
+    return {item['_id']: item.get('count', 0) for item in counts}
+
+
+def _invalidate_inline_collection_cache(user_id):
+    try:
+        from aoiwaifu.modules.inlinequery import user_collection_cache
+        user_collection_cache.pop(str(user_id), None)
+    except Exception:
+        pass
+
+
+def _build_pinned_characters_view(user_id, user, lang):
+    """Build a safe pinned-character panel with one-tap unpin actions."""
+    pinned = [str(cid) for cid in user.get('pinned_characters') or []]
+    if not pinned:
+        return (
+            premium_text(rich_card(
+                'Pinned characters',
+                tr("You haven't pinned any characters yet. Use /pincharacter <character_id>.", lang),
+                '📌',
+            )),
+            None,
+        )
+
+    owned_by_id = {}
+    for char in user.get('characters') or []:
+        if isinstance(char, dict) and char.get('id') is not None:
+            owned_by_id.setdefault(str(char['id']), char)
+
+    lines = []
+    keyboard = []
+    for index, character_id in enumerate(pinned, 1):
+        char = owned_by_id.get(character_id)
+        if char:
+            name = escape(str(char.get('name', 'Unknown Character')))
+            rarity = escape(str(char.get('rarity', 'Unknown')))
+            lines.append(f"{index}. <b>{name}</b> — {rarity} <code>#{escape(character_id)}</code>")
+        else:
+            lines.append(f'{index}. <code>#{escape(character_id)}</code> — <i>not in current collection</i>')
+        if character_id.isdigit():
+            keyboard.append([premium_button(
+                tr(f'Unpin #{character_id}', lang),
+                emoji='CLOSE',
+                style='DANGER',
+                callback_data=f'pinnedchars:remove:{user_id}:{character_id}',
+            )])
+
+    lines.append(f'\n{len(pinned)}/10 pinned')
+    return (
+        premium_text(rich_card('Your pinned characters', '\n'.join(lines), '📌')),
+        InlineKeyboardMarkup(keyboard) if keyboard else None,
+    )
+
+
 @app.on_message(filters.command(['pincharacter', 'hpin']))
 async def pin_character_handler(client: Client, message: Message):
     lang = await get_effective_lang(message)
@@ -71,11 +135,7 @@ async def pin_character_handler(client: Client, message: Message):
         return await reply_notice(message, tr('You can pin a maximum of 10 characters. Use /unpincharacter <id> first.', lang))
     pinned.append(character_id)
     await user_collection.update_one({'id': user_id}, {'$set': {'pinned_characters': pinned}})
-    try:
-        from aoiwaifu.modules.inlinequery import user_collection_cache
-        user_collection_cache.pop(str(user_id), None)
-    except Exception:
-        pass
+    _invalidate_inline_collection_cache(user_id)
     await reply_notice(message, tr(f'📌 Character #{character_id} pinned. It will appear at the top of your inline collection.', lang))
 
 @app.on_message(filters.command(['unpincharacter', 'hunpin']))
@@ -93,11 +153,7 @@ async def unpin_character_handler(client: Client, message: Message):
         return await reply_notice(message, tr(f'Character #{character_id} is not pinned.', lang))
     pinned.remove(character_id)
     await user_collection.update_one({'id': user_id}, {'$set': {'pinned_characters': pinned}})
-    try:
-        from aoiwaifu.modules.inlinequery import user_collection_cache
-        user_collection_cache.pop(str(user_id), None)
-    except Exception:
-        pass
+    _invalidate_inline_collection_cache(user_id)
     await reply_notice(message, tr(f'📌 Character #{character_id} unpinned.', lang))
 
 @app.on_message(filters.command(['pinnedcharacters', 'pinlist']))
@@ -105,23 +161,44 @@ async def pinlist_handler(client: Client, message: Message):
     lang = await get_effective_lang(message)
     if not message.from_user:
         return
-    user = await user_collection.find_one({'id': message.from_user.id})
-    pinned = [str(cid) for cid in user.get('pinned_characters') or []] if user else []
-    if not pinned:
-        return await reply_notice(message, tr("You haven't pinned any characters yet. Use /pincharacter <character_id>.", lang))
-    owned_by_id = {}
-    for char in user.get('characters') or []:
-        if isinstance(char, dict) and char.get('id') is not None:
-            owned_by_id.setdefault(str(char['id']), char)
-    lines = ['📌 <b>Your Pinned Characters</b>']
-    for index, character_id in enumerate(pinned, 1):
-        char = owned_by_id.get(character_id)
-        if char:
-            lines.append(f"{index}. <b>{escape(str(char.get('name', 'Unknown Character')))}</b> — {escape(str(char.get('rarity', 'Unknown')))} <code>#{escape(character_id)}</code>")
-        else:
-            lines.append(f'{index}. <code>#{escape(character_id)}</code>')
-    lines.append(f'\n{len(pinned)}/10 pinned')
-    await reply_notice(message, tr('\n'.join(lines), lang), parse_mode=enums.ParseMode.HTML)
+    user = await user_collection.find_one({'id': message.from_user.id}) or {}
+    panel, keyboard = _build_pinned_characters_view(message.from_user.id, user, lang)
+    return await message.reply_text(
+        panel,
+        reply_markup=keyboard,
+        parse_mode=enums.ParseMode.HTML,
+        disable_web_page_preview=True,
+    )
+
+
+@app.on_callback_query(filters.regex('^pinnedchars:remove:'))
+async def pinned_character_remove_callback(client: Client, callback_query: CallbackQuery):
+    lang = await get_effective_lang(callback_query)
+    try:
+        _, action, user_id, character_id = callback_query.data.split(':', 3)
+        user_id = int(user_id)
+        if action != 'remove' or callback_query.from_user.id != user_id:
+            await callback_query.answer(tr("It's not your pinned list!", lang), show_alert=True)
+            return
+        user = await user_collection.find_one({'id': user_id}) or {}
+        pinned = [str(cid) for cid in user.get('pinned_characters') or []]
+        if character_id not in pinned:
+            await callback_query.answer(tr('This character is no longer pinned.', lang), show_alert=True)
+            return
+        pinned.remove(character_id)
+        await user_collection.update_one({'id': user_id}, {'$set': {'pinned_characters': pinned}})
+        _invalidate_inline_collection_cache(user_id)
+        user['pinned_characters'] = pinned
+        panel, keyboard = _build_pinned_characters_view(user_id, user, lang)
+        await callback_query.answer(tr(f'Character #{character_id} unpinned.', lang))
+        await edit_panel(callback_query.message, panel, keyboard)
+    except Exception as exc:
+        print(f'Error removing pinned collection character: {exc}')
+        try:
+            await callback_query.answer(tr('Could not update your pinned list. Please try again.', lang), show_alert=True)
+        except Exception:
+            pass
+
 
 @app.on_message(filters.command(['harem', 'collection', 'claimlist']))
 async def harem_handler(client: Client, message: Message):
@@ -210,9 +287,11 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
         if page < 0 or page >= total_pages:
             page = 0
         lang = await get_effective_lang(callback_query or message, user_id=user_id)
+        duplicate_copies = max(0, total_characters - len(unique_characters))
         harem_message = (
             f"📄 <b>Page:</b> {page + 1}/{total_pages}  •  "
             f"✨ <b>Unique:</b> {len(unique_characters):,}  •  🎴 <b>Cards:</b> {total_characters:,}"
+            f"\n🔁 <b>Duplicate copies:</b> {duplicate_copies:,}"
         )
         if anime_filter:
             harem_message += f"\n🔎 <b>Anime:</b> {escape(str(anime_filter))} · use /harem to clear"
@@ -220,16 +299,18 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
             harem_message += f"\n{t('harem_filtered_by', lang, rarity=escape(str(filter_rarity)))}"
         current_characters = unique_characters[page * items_per_page:(page + 1) * items_per_page]
         current_grouped_characters = {k: list(v) for k, v in groupby(current_characters, key=lambda x: x.get('anime', 'Unknown Anime'))}
+        catalog_anime_counts = await _fetch_catalog_anime_counts(current_grouped_characters)
         for anime, chars in current_grouped_characters.items():
-            total_anime_chars = await collection.count_documents({'anime': anime})
+            total_anime_chars = catalog_anime_counts.get(anime, 0)
             owned_in_anime = len({
                 str(character.get('id'))
                 for character in all_characters
                 if character.get('anime', 'Unknown Anime') == anime
             })
+            completion = (owned_in_anime / total_anime_chars * 100) if total_anime_chars else 0
             harem_message += (
                 f"\n\n{rich_heading(escape(str(anime)), '⛩️')} "
-                f"<i>{owned_in_anime}/{total_anime_chars} collected</i>\n"
+                f"<i>{owned_in_anime}/{total_anime_chars} collected · {completion:.1f}%</i>\n"
             )
             for character in chars:
                 character_id = str(character.get('id', '?'))

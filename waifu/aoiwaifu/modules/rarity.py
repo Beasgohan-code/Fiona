@@ -1,9 +1,9 @@
-"""Show catalog size by rarity in a compact Richgram-style card."""
+"""Show catalog counts for Fiona's active canonical rarity options."""
 
 import html
 
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu import app, collection
+from aoiwaifu import app, collection, rarity_map
 from pyrogram import filters, enums
 from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table
 
@@ -12,21 +12,31 @@ from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table
 async def rarity_count(client, message):
     lang = await get_effective_lang(message)
     try:
-        rarities = await collection.distinct("rarity")
-        if not rarities:
-            return await message.reply_text(
-                premium_text(rich_card("Rarity catalog", "No rarities are available yet.", "⚠️")),
-                parse_mode=enums.ParseMode.HTML,
-            )
-
+        # Aggregate once, then render the active rarities in their configured order.
+        count_rows = await collection.aggregate([
+            {"$group": {"_id": "$rarity", "count": {"$sum": 1}}}
+        ]).to_list(length=None)
+        counts = {row.get("_id"): int(row.get("count", 0) or 0) for row in count_rows}
+        configured = list(rarity_map.values())
         rows = []
-        total_count = 0
-        for rarity in sorted(rarities, key=lambda value: str(value).casefold()):
-            count = await collection.count_documents({"rarity": rarity})
-            total_count += count
-            rows.append((html.escape(str(rarity)), f"<b>{count:,}</b>"))
+        total_count = sum(counts.values())
+
+        for rarity in configured:
+            count = counts.pop(rarity, 0)
+            rows.append((html.escape(rarity), f"<b>{count:,}</b>"))
+
+        # Keep older catalog data visible as a count, without exposing obsolete
+        # rarity names as choices or deleting character records.
+        legacy_count = sum(counts.values())
+        if legacy_count:
+            rows.append(("Legacy / unconfigured", f"<b>{legacy_count:,}</b>"))
         rows.append(("<b>Total characters</b>", f"<b>{total_count:,}</b>"))
-        card = rich_card("Character catalog by rarity", rich_table(("RARITY", "COUNT"), rows), "💎")
+
+        card = rich_card(
+            "Character catalog by rarity",
+            rich_table(("RARITY", "COUNT"), rows),
+            "💎",
+        )
         await message.reply_text(premium_text(tr(card, lang)), parse_mode=enums.ParseMode.HTML)
     except Exception:
         card = rich_card("Catalog unavailable", "Could not load rarity totals. Please try again.", "⚠️")

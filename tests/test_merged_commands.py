@@ -160,6 +160,67 @@ class MergedCommandTests(unittest.TestCase):
         )
         self.assertEqual(filter_characters(characters, " "), characters)
 
+    def test_collection_catalog_progress_batches_anime_counts(self):
+        source_path = WAIFU / "modules/harem.py"
+        tree = ast.parse(source_path.read_text(encoding="utf-8"))
+        helper = next(
+            node for node in tree.body
+            if isinstance(node, ast.AsyncFunctionDef) and node.name == "_fetch_catalog_anime_counts"
+        )
+        calls = []
+
+        class FakeCursor:
+            async def to_list(self, length=None):
+                self.length = length
+                return [{"_id": "Naruto", "count": 42}, {"_id": "One Piece", "count": 31}]
+
+        class FakeCollection:
+            def aggregate(self, pipeline):
+                calls.append(pipeline)
+                return FakeCursor()
+
+        namespace = {"collection": FakeCollection()}
+        exec(compile(ast.Module(body=[helper], type_ignores=[]), str(source_path), "exec"), namespace)
+        counts = asyncio.run(namespace["_fetch_catalog_anime_counts"](["Naruto", "Naruto", "One Piece"]))
+        self.assertEqual(counts, {"Naruto": 42, "One Piece": 31})
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][0]["$match"]["anime"]["$in"], ["Naruto", "One Piece"])
+
+    def test_pinned_collection_panel_escapes_names_and_has_owner_scoped_unpin_buttons(self):
+        source_path = WAIFU / "modules/harem.py"
+        tree = ast.parse(source_path.read_text(encoding="utf-8"))
+        helper = next(
+            node for node in tree.body
+            if isinstance(node, ast.FunctionDef) and node.name == "_build_pinned_characters_view"
+        )
+
+        class FakeKeyboard:
+            def __init__(self, rows):
+                self.inline_keyboard = rows
+
+        namespace = {
+            "escape": __import__("html").escape,
+            "premium_text": lambda text: text,
+            "rich_card": lambda title, body, emoji: f"{emoji} {title}\\n{body}",
+            "tr": lambda text, lang: text,
+            "premium_button": lambda text, **kwargs: {"text": text, **kwargs},
+            "InlineKeyboardMarkup": FakeKeyboard,
+        }
+        exec(compile(ast.Module(body=[helper], type_ignores=[]), str(source_path), "exec"), namespace)
+        panel, keyboard = namespace["_build_pinned_characters_view"](
+            55,
+            {
+                "pinned_characters": [123, 456],
+                "characters": [{"id": 123, "name": "<Anya>", "rarity": "Legendary"}],
+            },
+            "en",
+        )
+        self.assertIn("&lt;Anya&gt;", panel)
+        self.assertIn("#456", panel)
+        self.assertEqual(len(keyboard.inline_keyboard), 2)
+        self.assertEqual(keyboard.inline_keyboard[0][0]["callback_data"], "pinnedchars:remove:55:123")
+        self.assertIn("pinnedchars:remove:55:456", keyboard.inline_keyboard[1][0]["callback_data"])
+
     def test_harem_and_profile_use_shared_rich_ui_without_timed_message_deletion(self):
         harem = (WAIFU / "modules/harem.py").read_text(encoding="utf-8")
         profile = (WAIFU / "modules/stats.py").read_text(encoding="utf-8")
@@ -174,6 +235,8 @@ class MergedCommandTests(unittest.TestCase):
         self.assertIn("collection_anime_filter", harem)
         self.assertIn("filters.regex('^remove_anime_filter:')", harem)
         self.assertIn("owned_in_anime", harem)
+        self.assertIn("{completion:.1f}%", harem)
+        self.assertIn("Duplicate copies:", harem)
         self.assertIn("×{count}", harem)
         self.assertNotIn("rich_table(('ID', 'RARITY', 'CHARACTER', 'OWNED'), rows)", harem)
         self.assertIn("rich_table(\n            ('RARITY', 'CHARACTERS')", profile)
@@ -318,10 +381,18 @@ class MergedCommandTests(unittest.TestCase):
     def test_profile_uses_generated_card_and_keeps_photo_fallback(self):
         profile = (WAIFU / "modules/stats.py").read_text(encoding="utf-8")
         card = (WAIFU / "unit/profile_card.py").read_text(encoding="utf-8")
-        self.assertIn("build_profile_card(stats)", profile)
+        self.assertIn("build_profile_card(stats, featured_image=featured_image)", profile)
         self.assertIn('photo=stats["photo_url"] or STATS_IMG[0]', profile)
-        self.assertIn('image.save(output, format="PNG", optimize=True)', card)
-        self.assertIn("COLLECTION PROGRESS", card)
+        self.assertIn('await _resolve_profile_portrait(', profile)
+        self.assertIn('await client.download_media(file_id, in_memory=True)', profile)
+        self.assertIn('"featured_character": featured_character', profile)
+        self.assertIn('"daily_streak": daily_streak', profile)
+        self.assertIn('image.convert("RGB").save(output, format="PNG", optimize=True)', card)
+        self.assertIn("CATALOG PROGRESS", card)
+        self.assertIn("FAVOURITE CHARACTER", card)
+        self.assertIn("PROFILE PHOTO", card)
+        self.assertIn("GaussianBlur(radius=26)", card)
+        self.assertIn("_blurred_backdrop(featured_image)", card)
 
     def test_owner_command_is_private_and_owner_id_gated(self):
         owner = (WAIFU / "modules/owner.py").read_text(encoding="utf-8")

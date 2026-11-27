@@ -1055,7 +1055,23 @@ class RichMystic:
     async def edit_text(self, text: str, reply_markup=None, **kw) -> bool:
         if not self.id:
             return False
-        return await edit_rich(self.chat_id, self.id, _style_status(text), reply_markup=reply_markup)
+        if await edit_rich(self.chat_id, self.id, _style_status(text), reply_markup=reply_markup):
+            return True
+        # Rich edits can fail on transient MTProto/entity issues. Fall back to a
+        # plain Telegram edit so users do not get stuck seeing "Searching...".
+        try:
+            await _client().edit_message_text(
+                chat_id=self.chat_id,
+                message_id=self.id,
+                text=str(text),
+                parse_mode=None,
+                reply_markup=reply_markup,
+                **_no_preview_kwargs(),
+            )
+            return True
+        except Exception:
+            log.warning("RichMystic plain edit fallback failed in %s (mid=%s)", self.chat_id, self.id, exc_info=True)
+            return False
 
     async def edit(self, text: str, reply_markup=None, **kw) -> bool:
         return await self.edit_text(text, reply_markup=reply_markup, **kw)
