@@ -11,7 +11,7 @@ from pyrogram.types import Message
 from aoiwaifu import app, user_collection
 from aoiwaifu.admin.blocklist import is_user_blocklisted
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import premium_text
+from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table
 
 pay_in_flight = set()
 lock = {}
@@ -81,7 +81,8 @@ async def daily_gift(client: Client, message: Message):
             last_daily = datetime.fromisoformat(last_daily).date()
         if last_daily == today:
             await message.reply_text(
-                tr("🎁 You have already claimed your daily gift today! Come back tomorrow.", lang)
+                premium_text(rich_card("Daily reward claimed", "Your next daily reward is available tomorrow.", "🎁")),
+                parse_mode=enums.ParseMode.HTML,
             )
             return
 
@@ -92,10 +93,12 @@ async def daily_gift(client: Client, message: Message):
         upsert=True,
     )
     new_balance, _ = await get_balance(user_id)
-    user_name = html.escape(message.from_user.first_name or "User")
-    await message.reply_text(
-        tr(f"🎁 {user_name}, you received your daily gift!\n💰 +{daily_amount} coins (Total: {new_balance:,} coins)", lang)
+    card = rich_card(
+        "Daily coins received",
+        rich_table(("TRANSACTION", "COINS"), [("Reward", f"<b>+{daily_amount:,}</b>"), ("New balance", f"<code>{new_balance:,}</code>")]),
+        "🎁",
     )
+    await message.reply_text(premium_text(tr(card, lang)), parse_mode=enums.ParseMode.HTML)
 
 
 @app.on_message(filters.command("weekly"))
@@ -118,7 +121,8 @@ async def weekly_gift(client: Client, message: Message):
             next_week = week_start + timedelta(days=7)
             days_left = max(1, (next_week - now).days)
             await message.reply_text(
-                tr(f"🎁 You have already claimed your weekly gift! Next gift available in {days_left} days.", lang)
+                premium_text(rich_card("Weekly reward claimed", f"Your next reward is available in <b>{days_left} days</b>.", "🎁")),
+                parse_mode=enums.ParseMode.HTML,
             )
             return
 
@@ -129,10 +133,12 @@ async def weekly_gift(client: Client, message: Message):
         upsert=True,
     )
     new_balance, _ = await get_balance(user_id)
-    user_name = html.escape(message.from_user.first_name or "User")
-    await message.reply_text(
-        tr(f"🎉 {user_name}, you received your weekly gift!\n💰 +{weekly_amount} coins (Total: {new_balance:,} coins)", lang)
+    card = rich_card(
+        "Weekly coins received",
+        rich_table(("TRANSACTION", "COINS"), [("Reward", f"<b>+{weekly_amount:,}</b>"), ("New balance", f"<code>{new_balance:,}</code>")]),
+        "🎁",
     )
+    await message.reply_text(premium_text(tr(card, lang)), parse_mode=enums.ParseMode.HTML)
 
 
 @app.on_message(filters.command(["balance", "bal"]))
@@ -144,12 +150,17 @@ async def balance(client: Client, message: Message):
     lang = await get_effective_lang(message, user_id=user_id)
     user_balance, user_tokens = await get_balance(user_id)
     user_name = html.escape(message.from_user.first_name or "User")
-    response = (
-        f"╭━━━〔 💰 𝐖𝐀𝐋𝐋𝐄𝐓 〕━━━╮\n"
-        f"<blockquote>👤 <b>Collector:</b> {user_name}\n"
-        f"💰 <b>Coins:</b> <code>{user_balance:,}</code>\n"
-        f"🪙 <b>Tokens:</b> <code>{user_tokens:,}</code></blockquote>\n"
-        f"╰━━━━━━━━━━━━━━━━━╯"
+    response = rich_card(
+        "Collector wallet",
+        rich_table(
+            ("ASSET", "BALANCE"),
+            [
+                (f"👤 {user_name}", ""),
+                ("💰 Coins", f"<code>{user_balance:,}</code>"),
+                ("🪙 Tokens", f"<code>{user_tokens:,}</code>"),
+            ],
+        ),
+        "👛",
     )
     await message.reply_text(premium_text(tr(response, lang)), parse_mode=enums.ParseMode.HTML)
 
@@ -231,12 +242,16 @@ async def pay(client: Client, message: Message):
         )
         sender_name = html.escape(message.from_user.first_name or "User")
         safe_recipient = html.escape(str(recipient_name))
-        await message.reply_text(
-            tr(
-                f"✅ <b>Payment Successful!</b>\n"
-                f"💸 {sender_name} sent <code>{amount:,}</code> coins to {safe_recipient}.",
-                lang,
+        payment_card = rich_card(
+            "Payment complete",
+            rich_table(
+                ("TRANSFER", "DETAIL"),
+                [("From", sender_name), ("To", safe_recipient), ("Amount", f"<b>{amount:,} coins</b>")],
             ),
+            "💸",
+        )
+        await message.reply_text(
+            premium_text(tr(payment_card, lang)),
             parse_mode=enums.ParseMode.HTML,
         )
         try:

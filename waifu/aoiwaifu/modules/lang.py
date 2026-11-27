@@ -38,6 +38,7 @@ from aoiwaifu.unit.aoi_lang import (
     t,
 )
 from aoiwaifu.modules.start import generate_start_message
+from aoiwaifu.unit.rich_ui import edit_panel, premium_text
 
 
 async def is_group_admin_or_owner(client: Client, chat_id: int, user_id: int) -> bool:
@@ -117,7 +118,7 @@ async def dm_lang_command(client: Client, message: Message):
         back_callback="back_to_home",
         extra_suffix=":menu",
     )
-    await message.reply_text(text, reply_markup=markup, parse_mode=enums.ParseMode.HTML)
+    await message.reply_text(premium_text(text), reply_markup=markup, parse_mode=enums.ParseMode.HTML)
 
 
 @app.on_message(filters.command(["wlang", "wlanguage", "wsetlang"]) & filters.group)
@@ -142,7 +143,7 @@ async def group_settings_lang_command(client: Client, message: Message):
 
     group_title = getattr(message.chat, "title", None) or f"Group {chat_id}"
     text, markup = await build_group_settings_text_and_markup(chat_id, group_title, lang=cur_lang)
-    await message.reply_text(text, reply_markup=markup, parse_mode=enums.ParseMode.HTML)
+    await message.reply_text(premium_text(text), reply_markup=markup, parse_mode=enums.ParseMode.HTML)
 
 
 # 🔹 Callback: Open DM Language Menu from Start Screen
@@ -157,10 +158,7 @@ async def open_dm_lang_callback(client: Client, query: CallbackQuery):
         back_callback="back_to_home",
         extra_suffix=":menu",
     )
-    try:
-        await query.message.edit_caption(caption=text, reply_markup=markup, parse_mode=enums.ParseMode.HTML)
-    except Exception:
-        await query.message.edit_text(text=text, reply_markup=markup, parse_mode=enums.ParseMode.HTML)
+    await edit_panel(query.message, premium_text(text), reply_markup=markup)
     await query.answer()
 
 
@@ -177,10 +175,7 @@ async def open_group_settings_callback(client: Client, query: CallbackQuery):
 
     group_title = getattr(query.message.chat, "title", None) or f"Group {chat_id}"
     text, markup = await build_group_settings_text_and_markup(chat_id, group_title, lang=cur_lang)
-    try:
-        await query.message.edit_caption(caption=text, reply_markup=markup, parse_mode=enums.ParseMode.HTML)
-    except Exception:
-        await query.message.edit_text(text=text, reply_markup=markup, parse_mode=enums.ParseMode.HTML)
+    await edit_panel(query.message, premium_text(text), reply_markup=markup)
     await query.answer()
 
 
@@ -199,10 +194,7 @@ async def set_dm_lang_callback(client: Client, query: CallbackQuery):
     # After choosing language on first /start (or from start menu), display the localized Start Home screen!
     caption, buttons = await generate_start_message(client, query.message, lang=new_lang)
     markup = InlineKeyboardMarkup(buttons)
-    try:
-        await query.message.edit_caption(caption=caption, reply_markup=markup, parse_mode=enums.ParseMode.HTML)
-    except Exception:
-        await query.message.edit_text(text=caption, reply_markup=markup, parse_mode=enums.ParseMode.HTML)
+    await edit_panel(query.message, premium_text(caption), reply_markup=markup)
 
 
 # 🔹 Callback: Select Group Language (Group Settings)
@@ -223,7 +215,4 @@ async def set_group_lang_callback(client: Client, query: CallbackQuery):
 
     group_title = getattr(query.message.chat, "title", None) or f"Group {chat_id}"
     text, markup = await build_group_settings_text_and_markup(chat_id, group_title, lang=new_lang)
-    try:
-        await query.message.edit_caption(caption=text, reply_markup=markup, parse_mode=enums.ParseMode.HTML)
-    except Exception:
-        await query.message.edit_text(text=text, reply_markup=markup, parse_mode=enums.ParseMode.HTML)
+    await edit_panel(query.message, premium_text(text), reply_markup=markup)

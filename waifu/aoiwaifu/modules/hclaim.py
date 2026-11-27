@@ -12,8 +12,10 @@
 
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 import asyncio
+import html
 from pyrogram import Client, filters, types as t_types
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import InlineKeyboardMarkup
+from aoiwaifu.unit.rich_ui import premium_button, premium_text, rich_card, rich_table
 from datetime import datetime, timedelta
 from aoiwaifu import ZYRO as bot
 from aoiwaifu import user_collection, collection, user_guess_progress, SUPPORT_CHAT_ID as chat, SUPPORT_CHAT
@@ -64,8 +66,14 @@ async def mclaim(_, message: t_types.Message):
     if target_chat and str(message.chat.id) != target_chat:
         reply_markup = None
         if SUPPORT_CHAT:
-            reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton('💬 Join Support Chat', url=SUPPORT_CHAT)]])
-        return await message.reply_text(tr('🔔 Daily character claims are only available in the configured support group.', lang), reply_markup=reply_markup)
+            reply_markup = InlineKeyboardMarkup([[
+                premium_button('Join support group', emoji='CHAT_BUBBLE', style='PRIMARY', url=SUPPORT_CHAT)
+            ]])
+        return await message.reply_text(
+            premium_text(rich_card('Daily claim', 'Claims are available in the configured support group.', '🔔')),
+            reply_markup=reply_markup,
+            parse_mode='html',
+        )
     if user_id in claim_lock:
         await message.reply_text(tr('Your claim request is already being processed. Please wait.', lang))
         return
@@ -79,15 +87,48 @@ async def mclaim(_, message: t_types.Message):
         if last_claimed_date and hasattr(last_claimed_date, 'date') and last_claimed_date.date() == datetime.utcnow().date():
             remaining_time = timedelta(days=1) - (datetime.utcnow() - last_claimed_date)
             formatted_time = await format_time_delta(remaining_time)
-            return await message.reply_text(tr(f"⏳ *You've already claimed today! Next reward in:* `{formatted_time}`", lang))
+            return await message.reply_text(
+                premium_text(rich_card('Claim already collected', f"Your next daily claim unlocks in <code>{html.escape(formatted_time)}</code>.", '⏳')),
+                parse_mode='html',
+            )
         unique_characters = await get_unique_characters(user_id)
         if not unique_characters:
-            return await message.reply_text(tr('🚫 *No characters available to claim at the moment. Please try again later.*', lang))
+            return await message.reply_text(
+                premium_text(rich_card('No claim available', 'There are no eligible characters right now. Please try again later.', '🚫')),
+                parse_mode='html',
+            )
         await user_collection.update_one({'id': user_id}, {'$push': {'characters': {'$each': unique_characters}}, '$set': {'last_daily_reward': datetime.utcnow()}})
         for character in unique_characters:
-            await message.reply_photo(photo=character['img_url'], caption=tr(f"🎊 ℂ𝕆ℕ𝔾ℝ𝔸𝕋𝕌𝕃𝔸𝕋𝕀𝕆ℕ𝕊 {mention}! 🎉\n🌸 𝐍𝐚𝐦𝐞 : {character['name']}\n🌈 𝐑𝐚𝐫𝐢𝐭𝐲 : {character['rarity']}\n⛩️ 𝐀𝐧𝐢𝐦𝐞 : {character['anime']}\n💫 ℭ𝔬𝔪𝔢 𝔟𝔞𝔠𝔨 𝔱𝔬𝔪𝔬𝔯𝔯𝔬𝔴 𝔣𝔬𝔯 𝔞𝔫𝔬𝔱𝔥𝔢𝔯 𝔠𝔩𝔞𝔦𝔪!", lang))
+            details = rich_table(
+                ('DETAIL', 'CHARACTER'),
+                [
+                    ('Name', f"<b>{html.escape(str(character.get('name', 'Unknown')))}</b>"),
+                    ('Rarity', html.escape(str(character.get('rarity', 'Unknown')))),
+                    ('Anime', html.escape(str(character.get('anime', 'Unknown')))),
+                    ('ID', f"<code>{html.escape(str(character.get('id', '?')))}</code>"),
+                ],
+            )
+            caption = premium_text(rich_card(
+                'Daily character claimed',
+                f"Congratulations, {mention}!\n{details}\nCome back tomorrow for another claim.",
+                '🎁',
+            ))
+            if character.get('img_url'):
+                try:
+                    await message.reply_photo(
+                        photo=character['img_url'],
+                        caption=tr(caption, lang),
+                        parse_mode='html',
+                    )
+                    continue
+                except Exception:
+                    pass
+            await message.reply_text(tr(caption, lang), parse_mode='html')
     except Exception as e:
         print(f'Error in mclaim command: {e}')
-        await message.reply_text(tr('❌ *An unexpected error occurred.*', lang))
+        await message.reply_text(
+            premium_text(rich_card('Claim unavailable', 'Something went wrong while processing this claim. Please retry shortly.', '⚠️')),
+            parse_mode='html',
+        )
     finally:
         claim_lock.pop(user_id, None)

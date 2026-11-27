@@ -1,10 +1,12 @@
 """User character redeem command (/redeem)."""
 
+import html
 from pymongo import ReturnDocument
 from pyrogram import enums, filters
 
 from aoiwaifu import ZYRO as app, collection, db, user_collection
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
+from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table
 
 redeem_collection = db["redeem_codes"]
 redeem_locks = set()
@@ -76,13 +78,19 @@ async def redeem_character(client, message):
         await user_collection.update_one(
             {"id": user_id}, {"$push": {"characters": character}}, upsert=True
         )
-        char_info = (
-            f"🎭 <b>Character:</b> <code>{character.get('name', 'Unknown')}</code>\n"
-            f"📺 <b>Anime:</b> <code>{character.get('anime', 'Unknown')}</code>\n"
-            f"🌟 <b>Rarity:</b> <code>{character.get('rarity', 'Unknown')}</code>\n"
-            f"🖼 <b>Image:</b> <a href=\"{character.get('img_url', '#')}\">Click Here</a>\n\n"
-            f"🎉 <b>You have successfully redeemed this character!</b>"
+        char_info = rich_card(
+            'Code redeemed',
+            rich_table(
+                ('DETAIL', 'CHARACTER'),
+                [
+                    ('Name', f"<b>{html.escape(str(character.get('name', 'Unknown')))}</b>"),
+                    ('Anime', html.escape(str(character.get('anime', 'Unknown')))),
+                    ('Rarity', html.escape(str(character.get('rarity', 'Unknown')))),
+                    ('ID', f"<code>{html.escape(str(character.get('id', '?')))}</code>"),
+                ],
+            ) + "\nThis character has been added to your collection.",
+            '🎟️',
         )
-        await message.reply_text(tr(char_info, lang), parse_mode=enums.ParseMode.HTML)
+        await message.reply_text(premium_text(tr(char_info, lang)), parse_mode=enums.ParseMode.HTML)
     finally:
         redeem_locks.discard(user_id)

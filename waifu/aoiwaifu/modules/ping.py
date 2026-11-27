@@ -4,6 +4,7 @@ from pyrogram import filters, enums
 from telegram import Update
 from telegram.ext import CommandHandler, CallbackContext
 from aoiwaifu import app, application, sudo_users, OWNER_ID
+from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table
 
 START_TIME_PING = time.time()
 
@@ -19,26 +20,36 @@ async def pyro_ping(client, message):
     start_time = time.time()
     msg = await message.reply_text(tr("🌸 <i>Pinging Fiona servers...</i>", lang), parse_mode=enums.ParseMode.HTML)
     elapsed_time = round((time.time() - start_time) * 1000, 2)
-    uptime = _format_uptime()
-    response_text = (
-        f"╭━━━〔 🌸 𝐀𝐎𝐈 𝐖𝐀𝐈𝐅𝐔 ✦ 𝐏𝐎𝐍𝐆 〕━━━╮\n\n"
-        f"<blockquote>⚡ <b>Network Latency:</b> <code>{elapsed_time} ms</code>\n"
-        f"⏳ <b>Uptime:</b> <code>{uptime}</code>\n"
-        f"🌸 <b>Core Status:</b> <code>Optimal &amp; Operational ✦</code></blockquote>\n"
-        f"╰━━━━━━━━━━━━━━━━━━━━╯"
+    response_text = rich_card(
+        'Fiona service health',
+        rich_table(
+            ('CHECK', 'RESULT'),
+            [
+                ('Telegram response', f'<code>{elapsed_time:.2f} ms</code>'),
+                ('Process uptime', f'<code>{_format_uptime()}</code>'),
+                ('Bot status', '<b>Online</b>'),
+            ],
+        ),
+        '📶',
     )
-    await msg.edit_text(tr(response_text, lang), parse_mode=enums.ParseMode.HTML)
+    await msg.edit_text(premium_text(tr(response_text, lang)), parse_mode=enums.ParseMode.HTML)
 
 async def ping(update: Update, context: CallbackContext) -> None:
     lang = await get_effective_lang(update)
     start_time = time.time()
     message = await update.message.reply_text(tr("🌸 <i>Pinging Fiona servers...</i>", lang), parse_mode="HTML")
     elapsed_time = round((time.time() - start_time) * 1000, 2)
-    response_text = (
-        f"╭━━━〔 🌸 𝐀𝐎𝐈 𝐖𝐀𝐈𝐅𝐔 ✦ 𝐏𝐎𝐍𝐆 〕━━━╮\n\n"
-        f"<blockquote>⚡ <b>Network Latency:</b> <code>{elapsed_time} ms</code>\n"
-        f"🌸 <b>Core Status:</b> <code>Optimal &amp; Operational ✦</code></blockquote>\n"
-        f"╰━━━━━━━━━━━━━━━━━━━━╯"
+    response_text = rich_card(
+        'Fiona service health',
+        rich_table(
+            ('CHECK', 'RESULT'),
+            [
+                ('Telegram response', f'<code>{elapsed_time:.2f} ms</code>'),
+                ('Process uptime', f'<code>{_format_uptime()}</code>'),
+                ('Bot status', '<b>Online</b>'),
+            ],
+        ),
+        '📶',
     )
     await message.edit_text(tr(response_text, lang), parse_mode="HTML")
 

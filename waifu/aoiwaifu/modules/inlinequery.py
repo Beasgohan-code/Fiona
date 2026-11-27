@@ -18,6 +18,7 @@ from telegram.ext import InlineQueryHandler, ContextTypes
 
 from aoiwaifu import app, application, user_collection
 from aoiwaifu.unit.aoi_inline import *
+from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table
 
 all_characters_cache = TTLCache(maxsize=10000, ttl=36000)
 user_collection_cache = TTLCache(maxsize=10000, ttl=60)
@@ -126,31 +127,28 @@ async def inlinequery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         char_rarity = escape(str(character.get("rarity", "Unknown")))
         char_id = escape(str(character.get("id", "Unknown")))
 
+        details = [
+            ('Name', f"<b>{char_name}</b>"),
+            ('Anime', char_anime),
+            ('Rarity', char_rarity),
+            ('ID', f"<code>#{char_id}</code>"),
+        ]
         if user:
             user_character_count = sum(
                 1
-                for char in user["characters"]
-                if "id" in char and char["id"] == character["id"]
+                for char in (user.get("characters") or [])
+                if isinstance(char, dict) and str(char.get("id")) == str(character.get("id"))
             )
             owner_name = escape(str(user.get("first_name", "Collector")))
-            caption = (
-                f"╭━〔 🌸 𝐀𝐎𝐈 𝐖𝐀𝐈𝐅𝐔 ✦ 𝐇𝐀𝐑𝐄𝐌 〕━╮\n"
-                f"👤 <b>Collector:</b> <a href='tg://user?id={user['id']}'>{owner_name}</a>\n\n"
-                f"<blockquote>💮 <b>Name:</b> {char_name} <code>(x{user_character_count})</code>\n"
-                f"🌸 <b>Anime:</b> {char_anime}\n"
-                f"💎 <b>Rarity:</b> {char_rarity}\n"
-                f"🆔 <b>ID:</b> <code>#{char_id}</code></blockquote>\n"
-                f"╰━━━━━━━━━━━━━━━━━━╯"
-            )
-        else:
-            caption = (
-                f"╭━〔 🌸 𝐀𝐎𝐈 𝐖𝐀𝐈𝐅𝐔 ✦ 𝐂𝐀𝐑𝐃 〕━╮\n\n"
-                f"<blockquote>💮 <b>Name:</b> {char_name}\n"
-                f"🌸 <b>Anime:</b> {char_anime}\n"
-                f"💎 <b>Rarity:</b> {char_rarity}\n"
-                f"🆔 <b>ID:</b> <code>#{char_id}</code></blockquote>\n\n"
-                f"╰━━━━━━━━━━━━━━━━━━╯"
-            )
+            details.insert(0, (
+                'Collector',
+                f"<a href='tg://user?id={user['id']}'>{owner_name}</a> · x{user_character_count}",
+            ))
+        caption = premium_text(rich_card(
+            'Waifu character card',
+            rich_table(('DETAIL', 'VALUE'), details),
+            '🎴',
+        ))
 
         result_id = f"{character.get('id', 'unknown')}_{time.time_ns()}"
 
@@ -170,7 +168,9 @@ async def inlinequery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                     ),
                     caption=caption,
                     parse_mode="HTML",
-                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Who Have It", callback_data=f"whohaveit_{char_id}")]]),
+                    reply_markup=InlineKeyboardMarkup([[
+                        InlineKeyboardButton("👥 Find collectors", callback_data=f"whohaveit_{char_id}")
+                    ]]),
                 )
             )
         elif "img_url" in character:
@@ -186,6 +186,9 @@ async def inlinequery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                     ),
                     caption=caption,
                     parse_mode="HTML",
+                    reply_markup=InlineKeyboardMarkup([[
+                        InlineKeyboardButton("👥 Find collectors", callback_data=f"whohaveit_{char_id}")
+                    ]]),
                 )
             )
 

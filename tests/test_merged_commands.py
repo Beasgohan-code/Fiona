@@ -159,11 +159,15 @@ class MergedCommandTests(unittest.TestCase):
         self.assertIn("show_alert=True", autoplay)
 
     def test_major_waifu_cards_share_rich_text_and_premium_controls(self):
-        modules = ("shop", "trade", "gift", "fav", "check", "guess", "rank", "leaderboard", "balance", "sips", "addchar", "referral")
+        modules = ("shop", "trade", "gift", "fav", "check", "guess", "rank", "leaderboard", "balance", "sips", "addchar", "referral", "hclaim", "gen", "rarity", "total", "ping", "lang")
         for module in modules:
             source = (WAIFU / f"modules/{module}.py").read_text(encoding="utf-8")
             self.assertIn("rich_ui", source, f"{module} should use shared card rendering")
             self.assertIn("premium_text", source, f"{module} should decorate card text")
+        inline_query = (WAIFU / "modules/inlinequery.py").read_text(encoding="utf-8")
+        self.assertIn("rich_card", inline_query)
+        self.assertIn("rich_table", inline_query)
+        self.assertIn("premium_text", inline_query)
 
     def test_help_uses_the_unified_waifu_command_names(self):
         help_data = waifu_help_data()
@@ -209,6 +213,7 @@ class MergedCommandTests(unittest.TestCase):
             WAIFU / "modules/sips.py",
             WAIFU / "modules/addchar.py",
             WAIFU / "modules/referral.py",
+            WAIFU / "modules/hclaim.py",
             WAIFU / "unit/aoi_lang.py",
         ):
             tree = ast.parse(path.read_text(encoding="utf-8"))
