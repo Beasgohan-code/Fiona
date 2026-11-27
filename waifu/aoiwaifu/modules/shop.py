@@ -1,10 +1,12 @@
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t
+import html
 import random
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto, InputMediaVideo
+from pyrogram.types import InlineKeyboardMarkup, InputMediaPhoto, InputMediaVideo
 from bson import ObjectId
 from pyrogram import filters
 from pyrogram.enums import ParseMode
 from aoiwaifu import *
+from aoiwaifu.unit.rich_ui import premium_button, premium_text
 from pymongo import ReturnDocument
 user_shop_state = {}
 shop_claim_locks = set()
@@ -14,7 +16,10 @@ SHOP_RARITIES = [('Frequent 🫧', '🫧'), ('Superior 🎋', '🎋'), ('Elite �
 SHOP_MAIN_CAPTION = '╭━〔 🌸 𝐀𝐎𝐈 𝐖𝐀𝐈𝐅𝐔 ✦ 𝐒𝐇𝐎𝐏 〕━╮\n\n<blockquote>🌟 <b>Choose a rarity emoji below to browse the Bazaar:</b>\n🫧 Frequent  •  🎋 Superior  •  🪸 Elite\n👑 Majestic  •  🏜️ Summer</blockquote>\n╰━━━━━━━━━━━━━━━━━━╯'
 
 def build_shop_keyboard() -> InlineKeyboardMarkup:
-    buttons = [InlineKeyboardButton(emoji, callback_data=f'xeno_{i}') for i, (_, emoji) in enumerate(SHOP_RARITIES)]
+    buttons = [
+        premium_button(rarity.split()[0], emoji='STAR', callback_data=f'xeno_{i}')
+        for i, (rarity, _) in enumerate(SHOP_RARITIES)
+    ]
     keyboard = [buttons[i:i + 3] for i in range(0, len(buttons), 3)]
     return InlineKeyboardMarkup(keyboard)
 
@@ -32,6 +37,7 @@ async def _edit_shop_message_media(msg, media_url: str, caption: str, reply_mark
     Edit the existing shop message in place instead of deleting and sending a new message.
     """
     try:
+        caption = premium_text(caption)
         if is_video(media_url):
             media_obj = InputMediaVideo(media=media_url, caption=caption, parse_mode=ParseMode.HTML)
         else:
@@ -46,7 +52,12 @@ async def _edit_shop_message_media(msg, media_url: str, caption: str, reply_mark
 @app.on_message(filters.command(['shop', 'hshop', 'hshopmenu']))
 async def shop_menu(client, message):
     lang = await get_effective_lang(message)
-    await message.reply_photo(photo=SHOP_IMAGE_URL, caption=t('shop_main_caption', lang), reply_markup=build_shop_keyboard(), parse_mode=ParseMode.HTML)
+    await message.reply_photo(
+        photo=SHOP_IMAGE_URL,
+        caption=premium_text(t('shop_main_caption', lang)),
+        reply_markup=build_shop_keyboard(),
+        parse_mode=ParseMode.HTML,
+    )
 
 @app.on_callback_query(filters.regex('^xeno_\\d+$'))
 async def show_rarity_list(client, callback_query):
@@ -70,8 +81,34 @@ async def show_character(client, msg, user_id):
     data = user_shop_state[user_id]
     char = data['characters'][data['index']]
     price = RARITY_PRICE.get(char['rarity'], 1000)
-    caption = f"╭━〔 🌸 𝐀𝐎𝐈 𝐖𝐀𝐈𝐅𝐔 ✦ 𝐒𝐇𝐎𝐏 〕━╮\n\n<blockquote>💎 <b>{char['name']}</b>\n🏯 <b>Anime:</b> {char['anime']}\n⭐ <b>Rarity:</b> {char['rarity']}\n💰 <b>Price:</b> {price:,} Star Coins\n🆔 <b>ID:</b> <code>{char['id']}</code></blockquote>\n╰━━━━━━━━━━━━━━━━━━╯"
-    keyboard = [[InlineKeyboardButton('⬅️', callback_data='prev_char'), InlineKeyboardButton('🪄 Buy', callback_data=f"claim_{data['index']}"), InlineKeyboardButton('➡️', callback_data='next_char')], [InlineKeyboardButton('🔄 5k', callback_data='refresh_chars'), InlineKeyboardButton('🏪 Back', callback_data='shop_back')]]
+    user = await user_collection.find_one({'id': user_id}, {'balance': 1, 'characters': 1}) or {}
+    balance = int(user.get('balance', 0) or 0)
+    owned = sum(
+        1 for item in (user.get('characters') or [])
+        if isinstance(item, dict) and str(item.get('id')) == str(char.get('id'))
+    )
+    caption = (
+        f"╭━━〔 🛍️ <b>FIONA CHARACTER BAZAAR</b> 〕━━╮\n"
+        f"<blockquote>💎 <b>{html.escape(str(char.get('name', 'Unknown')))}</b>\n"
+        f"🏯 <b>Anime:</b> {html.escape(str(char.get('anime', 'Unknown')))}\n"
+        f"⭐ <b>Rarity:</b> {html.escape(str(char.get('rarity', 'Unknown')))}\n"
+        f"🆔 <b>ID:</b> <code>{html.escape(str(char.get('id', '?')))}</code>\n"
+        f"💰 <b>Price:</b> {price:,} coins\n"
+        f"👛 <b>Your wallet:</b> {balance:,} coins\n"
+        f"📦 <b>Already owned:</b> {owned}</blockquote>\n"
+        "<i>Review the details, then buy or keep browsing.</i>"
+    )
+    keyboard = [
+        [
+            premium_button('Previous', emoji='LEFT_CHEVRON', callback_data='prev_char'),
+            premium_button('Buy', emoji='CART', style='SUCCESS', callback_data=f"claim_{data['index']}"),
+            premium_button('Next', emoji='RIGHT_CHEVRON', callback_data='next_char'),
+        ],
+        [
+            premium_button('Refresh · 5k', emoji='REFRESH', callback_data='refresh_chars'),
+            premium_button('Shop home', emoji='HOME', callback_data='shop_back'),
+        ],
+    ]
     image_url = char.get('img_url') or char.get('image') or char.get('url')
     if not image_url:
         try:
@@ -153,5 +190,6 @@ async def claim_character(client, callback_query):
         if not updated_user:
             return await callback_query.answer(tr('❌ Not enough coins or not registered!', lang), show_alert=True)
         await callback_query.answer(tr(f"🎉 You claimed {char.get('name')} for {price:,} coins!", lang), show_alert=True)
+        await show_character(client, callback_query.message, user_id)
     finally:
         shop_claim_locks.discard(user_id)

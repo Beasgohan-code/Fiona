@@ -11,11 +11,13 @@
 
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 import asyncio
+import html
 from pyrogram import filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import InlineKeyboardMarkup
 from pyrogram.enums import ParseMode
 from aoiwaifu import user_collection, ZYRO
 from aoiwaifu.admin.blocklist import is_user_blocklisted
+from aoiwaifu.unit.rich_ui import premium_button, premium_text, rich_card, edit_panel
 
 pending_gifts = {}
 
@@ -72,12 +74,31 @@ async def gift(client, message):
         'receiver_first_name': receiver_first_name,
         'processed': False,
     }
-    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton('✅ Confirm Gift', callback_data='confirm_gift')], [InlineKeyboardButton('❌ Cancel Gift', callback_data='cancel_gift')]])
-    caption = f"🎁 <b>Gift Character</b>\n🌸 <b>{character.get('name', 'Unknown')}</b>\n"
+    keyboard = InlineKeyboardMarkup([[
+        premium_button('Confirm gift', emoji='GIFT', style='SUCCESS', callback_data='confirm_gift'),
+        premium_button('Cancel', emoji='CLOSE', style='DANGER', callback_data='cancel_gift'),
+    ]])
+    character_name = html.escape(str(character.get('name', 'Unknown')))
+    recipient_name = html.escape(str(receiver_first_name or 'your friend'))
+    caption = rich_card(
+        'Gift preview',
+        f"Send <b>{character_name}</b> to <b>{recipient_name}</b>?\n"
+        "Confirm to transfer one copy from your collection. This request expires in one hour.",
+        '🎁',
+    )
     if character.get('img_url'):
-        await message.reply_photo(photo=character['img_url'], caption=tr(caption, lang), parse_mode=ParseMode.HTML, reply_markup=keyboard)
+        await message.reply_photo(
+            photo=character['img_url'],
+            caption=premium_text(tr(caption, lang)),
+            parse_mode=ParseMode.HTML,
+            reply_markup=keyboard,
+        )
     else:
-        await message.reply_text(tr(caption, lang), parse_mode=ParseMode.HTML, reply_markup=keyboard)
+        await message.reply_text(
+            premium_text(tr(caption, lang)),
+            parse_mode=ParseMode.HTML,
+            reply_markup=keyboard,
+        )
     asyncio.create_task(auto_cancel_gift(sender_id, receiver_id))
 
 
@@ -138,4 +159,21 @@ async def on_callback_query(client, callback_query):
         else:
             await user_collection.insert_one({'id': receiver_id, 'username': gift_item['receiver_username'], 'first_name': gift_item['receiver_first_name'], 'characters': [gift_item['character']]})
 
-        # Record in temporary in-memory Gift Logs (NOT stored in MongoDB)
+        # Gift history is intentionally not persisted; this preserves the existing privacy policy.
+        pending_gifts.pop((sender_id, receiver_id), None)
+        await callback_query.answer(tr('Gift sent successfully!', lang))
+        confirmation = rich_card(
+            'Gift sent',
+            f"<b>{html.escape(str(gift_character.get('name', 'Unknown')))}</b> was added to "
+            f"<b>{html.escape(str(gift_item.get('receiver_first_name') or 'your friend'))}</b>'s collection.",
+            '🎁',
+        )
+        await edit_panel(callback_query.message, tr(confirmation, lang), reply_markup=None)
+    else:
+        pending_gifts.pop((sender_id, receiver_id), None)
+        await callback_query.answer(tr('Gift cancelled.', lang))
+        await edit_panel(
+            callback_query.message,
+            rich_card('Gift cancelled', 'No character was transferred.', '❌'),
+            reply_markup=None,
+        )

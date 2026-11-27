@@ -1,11 +1,13 @@
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 import asyncio
+import html
 import uuid
 from pyrogram import filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import InlineKeyboardMarkup
 from pyrogram.enums import ParseMode
 from aoiwaifu import user_collection, ZYRO
 from aoiwaifu.admin.blocklist import is_user_blocklisted
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card
 pending_trades = {}
 lock = []
 
@@ -66,9 +68,24 @@ async def trade(client, message):
     trade_id = str(uuid.uuid4())
     lock.append(sender_id)
     lock.append(receiver_id)
-    pending_trades[trade_id] = {'sender_id': sender_id, 'sender_char': sender_char, 'receiver_id': receiver_id, 'receiver_char': receiver_char, 'receiver_username': receiver_username, 'receiver_first_name': receiver_first_name, 'processed': False, 'message_id': None}
-    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton('Confirm Trade', callback_data=f'confirm_trade_{trade_id}')], [InlineKeyboardButton('Cancel Trade', callback_data=f'cancel_trade_{trade_id}')]])
-    trade_message = await message.reply_text(tr(f"{message.reply_to_message.from_user.mention}, do you agree to trade your character (ID: {receiver_char_id}) with {message.from_user.mention}'s character (ID: {sender_char_id})?", lang), parse_mode=ParseMode.HTML, reply_markup=keyboard)
+    pending_trades[trade_id] = {'sender_id': sender_id, 'sender_first_name': message.from_user.first_name or 'Collector', 'sender_char': sender_char, 'receiver_id': receiver_id, 'receiver_char': receiver_char, 'receiver_username': receiver_username, 'receiver_first_name': receiver_first_name or 'Collector', 'processed': False, 'message_id': None}
+    keyboard = InlineKeyboardMarkup([
+        [
+            premium_button('Accept trade', emoji='CHECK_CIRCLE', style='SUCCESS', callback_data=f'confirm_trade_{trade_id}'),
+            premium_button('Decline', emoji='CLOSE', style='DANGER', callback_data=f'cancel_trade_{trade_id}'),
+        ]
+    ])
+    trade_body = (
+        f"{message.reply_to_message.from_user.mention}, review this swap before confirming.\n"
+        f"You receive character <code>{receiver_char_id}</code>; "
+        f"{message.from_user.mention} offers <code>{sender_char_id}</code>.\n"
+        "Only the recipient can accept. This offer expires in 10 minutes."
+    )
+    trade_message = await message.reply_text(
+        premium_text(rich_card('Character trade offer', tr(trade_body, lang), '🔁')),
+        parse_mode=ParseMode.HTML,
+        reply_markup=keyboard,
+    )
     pending_trades[trade_id]['message_id'] = trade_message.id
     asyncio.create_task(auto_cancel_trade(trade_id, sender_id, receiver_id))
 
@@ -150,7 +167,12 @@ async def on_trade_callback(client, callback_query):
         if trade['receiver_id'] in lock:
             lock.remove(trade['receiver_id'])
         del pending_trades[trade_id]
-        await callback_query.message.edit_text(tr(f"Trade successful! Characters have been swapped between [{trade['receiver_first_name']}](tg://user?id={trade['receiver_id']}) and [{callback_query.from_user.first_name}](tg://user?id={trade['sender_id']}).", lang), parse_mode=ParseMode.HTML, reply_markup=None)
+        success = (
+            f"<b>Trade complete</b>\n"
+            f"<a href='tg://user?id={trade['sender_id']}'>{html.escape(trade['sender_first_name'])}</a> and "
+            f"<a href='tg://user?id={trade['receiver_id']}'>{html.escape(trade['receiver_first_name'])}</a> swapped characters."
+        )
+        await edit_panel(callback_query.message, tr(success, lang), reply_markup=None)
     elif data.startswith('cancel_trade_'):
         if user_id not in [trade['sender_id'], trade['receiver_id']]:
             await callback_query.answer(tr('This is not your trade!', lang), show_alert=True)
@@ -161,4 +183,4 @@ async def on_trade_callback(client, callback_query):
         if trade['receiver_id'] in lock:
             lock.remove(trade['receiver_id'])
         del pending_trades[trade_id]
-        await callback_query.message.edit_text(tr('❌️ Trade cancelled.', lang), parse_mode=ParseMode.HTML, reply_markup=None)
+        await edit_panel(callback_query.message, rich_card('Trade cancelled', 'This offer has been closed.', '❌'), reply_markup=None)

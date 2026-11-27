@@ -1,18 +1,35 @@
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 from pyrogram import Client, filters, enums
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram.types import InlineKeyboardMarkup
 from pyrogram.errors import MessageNotModified
 import asyncio
 import html
 from aoiwaifu import app as Client
 from aoiwaifu import PHOTO_URL, user_collection, top_global_groups_collection
 from aoiwaifu.admin.blocklist import get_blocklisted_id_variants
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text
 
 def leaderboard_header(title, subtitle):
     return f'🎀 <b>ＡＬＹＡ  ＷＡＩ𝐅Ｕ</b> 🎀\n╭──────────────╮\n  🏆 <b>{title}</b>\n  <i>{subtitle}</i>\n╰──────────────╯\n\n'
 
 def leaderboard_buttons(active_button=None):
-    return InlineKeyboardMarkup([[InlineKeyboardButton('✅ Top' if active_button == 'top' else '🏆 Top', callback_data='top'), InlineKeyboardButton('✅ Groups' if active_button == 'top_group' else '👥 Groups', callback_data='top_group')], [InlineKeyboardButton('✅ Coins' if active_button == 'mtop' else '💰 Coins', callback_data='mtop'), InlineKeyboardButton('✅ Dollar' if active_button == 'tokens' else '💵 Dollar', callback_data='tokens')], [InlineKeyboardButton('✅ Diwali' if active_button == 'diwali' else '🪔 Diwali', callback_data='diwali')]])
+    specs = [
+        ('top', 'Collectors', 'TOP_PODIUM'),
+        ('top_group', 'Groups', 'USERS_GROUP'),
+        ('mtop', 'Coins', 'COIN'),
+        ('tokens', 'Tokens', 'WALLET'),
+        ('diwali', 'Diwali', 'STAR'),
+    ]
+    buttons = [
+        premium_button(
+            f"✓ {label}" if active_button == key else label,
+            emoji=icon,
+            style='PRIMARY' if active_button == key else None,
+            callback_data=key,
+        )
+        for key, label, icon in specs
+    ]
+    return InlineKeyboardMarkup([buttons[:2], buttons[2:4], buttons[4:]])
 
 async def resolve_user_display_name(client: Client, user_id: int, current_first_name: str=None, current_username: str=None) -> str:
     """Use names already stored in MongoDB; avoid slow Telegram API lookups."""
@@ -32,7 +49,7 @@ async def rank(client, message):
     lang = await get_effective_lang(message)
 
     # Send the visual response immediately; update this same message after DB work.
-    loading_caption = leaderboard_header('GLOBAL COLLECTOR RANK', 'Syncing the leaderboard…') + '⏳ <b>Logging...</b>\n\n<i>Fetching the top collectors. Please wait.</i>'
+    loading_caption = premium_text(leaderboard_header('GLOBAL COLLECTOR RANK', 'Syncing the leaderboard…') + '⏳ <b>Loading rankings...</b>\n\n<i>Fetching the top collectors. Please wait.</i>')
     progress = await message.reply_photo(
         photo=PHOTO_URL[0],
         caption=loading_caption,
@@ -62,7 +79,7 @@ async def rank(client, message):
                 caption += add_rank_line(i, name, user.get('char_count', 0))
         caption += '\n<i>Every character counts. Keep collecting and climb the leaderboard! ✨</i>'
         await progress.edit_caption(
-            caption=tr(caption, lang),
+            caption=premium_text(tr(caption, lang)),
             parse_mode=enums.ParseMode.HTML,
             reply_markup=leaderboard_buttons('top')
         )
@@ -76,7 +93,11 @@ async def rank(client, message):
 
 async def update_caption(callback_query, caption, active_button):
     try:
-        await callback_query.edit_message_caption(caption=caption, parse_mode=enums.ParseMode.HTML, reply_markup=leaderboard_buttons(active_button))
+        await edit_panel(
+            callback_query.message,
+            premium_text(caption),
+            reply_markup=leaderboard_buttons(active_button),
+        )
     except MessageNotModified:
         pass
     finally:
@@ -149,10 +170,10 @@ async def diwali_callback(client, callback_query):
     leaderboard_data = await cursor.to_list(length=10)
     caption = leaderboard_header('DIWALI COLLECTION', 'Top collectors of Diwali characters 🪔')
     if not leaderboard_data:
-        caption += '🌸 <i>No Diwali characters collected yet. Be the first!</i>\\n'
+        caption += '🌸 <i>No Diwali characters collected yet. Be the first!</i>\n'
     else:
         resolved_names = await asyncio.gather(*[resolve_user_display_name(client, u.get('id'), u.get('first_name'), u.get('username')) for u in leaderboard_data])
         for rank, (user, name) in enumerate(zip(leaderboard_data, resolved_names), start=1):
             caption += add_rank_line(rank, name, user.get('diwali_count', 0), user.get('id'), 'Diwali characters')
-    caption += '\\n<i>Collect more Diwali characters to reach the top! ✨</i>'
+    caption += '\n<i>Collect more Diwali characters to reach the top! ✨</i>'
     await update_caption(callback_query, caption, 'diwali')

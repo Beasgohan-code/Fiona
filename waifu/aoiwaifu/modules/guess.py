@@ -5,7 +5,7 @@ from datetime import datetime
 from html import escape
 import time
 from pyrogram import Client, enums, filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
+from pyrogram.types import InlineKeyboardMarkup, Message
 
 from aoiwaifu import (
     app,
@@ -20,6 +20,7 @@ from aoiwaifu import (
     user_guess_progress,
 )
 from aoiwaifu.unit.aoi_lang import get_effective_lang, t, tr
+from aoiwaifu.unit.rich_ui import premium_button, premium_text, rich_card
 
 
 @app.on_message(filters.command(["guess", "protecc", "collect", "grab", "hunt"]))
@@ -112,25 +113,24 @@ async def guess(client: Client, message: Message):
 
         char = last_characters[chat_id]
         caption = (
-            f"✨ <b><a href='tg://user?id={user_id}'>{escape(message.from_user.first_name or 'Player')}</a></b> "
-            f"caught a character!\n\n"
+            f"<b><a href='tg://user?id={user_id}'>{escape(message.from_user.first_name or 'Player')}</a> caught a character!</b>\n\n"
             f"<blockquote>💮 <b>Name:</b> {escape(str(char['name']))}\n"
             f"🌸 <b>Anime:</b> {escape(str(char['anime']))}\n"
             f"💎 <b>Rarity:</b> {escape(str(char['rarity']))}\n"
-            f"⏱ <b>Time:</b> {time_taken_str}\n"
+            f"⏱ <b>Time:</b> {escape(time_taken_str)}\n"
             f"💰 <b>Reward:</b> +40 coins (Total: {new_balance:,})</blockquote>"
         )
-        keyboard = InlineKeyboardMarkup(
-            [[InlineKeyboardButton(t("btn_view_in_harem", lang), switch_inline_query_current_chat=f"collection.{user_id}")]]
-        )
-        await message.reply_text(tr(caption, lang), parse_mode=enums.ParseMode.HTML, reply_markup=keyboard)
+        keyboard = InlineKeyboardMarkup([[
+            premium_button(t("btn_view_in_harem", lang), emoji='USERS_GROUP', switch_inline_query_current_chat=f"collection.{user_id}")
+        ]])
+        await message.reply_text(premium_text(tr(caption, lang)), parse_mode=enums.ParseMode.HTML, reply_markup=keyboard)
     else:
         message_id = last_characters[chat_id].get("message_id")
         incorrect_text = t("guess_incorrect", lang)
         if message_id:
-            keyboard = InlineKeyboardMarkup(
-                [[InlineKeyboardButton(t("btn_view_media_again", lang), url=f"https://t.me/c/{str(chat_id)[4:]}/{message_id}")]]
-            )
-            await message.reply_text(tr(incorrect_text, lang), reply_markup=keyboard, parse_mode=enums.ParseMode.HTML)
+            keyboard = InlineKeyboardMarkup([[
+                premium_button(t("btn_view_media_again", lang), emoji='IMAGE_PHOTO', url=f"https://t.me/c/{str(chat_id)[4:]}/{message_id}")
+            ]])
+            await message.reply_text(premium_text(tr(incorrect_text, lang)), reply_markup=keyboard, parse_mode=enums.ParseMode.HTML)
         else:
             await message.reply_text(tr(incorrect_text, lang), parse_mode=enums.ParseMode.HTML)

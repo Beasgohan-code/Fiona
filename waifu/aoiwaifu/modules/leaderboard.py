@@ -14,6 +14,7 @@ from aoiwaifu import (
 )
 from aoiwaifu.admin.blocklist import get_blocklisted_id_variants
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
+from aoiwaifu.unit.rich_ui import premium_text, rich_card
 
 
 @app.on_message(filters.command("TopGroups"))
@@ -38,7 +39,7 @@ async def global_leaderboard(client: Client, message: Message):
     photo_url = random.choice(PHOTO_URL)
     await message.reply_photo(
         photo=photo_url,
-        caption=tr(leaderboard_message, lang),
+        caption=premium_text(tr(leaderboard_message, lang)),
         parse_mode=enums.ParseMode.HTML,
     )
 
@@ -72,7 +73,7 @@ async def ctop(client: Client, message: Message):
     photo_url = random.choice(PHOTO_URL)
     await message.reply_photo(
         photo=photo_url,
-        caption=tr(leaderboard_message, lang),
+        caption=premium_text(tr(leaderboard_message, lang)),
         parse_mode=enums.ParseMode.HTML,
     )
 
@@ -82,4 +83,4 @@ async def stats(client: Client, message: Message):
     lang = await get_effective_lang(message)
     user_count = await user_collection.count_documents({})
     group_count = await group_user_totals_collection.distinct("group_id")
-    await message.reply_text(tr(f"Total Users: {user_count}\nTotal Groups: {len(group_count)}", lang))
+    await message.reply_text(premium_text(rich_card("Fiona community", f"👥 <b>Collectors:</b> {user_count:,}\n🌐 <b>Active groups:</b> {len(group_count):,}", "📊")), parse_mode=enums.ParseMode.HTML)

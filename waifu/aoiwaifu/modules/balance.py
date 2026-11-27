@@ -11,6 +11,7 @@ from pyrogram.types import Message
 from aoiwaifu import app, user_collection
 from aoiwaifu.admin.blocklist import is_user_blocklisted
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
+from aoiwaifu.unit.rich_ui import premium_text
 
 pay_in_flight = set()
 lock = {}
@@ -150,7 +151,7 @@ async def balance(client: Client, message: Message):
         f"🪙 <b>Tokens:</b> <code>{user_tokens:,}</code></blockquote>\n"
         f"╰━━━━━━━━━━━━━━━━━╯"
     )
-    await message.reply_text(tr(response, lang), parse_mode=enums.ParseMode.HTML)
+    await message.reply_text(premium_text(tr(response, lang)), parse_mode=enums.ParseMode.HTML)
 
 
 @app.on_message(filters.command("pay"))

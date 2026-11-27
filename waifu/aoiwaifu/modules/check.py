@@ -2,8 +2,9 @@ from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_l
 from aoiwaifu import app, collection as character_collection, user_collection
 from aoiwaifu.admin.blocklist import get_blocklisted_id_variants
 from pyrogram import Client, filters, enums
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-import asyncio
+from pyrogram.types import InlineKeyboardMarkup, CallbackQuery
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card
+from html import escape
 
 @app.on_message(filters.command('check'))
 async def check_character(client, message):
@@ -17,12 +18,24 @@ async def check_character(client, message):
     if not character:
         await message.reply_text(tr('Character not found.', lang))
         return
-    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton('Who Have It', callback_data=f'whohaveit_{character_id}')]])
-    text = f"🌟 **Character Info**\n🆔 ID: `{character_id}`\n📛 Name: {character['name']}\n📺 Anime: {character['anime']}\n💎 Rarity: {character['rarity']}\n"
-    if 'vid_url' in character:
-        await message.reply_video(character['vid_url'], caption=tr(text, lang), reply_markup=keyboard)
+    keyboard = InlineKeyboardMarkup([[
+        premium_button('Find collectors', emoji='USERS_GROUP', callback_data=f'whohaveit_{character_id}')
+    ]])
+    text = rich_card(
+        'Character details',
+        f"🆔 <b>ID:</b> <code>{escape(str(character_id))}</code>\n"
+        f"📛 <b>Name:</b> {escape(str(character.get('name', 'Unknown')))}\n"
+        f"📺 <b>Anime:</b> {escape(str(character.get('anime', 'Unknown')))}\n"
+        f"💎 <b>Rarity:</b> {escape(str(character.get('rarity', 'Unknown')))}",
+        '🌟',
+    )
+    caption = premium_text(tr(text, lang))
+    if character.get('vid_url'):
+        await message.reply_video(character['vid_url'], caption=caption, parse_mode=enums.ParseMode.HTML, reply_markup=keyboard)
+    elif character.get('img_url'):
+        await message.reply_photo(character['img_url'], caption=caption, parse_mode=enums.ParseMode.HTML, reply_markup=keyboard)
     else:
-        await message.reply_photo(character['img_url'], caption=tr(text, lang), reply_markup=keyboard)
+        await message.reply_text(caption, parse_mode=enums.ParseMode.HTML, reply_markup=keyboard)
 
 @app.on_callback_query(filters.regex('^whohaveit_'))
 async def who_have_it(client, callback_query):
@@ -33,9 +46,14 @@ async def who_have_it(client, callback_query):
     if not users:
         await callback_query.answer(tr('No one owns this character yet!', lang), show_alert=True)
         return
-    owner_text = '**🏆 Top 10 Users Who Own This Character:**\n\n'
+    owner_lines = []
     for i, user in enumerate(users, 1):
-        user_name = user.get('first_name', 'Unknown')
-        count = sum((1 for char in user.get('characters', []) if char['id'] == character_id))
-        owner_text += f"{i}. [{user_name}](tg://user?id={user['id']}) — x{count}\n"
-    await callback_query.message.edit_caption(caption=tr(f'{callback_query.message.caption}\n\n{owner_text}', lang), reply_markup=None)
+        user_name = escape(str(user.get('first_name', 'Collector')))
+        count = sum(
+            1 for char in user.get('characters', [])
+            if isinstance(char, dict) and str(char.get('id')) == str(character_id)
+        )
+        owner_lines.append(f"{i}. <a href='tg://user?id={user['id']}'>{user_name}</a> · x{count}")
+    owner_text = rich_card('Character owners', "\n".join(owner_lines), '🏆')
+    await edit_panel(callback_query.message, tr(owner_text, lang), reply_markup=None)
+    await callback_query.answer()

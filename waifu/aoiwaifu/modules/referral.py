@@ -5,8 +5,9 @@ import time
 import urllib.parse
 from datetime import datetime
 from pyrogram import Client, filters, enums
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+from pyrogram.types import InlineKeyboardMarkup, CallbackQuery
 from pyrogram.errors import MessageNotModified
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card
 from aoiwaifu import app, user_collection, db, GLOG, get_effective_lang, t
 referrals_collection = db['referrals']
 REFERRAL_DOLLARS = 25
@@ -51,7 +52,11 @@ def build_referral_keyboard(bot_username: str, user_id: int) -> InlineKeyboardMa
     encoded_url = urllib.parse.quote(ref_link, safe='')
     encoded_text = urllib.parse.quote(share_msg, safe='')
     share_url = f'https://t.me/share/url?url={encoded_url}&text={encoded_text}'
-    return InlineKeyboardMarkup([[InlineKeyboardButton('🚀 Share', url=share_url), InlineKeyboardButton('📋 Record', callback_data=f'refer_list:{user_id}'), InlineKeyboardButton('🔄 Refresh', callback_data=f'refer_refresh:{user_id}')]])
+    return InlineKeyboardMarkup([[
+        premium_button('Share', emoji='SHARE', style='SUCCESS', url=share_url),
+        premium_button('History', emoji='DOCUMENT_RULES', callback_data=f'refer_list:{user_id}'),
+        premium_button('Refresh', emoji='REFRESH', callback_data=f'refer_refresh:{user_id}'),
+    ]])
 
 @app.on_message(filters.command(['refer', 'referral']))
 async def refer_command(client: Client, message):
@@ -64,7 +69,7 @@ async def refer_command(client: Client, message):
     lang = await get_effective_lang(message, user_id=user_id)
     caption = await build_referral_text(bot_username, user_id, referrals_count, lang=lang)
     keyboard = build_referral_keyboard(bot_username, user_id)
-    await message.reply_text(text=tr(caption, lang), reply_markup=keyboard, parse_mode=enums.ParseMode.HTML)
+    await message.reply_text(text=premium_text(tr(caption, lang)), reply_markup=keyboard, parse_mode=enums.ParseMode.HTML)
 
 @app.on_callback_query(filters.regex('^refer_refresh:(\\d+)$'))
 async def refer_refresh_callback(client: Client, callback_query: CallbackQuery):
@@ -78,7 +83,7 @@ async def refer_refresh_callback(client: Client, callback_query: CallbackQuery):
     caption = await build_referral_text(bot_username, target_user_id, referrals_count, lang=lang)
     keyboard = build_referral_keyboard(bot_username, target_user_id)
     try:
-        await callback_query.edit_message_text(text=tr(caption, lang), reply_markup=keyboard, parse_mode=enums.ParseMode.HTML)
+        await edit_panel(callback_query.message, premium_text(tr(caption, lang)), reply_markup=keyboard)
     except MessageNotModified:
         pass
     finally:
@@ -105,9 +110,11 @@ async def refer_list_callback(client: Client, callback_query: CallbackQuery):
             lines.append(f'{idx}. <a href="tg://user?id={r_uid}"><b>{r_name}</b></a>{uname_str} — <code>{r_uid}</code>\n    └ 📅 <i>{r_date}</i> • 🎁 <code>+${REFERRAL_DOLLARS} &amp; +{REFERRAL_COINS:,} coins</code>')
         rec_text = '\n'.join(lines)
     text = f'╭━━━〔 📋 𝐑𝐄𝐅𝐄𝐑𝐑𝐀𝐋 𝐑𝐄𝐂𝐎𝐑𝐃 〕━━━╮\nTotal Invited Users: <b>{len(records)}</b>\n╰━━━━━━━━━━━━━━━━━━━━━━╯\n\n<blockquote>{rec_text}\n\n🔗 <b>Invite Link:</b> <code>{ref_link}</code></blockquote>'
-    kb = InlineKeyboardMarkup([[InlineKeyboardButton('⬅️ Back', callback_data=f'refer_refresh:{target_user_id}')]])
+    kb = InlineKeyboardMarkup([[
+        premium_button('Back to referral card', emoji='BACK_ARROW', callback_data=f'refer_refresh:{target_user_id}')
+    ]])
     try:
-        await callback_query.edit_message_text(text=tr(text, lang), reply_markup=kb, parse_mode=enums.ParseMode.HTML)
+        await edit_panel(callback_query.message, premium_text(tr(text, lang)), reply_markup=kb)
     except MessageNotModified:
         pass
     finally:

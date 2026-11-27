@@ -21,6 +21,13 @@ def premium_button(text: str, emoji: str, **kwargs):
     return pbtn(text=text, emoji=emoji, **kwargs)
 
 
+def rich_card(title: str, body: str, emoji: str = "✨") -> str:
+    """Wrap a short HTML body in Fiona's consistent Telegram card treatment."""
+    title = str(title or "Fiona")
+    body = str(body or "")
+    return f"<b>{emoji} {title}</b>\n<blockquote>{body}</blockquote>"
+
+
 async def edit_panel(message, text: str, reply_markup=None) -> bool:
     """Edit a Fiona panel through the shared rich renderer, then fall back safely."""
     html = premium_text(text)

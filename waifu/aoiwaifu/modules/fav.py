@@ -1,8 +1,10 @@
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from pyrogram.types import InlineKeyboardMarkup, CallbackQuery
 from pymongo import MongoClient
 from aoiwaifu import app, user_collection
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card
+import html
 
 @app.on_message(filters.command('fav'))
 async def fav_command(client, message):
@@ -21,11 +23,19 @@ async def fav_command(client, message):
         await message.reply_text(tr('This character is not in your collection. ❌', lang))
         return
     if 'vid_url' in character:
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton('✅ Yes', callback_data=f'fav_yes_{character_id}_{user_id}'), InlineKeyboardButton('❎ No', callback_data='fav_no')]])
-        await message.reply_video(video=character['vid_url'], caption=tr(f"Add {character['name']} to favorites?", lang), reply_markup=keyboard)
+        keyboard = InlineKeyboardMarkup([[
+            premium_button('Add favorite', emoji='HEART', style='SUCCESS', callback_data=f'fav_yes_{character_id}_{user_id}'),
+            premium_button('Cancel', emoji='CLOSE', style='DANGER', callback_data='fav_no'),
+        ]])
+        caption = premium_text(rich_card('Set favorite', f"Make <b>{html.escape(str(character.get('name', 'Unknown')))}</b> your featured character?", '💖'))
+        await message.reply_video(video=character['vid_url'], caption=tr(caption, lang), parse_mode='html', reply_markup=keyboard)
     elif 'img_url' in character:
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton('✅ Yes', callback_data=f'fav_yes_{character_id}_{user_id}'), InlineKeyboardButton('❎ No', callback_data='fav_no')]])
-        await message.reply_photo(photo=character['img_url'], caption=tr(f"Add {character['name']} to favorites?", lang), reply_markup=keyboard)
+        keyboard = InlineKeyboardMarkup([[
+            premium_button('Add favorite', emoji='HEART', style='SUCCESS', callback_data=f'fav_yes_{character_id}_{user_id}'),
+            premium_button('Cancel', emoji='CLOSE', style='DANGER', callback_data='fav_no'),
+        ]])
+        caption = premium_text(rich_card('Set favorite', f"Make <b>{html.escape(str(character.get('name', 'Unknown')))}</b> your featured character?", '💖'))
+        await message.reply_photo(photo=character['img_url'], caption=tr(caption, lang), parse_mode='html', reply_markup=keyboard)
     else:
         await message.reply_text(tr('This character has no media (image or video) associated with it. ❌', lang))
 
@@ -49,11 +59,19 @@ async def fav_yes(client, callback_query: CallbackQuery):
         return
     user['favorites'] = [character_id]
     await user_collection.update_one({'id': user_id}, {'$set': {'favorites': user['favorites']}})
-    await callback_query.message.edit_caption(tr(f"{character['name']} has been added to your favorites! ✅", lang))
-    await callback_query.answer(tr('Character added to favorites. ✅', lang))
+    await edit_panel(
+        callback_query.message,
+        tr(rich_card('Favorite updated', f"<b>{html.escape(str(character.get('name', 'Unknown')))}</b> is now featured on your profile.", '💖'), lang),
+        reply_markup=None,
+    )
+    await callback_query.answer(tr('Character added to favorites.', lang))
 
 @app.on_callback_query(filters.regex('fav_no'))
 async def fav_no(client, callback_query: CallbackQuery):
     lang = await get_effective_lang(callback_query)
-    await callback_query.message.delete()
+    await edit_panel(
+        callback_query.message,
+        rich_card('Favorite unchanged', 'You can try again any time with /fav.', 'ℹ️'),
+        reply_markup=None,
+    )
     await callback_query.answer(tr('Action canceled.', lang))

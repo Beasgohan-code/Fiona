@@ -147,6 +147,13 @@ class MergedCommandTests(unittest.TestCase):
         self.assertNotIn("asyncio.sleep(180)", harem)
         self.assertIn("premium_button(\n                        tr('Next', lang)", harem)
 
+    def test_major_waifu_cards_share_rich_text_and_premium_controls(self):
+        modules = ("shop", "trade", "gift", "fav", "check", "guess", "rank", "leaderboard", "balance", "sips", "addchar", "referral")
+        for module in modules:
+            source = (WAIFU / f"modules/{module}.py").read_text(encoding="utf-8")
+            self.assertIn("rich_ui", source, f"{module} should use shared card rendering")
+            self.assertIn("premium_text", source, f"{module} should decorate card text")
+
     def test_help_uses_the_unified_waifu_command_names(self):
         help_data = waifu_help_data()
         help_text = "\\n".join(
@@ -181,6 +188,16 @@ class MergedCommandTests(unittest.TestCase):
             WAIFU / "modules/start.py",
             WAIFU / "modules/harem.py",
             WAIFU / "modules/stats.py",
+            WAIFU / "modules/shop.py",
+            WAIFU / "modules/trade.py",
+            WAIFU / "modules/gift.py",
+            WAIFU / "modules/fav.py",
+            WAIFU / "modules/check.py",
+            WAIFU / "modules/guess.py",
+            WAIFU / "modules/rank.py",
+            WAIFU / "modules/sips.py",
+            WAIFU / "modules/addchar.py",
+            WAIFU / "modules/referral.py",
             WAIFU / "unit/aoi_lang.py",
         ):
             tree = ast.parse(path.read_text(encoding="utf-8"))
