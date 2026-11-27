@@ -13,7 +13,7 @@ HELP_DATA = {
         "HELP": (
             "Manage and browse your character collection:\n\n"
             "• `/harem`, `/collection`, or `/claimlist` — View your collected characters\n"
-            "• `/hmode` — Filter your harem by rarity\n"
+            "• `/hmode` — Sort by anime, newest catch, or favorite; optionally filter by rarity\n"
             "• `/fav <id>` — Set your featured profile character\n"
             "• `/pincharacter <id>` / `/unpincharacter <id>` / `/pinnedcharacters` — Manage pinned collection characters (aliases: `/hpin`, `/hunpin`, `/pinlist`)\n"
             "• Group-message pinning uses the separate admin commands `/pin` and `/unpin`."
