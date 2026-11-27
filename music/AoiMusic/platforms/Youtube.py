@@ -447,10 +447,10 @@ def extract_info_with_fallback(link, opts, return_options=False):
 
     # YouTube can expose different format ladders to different clients. Retry
     # clients individually instead of letting one unavailable format selection
-    # reject an otherwise playable video. Include tv_samsung and web_embedded:
-    # both are already used by Fiona's working download profiles, but the
-    # combined client list can still hide a client's distinct format ladder.
-    for client in ("tv_samsung", "web_embedded", "android", "ios", "tv"):
+    # reject an otherwise playable video. yt-dlp 2026.11.23 added ios_producer
+    # and fixed/deprioritized web_embedded, so try the newer producer client
+    # before web_embedded's restricted ladder.
+    for client in ("tv_samsung", "ios_producer", "android", "ios", "tv", "web_embedded"):
         client_opts = copy.deepcopy(opts)
         extractor_args = client_opts.setdefault("extractor_args", {})
         youtube_args = extractor_args.setdefault("youtube", {})
@@ -1797,9 +1797,12 @@ class YouTube:
                 format=_AUDIO_FMT,
                 outtmpl="downloads/%(id)s.%(ext)s",
             )
-            # web_embedded is the only client that still serves audio-only
-            # formats here; tv/mweb/web only return progressive itag 18.
-            ydl_optssx["extractor_args"]["youtube"]["player_client"] = ["web_embedded"] + list(_YT_CLIENTS)
+            # Prefer current audio-producing clients; web_embedded is retained
+            # last as a legacy rescue because newer yt-dlp releases restrict
+            # and deprioritize its format ladder.
+            ydl_optssx["extractor_args"]["youtube"]["player_client"] = [
+                "ios_producer", "tv_samsung", "tv", "mweb", "web", "web_embedded"
+            ]
 
             info, download_opts = extract_info_with_fallback(
                 link, ydl_optssx, return_options=True

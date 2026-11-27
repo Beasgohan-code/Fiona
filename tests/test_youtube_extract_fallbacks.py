@@ -25,6 +25,14 @@ def load_extract_helper(fake_ytdl):
 
 
 class YouTubeExtractFallbackTests(unittest.TestCase):
+    def test_youtube_extractor_pin_includes_current_client_policy_fixes(self):
+        source = YOUTUBE_FILE.read_text(encoding="utf-8")
+        requirements = (ROOT / "requirements/merged.txt").read_text(encoding="utf-8")
+        self.assertIn("yt-dlp==2026.11.23", requirements)
+        self.assertIn('("tv_samsung", "ios_producer", "android", "ios", "tv", "web_embedded")', source)
+        audio_clients = source.split('ydl_optssx["extractor_args"]["youtube"]["player_client"] = [', 1)[1].split("]", 1)[0]
+        self.assertLess(audio_clients.index('"ios_producer"'), audio_clients.index('"web_embedded"'))
+
     def test_download_methods_reuse_extraction_options(self):
         tree = ast.parse(YOUTUBE_FILE.read_text(encoding="utf-8"))
         youtube_class = next(
