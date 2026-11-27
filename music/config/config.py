@@ -3,6 +3,7 @@
 import re
 import sys
 from os import getenv
+from pathlib import Path
 
 from dotenv import load_dotenv
 from pyrogram import filters
@@ -119,8 +120,9 @@ clean = {}
 autoclean = []
 
 # --- Default Images ---
-START_IMG_URL = getenv("START_IMG_URL", "https://i.ibb.co/VrbBW39/file-00000000fc9c8208a9c65e000748c4d3.png")
-PING_IMG_URL = getenv("PING_IMG_URL", "https://i.ibb.co/VrbBW39/file-00000000fc9c8208a9c65e000748c4d3.png")
+_FIONA_START_IMAGE = str(Path(__file__).resolve().parents[1] / "assets" / "fiona_start_ping.jpg")
+START_IMG_URL = getenv("START_IMG_URL", "").strip() or _FIONA_START_IMAGE
+PING_IMG_URL = getenv("PING_IMG_URL", "").strip() or _FIONA_START_IMAGE
 PLAYLIST_IMG_URL = getenv("PLAYLIST_IMG_URL", "https://i.ibb.co/VrbBW39/file-00000000fc9c8208a9c65e000748c4d3.png")
 GLOBAL_IMG_URL = getenv("GLOBAL_IMG_URL", "https://i.ibb.co/VrbBW39/file-00000000fc9c8208a9c65e000748c4d3.png")
 STATS_IMG_URL = getenv("STATS_IMG_URL", "https://i.ibb.co/VrbBW39/file-00000000fc9c8208a9c65e000748c4d3.png")

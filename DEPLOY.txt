@@ -41,6 +41,16 @@ instance for continuous bot availability: a free Render web instance can sleep,
 and an HTTP health endpoint or self-ping script cannot guarantee that it stays
 awake.
 
+BUNDLED BOT ARTWORK
+-------------------
+Fiona now ships local, optimized artwork for the Music start/ping cards and
+Waifu start, collection, leaderboard/stat, rank, and shop fallbacks. Waifu start
+screens rotate between the bundled welcome and collection images. Optional
+WAIFU_START_IMAGE, WAIFU_COLLECTION_IMAGE, WAIFU_SHOP_IMAGE, START_IMG_URL, and
+PING_IMG_URL values can override these defaults with local paths or Telegram-
+fetchable URLs. Character images stored in your database remain user content
+and are intentionally not replaced.
+
 FIXING `WEBPAGE_CURL_FAILED` ON /START
 --------------------------------------
 This means Telegram could not fetch the configured start image/video URL. The

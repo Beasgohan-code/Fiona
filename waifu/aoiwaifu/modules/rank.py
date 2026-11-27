@@ -5,9 +5,8 @@ from pyrogram.errors import MessageNotModified
 import asyncio
 import html
 from aoiwaifu import app as Client
-from aoiwaifu import user_collection, top_global_groups_collection
+from aoiwaifu import PHOTO_URL, user_collection, top_global_groups_collection
 from aoiwaifu.admin.blocklist import get_blocklisted_id_variants
-PHOTO_URL = ['https://files.catbox.moe/jk69z5.png']
 
 def leaderboard_header(title, subtitle):
     return f'🎀 <b>ＡＬＹＡ  ＷＡＩ𝐅Ｕ</b> 🎀\n╭──────────────╮\n  🏆 <b>{title}</b>\n  <i>{subtitle}</i>\n╰──────────────╯\n\n'

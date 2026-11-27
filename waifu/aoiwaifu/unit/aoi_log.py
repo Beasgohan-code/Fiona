@@ -1,10 +1,10 @@
 import os
 import requests
-from aoiwaifu import TOKEN, OWNER_ID, OWNER_USERNAME
+from aoiwaifu import TOKEN, OWNER_ID, OWNER_USERNAME, WAIFU_START_IMAGE
 
 CHAT_ID = OWNER_ID
 BOT_NAME = "Fiona"
-IMAGE_URL = "https://files.catbox.moe/7ccoub.jpg"
+IMAGE_URL = WAIFU_START_IMAGE
 
 def send_start_message():
     url = f"https://api.telegram.org/bot{TOKEN}/sendPhoto"
@@ -15,14 +15,26 @@ def send_start_message():
     )
     payload = {
         "chat_id": CHAT_ID,
-        "photo": IMAGE_URL,
         "caption": caption,
         "parse_mode": "MarkdownV2"  # Use MarkdownV2 for proper escaping
     }
 
     response = None
     try:
-        response = requests.post(url, json=payload, timeout=20)
+        if os.path.isfile(IMAGE_URL):
+            with open(IMAGE_URL, "rb") as image_file:
+                response = requests.post(
+                    url,
+                    data=payload,
+                    files={"photo": image_file},
+                    timeout=20,
+                )
+        else:
+            response = requests.post(
+                url,
+                json={**payload, "photo": IMAGE_URL},
+                timeout=20,
+            )
         response.raise_for_status()  # Raise exception for HTTP errors
         print("Start message sent successfully.")
     except requests.exceptions.RequestException as e:

@@ -63,6 +63,9 @@ from aoiwaifu.config import (
     START_MEDIA,
     PHOTO_URL,
     STATS_IMG,
+    WAIFU_START_IMAGE,
+    WAIFU_COLLECTION_IMAGE,
+    WAIFU_SHOP_IMAGE,
 )
 
 # --- Logging Setup ---

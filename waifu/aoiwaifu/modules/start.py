@@ -37,6 +37,19 @@ from aoiwaifu.unit.aoi_lang import (
 )
 
 START_TIME = time.time()
+_start_media_cycle: list[str] = []
+
+
+def pick_start_media() -> str:
+    """Return images in a shuffled cycle so adjacent starts avoid repeats."""
+    global _start_media_cycle
+    choices = [str(item).strip() for item in START_MEDIA if str(item).strip()]
+    if not choices:
+        return ""
+    if not _start_media_cycle:
+        _start_media_cycle = choices.copy()
+        random.shuffle(_start_media_cycle)
+    return _start_media_cycle.pop()
 
 
 def get_uptime():
@@ -296,7 +309,7 @@ async def start_private_command(client, message):
             except Exception:
                 pass
 
-    media = random.choice(START_MEDIA)
+    media = pick_start_media()
     if user and (not lang_already_set) and (not await has_user_set_lang(user.id)):
         prompt_caption, prompt_markup = build_dm_first_start_lang_prompt()
         await send_media_message(message, media, prompt_caption, prompt_markup)
@@ -325,7 +338,7 @@ async def start_group_command(client, message):
         )
     grp_lang = await get_chat_lang(message.chat.id)
     caption, buttons = await generate_group_start_message(client, message, lang=grp_lang)
-    media = random.choice(START_MEDIA)
+    media = pick_start_media()
     await send_media_message(message, media, caption, buttons)
 
 

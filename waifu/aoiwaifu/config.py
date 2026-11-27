@@ -1,6 +1,7 @@
 """Centralized environment-based configuration for Fiona."""
 
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -56,11 +57,18 @@ IMGBB_API_KEYS: list[str] = [
     if k.strip()
 ]
 
-# --- Media URLs ---
-_DEFAULT_PHOTO = "https://telegra.ph/file/900f153e2524317309612.jpg"
+# --- Local branded artwork (environment URLs remain supported as overrides) ---
+_ASSET_ROOT = Path(__file__).resolve().parents[2] / "waifu" / "assets"
+WAIFU_START_IMAGE = os.getenv("WAIFU_START_IMAGE", "").strip() or str(_ASSET_ROOT / "fiona_start_ping.jpg")
+WAIFU_COLLECTION_IMAGE = os.getenv("WAIFU_COLLECTION_IMAGE", "").strip() or str(_ASSET_ROOT / "fiona_collection.jpg")
+WAIFU_SHOP_IMAGE = os.getenv("WAIFU_SHOP_IMAGE", "").strip() or str(_ASSET_ROOT / "fiona_shop.jpg")
+
+# START_MEDIA accepts a comma-separated rotation; default start screens alternate
+# between the welcome art and the collection artwork. PHOTO_URL_1 remains a
+# backwards-compatible way to supply a custom first image.
 START_MEDIA: list[str] = _parse_str_list(
     os.getenv("START_MEDIA", ""),
-    [os.getenv("PHOTO_URL_1", _DEFAULT_PHOTO)],
+    [os.getenv("PHOTO_URL_1", "").strip() or WAIFU_START_IMAGE, WAIFU_COLLECTION_IMAGE],
 )
 PHOTO_URL: list[str] = _parse_str_list(
     os.getenv("PHOTO_URL", ""),
@@ -72,9 +80,9 @@ PHOTO_URL: list[str] = _parse_str_list(
         )
         if u
     ]
-    or [_DEFAULT_PHOTO],
+    or [WAIFU_COLLECTION_IMAGE],
 )
 STATS_IMG: list[str] = _parse_str_list(
     os.getenv("STATS_IMG", ""),
-    [PHOTO_URL[0]],
+    [WAIFU_COLLECTION_IMAGE],
 )

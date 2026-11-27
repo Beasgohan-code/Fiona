@@ -8,7 +8,7 @@ from aoiwaifu import *
 from pymongo import ReturnDocument
 user_shop_state = {}
 shop_claim_locks = set()
-SHOP_IMAGE_URL = 'https://i.ibb.co/HfnC1X4m/file-000000008d8c8208aeb660d5f616cdf0.png'
+SHOP_IMAGE_URL = WAIFU_SHOP_IMAGE
 RARITY_PRICE = {'Frequent 🫧': 1000, 'Superior 🎋': 3000, 'Elite 🪸': 8000, 'Pookie 🐣': 20000, 'Majestic 👑': 25000, 'Mythical 🧜\u200d♀️': 70000, 'DIY 🎨': 70000, 'Angelic 🪄': 100000, 'Galactic 🌌': 150000, 'Phantom 🧌': 200000, 'Imaginative 🍀': 300000, 'Exclusive \U0001fa8e': 350000, 'Habitual 👘': 500000, 'Winter ☃️': 25000, "Valentine's 💕": 25000, 'Summer 🏜️': 25000, 'Chibi 🎀': 5000, 'Cosplay 🗿': 40000, 'Rainy 🌧️': 25000, 'Seasonal 🍁': 25000}
 SHOP_RARITIES = [('Frequent 🫧', '🫧'), ('Superior 🎋', '🎋'), ('Elite 🪸', '🪸'), ('Majestic 👑', '👑'), ('Summer 🏜️', '🏜️')]
 SHOP_MAIN_CAPTION = '╭━〔 🌸 𝐀𝐎𝐈 𝐖𝐀𝐈𝐅𝐔 ✦ 𝐒𝐇𝐎𝐏 〕━╮\n\n<blockquote>🌟 <b>Choose a rarity emoji below to browse the Bazaar:</b>\n🫧 Frequent  •  🎋 Superior  •  🪸 Elite\n👑 Majestic  •  🏜️ Summer</blockquote>\n╰━━━━━━━━━━━━━━━━━━╯'
