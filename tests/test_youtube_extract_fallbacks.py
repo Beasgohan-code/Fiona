@@ -29,6 +29,7 @@ class YouTubeExtractFallbackTests(unittest.TestCase):
         source = YOUTUBE_FILE.read_text(encoding="utf-8")
         requirements = (ROOT / "requirements/merged.txt").read_text(encoding="utf-8")
         self.assertIn("yt-dlp==2026.11.23", requirements)
+        self.assertIn('_YT_CLIENTS = ["tv", "mweb", "web", "ios_producer", "tv_samsung"]', source)
         self.assertIn('("tv_samsung", "ios_producer", "android", "ios", "tv", "web_embedded")', source)
         audio_clients = source.split('ydl_optssx["extractor_args"]["youtube"]["player_client"] = [', 1)[1].split("]", 1)[0]
         self.assertLess(audio_clients.index('"ios_producer"'), audio_clients.index('"web_embedded"'))
