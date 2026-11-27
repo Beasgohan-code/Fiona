@@ -139,6 +139,27 @@ class MergedCommandTests(unittest.TestCase):
                 if emoji:
                     self.assertIn(emoji, emoji_keys)
 
+    def test_collection_anime_filter_matches_partial_titles_case_insensitively(self):
+        source_path = WAIFU / "modules/harem.py"
+        tree = ast.parse(source_path.read_text(encoding="utf-8"))
+        helper = next(
+            node for node in tree.body
+            if isinstance(node, ast.FunctionDef) and node.name == "_filter_collection_by_anime"
+        )
+        namespace = {}
+        exec(compile(ast.Module(body=[helper], type_ignores=[]), str(source_path), "exec"), namespace)
+        filter_characters = namespace["_filter_collection_by_anime"]
+        characters = [
+            {"id": 1, "anime": "Naruto Shippuden"},
+            {"id": 2, "anime": "One Piece"},
+            {"id": 3, "anime": "Naruto"},
+        ]
+        self.assertEqual(
+            [item["id"] for item in filter_characters(characters, "NARUTO")],
+            [1, 3],
+        )
+        self.assertEqual(filter_characters(characters, " "), characters)
+
     def test_harem_and_profile_use_shared_rich_ui_without_timed_message_deletion(self):
         harem = (WAIFU / "modules/harem.py").read_text(encoding="utf-8")
         profile = (WAIFU / "modules/stats.py").read_text(encoding="utf-8")
@@ -150,6 +171,8 @@ class MergedCommandTests(unittest.TestCase):
         self.assertNotIn("asyncio.sleep(180)", harem)
         self.assertIn("premium_button(\n                        tr('Next', lang)", harem)
         self.assertIn("items_per_page = 10", harem)
+        self.assertIn("collection_anime_filter", harem)
+        self.assertIn("filters.regex('^remove_anime_filter:')", harem)
         self.assertIn("owned_in_anime", harem)
         self.assertIn("×{count}", harem)
         self.assertNotIn("rich_table(('ID', 'RARITY', 'CHARACTER', 'OWNED'), rows)", harem)

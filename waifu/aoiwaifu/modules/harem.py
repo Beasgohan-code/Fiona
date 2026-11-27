@@ -37,6 +37,18 @@ async def fetch_user_characters(user_id):
         return (None, 'No valid characters found in your collection.')
     return (characters, None)
 
+
+def _filter_collection_by_anime(characters, query):
+    """Case-insensitively filter owned characters by an anime title fragment."""
+    query = str(query or '').strip().casefold()
+    if not query:
+        return list(characters)
+    return [
+        character for character in characters
+        if query in str(character.get('anime') or '').casefold()
+    ]
+
+
 @app.on_message(filters.command(['pincharacter', 'hpin']))
 async def pin_character_handler(client: Client, message: Message):
     lang = await get_effective_lang(message)
@@ -118,6 +130,18 @@ async def harem_handler(client: Client, message: Message):
     page = 0
     user = await user_collection.find_one({'id': user_id})
     filter_rarity = user.get('filter_rarity', None) if user else None
+    anime_filter = ' '.join((message.command or [])[1:]).strip()
+    if user:
+        if anime_filter:
+            await user_collection.update_one(
+                {'id': user_id},
+                {'$set': {'collection_anime_filter': anime_filter}},
+            )
+        else:
+            await user_collection.update_one(
+                {'id': user_id},
+                {'$unset': {'collection_anime_filter': ''}},
+            )
     await display_harem(client, message, user_id, page, filter_rarity, is_initial=True)
 
 async def display_harem(client, message, user_id, page, filter_rarity, is_initial=False, callback_query=None, force_refresh_photo=False):
@@ -136,6 +160,28 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
             return
         characters = sorted(characters, key=lambda x: (str(x.get('anime', '')), str(x.get('id', ''))))
         all_characters = characters
+        anime_filter = (user_db or {}).get('collection_anime_filter')
+        if anime_filter:
+            characters = _filter_collection_by_anime(characters, anime_filter)
+            if not characters:
+                clear_button = [[premium_button(
+                    tr('Clear anime filter', lang),
+                    emoji='CLOSE',
+                    callback_data=f'remove_anime_filter:{user_id}',
+                )]]
+                empty_text = rich_card(
+                    'Collection filter',
+                    f"No characters found for anime: <b>{escape(str(anime_filter))}</b>. Try a shorter title or clear the filter.",
+                    '🔎',
+                )
+                if is_initial:
+                    return await message.reply_text(
+                        premium_text(tr(empty_text, lang)),
+                        reply_markup=InlineKeyboardMarkup(clear_button),
+                        parse_mode=enums.ParseMode.HTML,
+                    )
+                await edit_panel(callback_query.message, tr(empty_text, lang), InlineKeyboardMarkup(clear_button))
+                return
         if filter_rarity:
             filtered_characters = [c for c in characters if c.get('rarity') == filter_rarity]
             if not filtered_characters:
@@ -168,6 +214,8 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
             f"📄 <b>Page:</b> {page + 1}/{total_pages}  •  "
             f"✨ <b>Unique:</b> {len(unique_characters):,}  •  🎴 <b>Cards:</b> {total_characters:,}"
         )
+        if anime_filter:
+            harem_message += f"\n🔎 <b>Anime:</b> {escape(str(anime_filter))} · use /harem to clear"
         if filter_rarity:
             harem_message += f"\n{t('harem_filtered_by', lang, rarity=escape(str(filter_rarity)))}"
         current_characters = unique_characters[page * items_per_page:(page + 1) * items_per_page]
@@ -214,6 +262,14 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                 ),
             ],
         ]
+        if anime_filter:
+            keyboard.append([
+                premium_button(
+                    tr('Clear anime filter', lang),
+                    emoji='CLOSE',
+                    callback_data=f'remove_anime_filter:{user_id}',
+                )
+            ])
         if total_pages > 1:
             nav_buttons = []
             if page > 0:
@@ -291,6 +347,34 @@ async def remove_filter_callback(client: Client, callback_query: CallbackQuery):
         )
     except Exception as e:
         print(f'Error in remove_filter callback: {e}')
+
+@app.on_callback_query(filters.regex('^remove_anime_filter:'))
+async def remove_anime_filter_callback(client: Client, callback_query: CallbackQuery):
+    lang = await get_effective_lang(callback_query)
+    try:
+        _, user_id = callback_query.data.split(':')
+        user_id = int(user_id)
+        if callback_query.from_user.id != user_id:
+            await callback_query.answer(tr("It's not your Harem!", lang), show_alert=True)
+            return
+        await user_collection.update_one(
+            {'id': user_id},
+            {'$unset': {'collection_anime_filter': ''}},
+        )
+        await callback_query.answer(tr('Anime filter removed.', lang))
+        user = await user_collection.find_one({'id': user_id}, {'filter_rarity': 1}) or {}
+        await display_harem(
+            client,
+            callback_query.message,
+            user_id,
+            page=0,
+            filter_rarity=user.get('filter_rarity'),
+            is_initial=False,
+            callback_query=callback_query,
+        )
+    except Exception as exc:
+        print(f'Error removing anime collection filter: {exc}')
+
 
 @app.on_callback_query(filters.regex('^harem:'))
 async def harem_callback(client: Client, callback_query: CallbackQuery):

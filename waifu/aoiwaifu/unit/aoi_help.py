@@ -12,7 +12,7 @@ HELP_DATA = {
         "HELP_NAME": "Collection",
         "HELP": (
             "Manage and browse your character collection:\n\n"
-            "• `/harem`, `/collection`, or `/claimlist` — View your collected characters\n"
+            "• `/harem [anime]` / `/collection [anime]` / `/claimlist [anime]` — View all characters or filter by anime title\n"
             "• `/hmode` — Filter your harem by rarity\n"
             "• `/fav <id>` — Set your featured profile character\n"
             "• `/pincharacter <id>` / `/unpincharacter <id>` / `/pinnedcharacters` — Manage pinned collection characters (aliases: `/hpin`, `/hunpin`, `/pinlist`)\n"
