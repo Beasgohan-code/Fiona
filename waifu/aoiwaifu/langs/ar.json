@@ -536,5 +536,15 @@
   "mines_replay_only_player": "❌ فقط اللاعب يمكنه إعادة اللعب!",
   "mines_replay_low_balance": "❌ رصيد غير كافٍ! تحتاج {bet} عملة.",
   "mines_replay_out_of_energy": "⚡ نفدت الطاقة ({rem_energy}/{max_energy})! انتظر {time_str}.",
-  "mines_replay_started": "🎲 بدأت لعبة جديدة!"
+  "mines_replay_started": "🎲 بدأت لعبة جديدة!",
+  "daily_reward_title": "تم استلام العملات اليومية",
+  "daily_claimed_title": "تم الاستلام اليوم",
+  "daily_claimed_tomorrow": "مكافأتك التالية متاحة غدًا.",
+  "daily_reward_line": "+{amount} عملة",
+  "wallet_balance_line": "رصيد المحفظة: {balance}",
+  "streak_title": "السلسلة اليومية",
+  "streak_current": "السلسلة الحالية: {streak} يومًا",
+  "streak_best": "أطول سلسلة: {streak} يومًا",
+  "streak_hint": "استخدم /daily كل يوم للحفاظ على سلسلتك.",
+  "daily_streak_line": "السلسلة: {streak} يومًا"
 }

@@ -543,5 +543,15 @@
   "mines_replay_only_player": "❌ Sirf game khelne wala player replay kar sakta hai!",
   "mines_replay_low_balance": "❌ Balance kam hai! {bet} coins chahiye.",
   "mines_replay_out_of_energy": "⚡ Out of Energy ({rem_energy}/{max_energy})! Wait {time_str}.",
-  "mines_replay_started": "🎲 Naya Game Shuru Hua!"
+  "mines_replay_started": "🎲 Naya Game Shuru Hua!",
+  "daily_reward_title": "दैनिक कॉइन्स मिले",
+  "daily_claimed_title": "आज का इनाम ले चुके हैं",
+  "daily_claimed_tomorrow": "आपका अगला इनाम कल उपलब्ध होगा।",
+  "daily_reward_line": "+{amount} कॉइन्स",
+  "wallet_balance_line": "वॉलेट बैलेंस: {balance}",
+  "streak_title": "दैनिक स्ट्रीक",
+  "streak_current": "मौजूदा स्ट्रीक: {streak} दिन",
+  "streak_best": "सबसे लंबी स्ट्रीक: {streak} दिन",
+  "streak_hint": "स्ट्रीक जारी रखने के लिए हर दिन /daily लें।",
+  "daily_streak_line": "स्ट्रीक: {streak} दिन"
 }

@@ -1,5 +1,6 @@
 import ast
 import json
+from datetime import date, timedelta
 import re
 import unittest
 from collections import defaultdict
@@ -152,15 +153,43 @@ class MergedCommandTests(unittest.TestCase):
 
     def test_summon_compatible_commands_use_fiona_handlers_and_menu(self):
         registered = set(commands_in_tree(WAIFU, is_music=False))
-        for name in ("spin", "achievements", "ach", "badges", "me", "hstats", "rarities", "server", "search", "claimlist", "summon", "panel"):
+        for name in ("spin", "achievements", "ach", "badges", "me", "hstats", "rarities", "server", "search", "claimlist", "summon", "streak", "panel"):
             self.assertIn(name, registered)
         private_names = {name for name, _ in PRIVATE_COMMANDS}
-        for name in ("spin", "achievements", "me", "hstats", "rarity", "server", "search", "claimlist", "summon"):
+        for name in ("spin", "achievements", "me", "hstats", "rarity", "server", "search", "claimlist", "summon", "streak"):
             self.assertIn(name, private_names)
         spin = (WAIFU / "modules/spin.py").read_text(encoding="utf-8")
         self.assertIn("find_one_and_update", spin)
         self.assertIn("SPIN_COOLDOWN = timedelta(hours=24)", spin)
         self.assertNotIn("sqlite", spin.lower())
+
+    def test_daily_reward_streak_is_persisted_and_localized(self):
+        balance_path = WAIFU / "modules/balance.py"
+        source = balance_path.read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        helpers = [
+            node for node in tree.body
+            if isinstance(node, ast.FunctionDef)
+            and node.name in {"_as_date", "_daily_streak_after_claim"}
+        ]
+        module = ast.Module(
+            body=[ast.ImportFrom(module="datetime", names=[ast.alias(name="date"), ast.alias(name="datetime"), ast.alias(name="timedelta")], level=0), *helpers],
+            type_ignores=[],
+        )
+        ast.fix_missing_locations(module)
+        namespace = {}
+        exec(compile(module, str(balance_path), "exec"), namespace)
+        today = date(2026, 11, 26)
+        streak = namespace["_daily_streak_after_claim"]
+        self.assertEqual(streak(today - timedelta(days=1), 4, today), 5)
+        self.assertEqual(streak(today - timedelta(days=2), 4, today), 1)
+        self.assertEqual(streak("2026-11-25T20:00:00", 2, today), 3)
+        self.assertIn('filters.command("streak")', source)
+        self.assertIn('"longest_daily_streak": best_streak', source)
+        for locale in (WAIFU / "langs").glob("*.json"):
+            data = json.loads(locale.read_text(encoding="utf-8"))
+            for key in ("daily_reward_title", "daily_streak_line", "streak_current", "streak_best", "streak_hint"):
+                self.assertIn(key, data, f"Missing {key} from {locale}")
 
     def test_plain_waifu_replies_use_the_shared_richgram_notice(self):
         wrapped = 0

@@ -413,5 +413,15 @@
   "mines_replay_only_player": "❌ Only the player can replay this game!",
   "mines_replay_low_balance": "❌ Low balance! Need {bet} coins.",
   "mines_replay_out_of_energy": "⚡ Out of Energy ({rem_energy}/{max_energy})! Wait {time_str}.",
-  "mines_replay_started": "🎲 New Game Started!"
+  "mines_replay_started": "🎲 New Game Started!",
+  "daily_reward_title": "Daily coins received",
+  "daily_claimed_title": "Already claimed today",
+  "daily_claimed_tomorrow": "Your next reward is available tomorrow.",
+  "daily_reward_line": "+{amount} coins",
+  "wallet_balance_line": "Wallet balance: {balance}",
+  "streak_title": "Daily streak",
+  "streak_current": "Current streak: {streak} days",
+  "streak_best": "Longest streak: {streak} days",
+  "streak_hint": "Claim /daily every day to keep your streak alive.",
+  "daily_streak_line": "Streak: {streak} days"
 }

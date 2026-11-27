@@ -536,5 +536,15 @@
   "mines_replay_only_player": "❌ Sadece oynayan kişi tekrar başlatabilir!",
   "mines_replay_low_balance": "❌ Yetersiz bakiye! {bet} jeton gerekli.",
   "mines_replay_out_of_energy": "⚡ Enerji bitti ({rem_energy}/{max_energy})! {time_str} bekleyin.",
-  "mines_replay_started": "🎲 Yeni Oyun Başladı!"
+  "mines_replay_started": "🎲 Yeni Oyun Başladı!",
+  "daily_reward_title": "Günlük paralar alındı",
+  "daily_claimed_title": "Bugün zaten alındı",
+  "daily_claimed_tomorrow": "Bir sonraki ödülün yarın kullanılabilir.",
+  "daily_reward_line": "+{amount} coin",
+  "wallet_balance_line": "Cüzdan bakiyesi: {balance}",
+  "streak_title": "Günlük seri",
+  "streak_current": "Mevcut seri: {streak} gün",
+  "streak_best": "En uzun seri: {streak} gün",
+  "streak_hint": "Serini korumak için her gün /daily kullan.",
+  "daily_streak_line": "Seri: {streak} gün"
 }

@@ -40,8 +40,9 @@ thin aliases to unrelated Fiona commands:
 
 - `/market`, `/inv`, `/inventory`, `/sell`, `/sellchar`, auctions, `/bomb`,
   `/steal`, and `/pinfo` (no equivalent marketplace/inventory model).
-- `/streak` and streak-dependent achievements (Fiona's daily reward does not
-  yet maintain a durable consecutive-day streak).
+- Streak-dependent reward bonuses/achievements are not copied. Fiona now tracks
+  a daily-reward streak and longest streak with `/streak`, while retaining its
+  existing fixed daily payout and achievement model.
 - `/setclaim`, `/chance`, `/chancelist`, `/checkspawn`, `/changetime`, and
   `/spawn` admin controls (Fiona uses its existing spawn and cooldown settings).
 - `/give`, `/givemoney`, `/rmmoney`, `/removeall`, `/claimlist`, and claim-code

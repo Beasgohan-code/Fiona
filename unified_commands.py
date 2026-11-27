@@ -33,6 +33,7 @@ PRIVATE_COMMANDS = (
     ("hunt", "Hunt for a character"),
     ("balance", "Check your collection balance"),
     ("dailygift", "Claim your daily reward"),
+    ("streak", "View your daily reward streak"),
     ("weekly", "Claim your weekly reward"),
     ("shop", "Browse collection shop"),
     ("refer", "Invite friends and view referral rewards"),

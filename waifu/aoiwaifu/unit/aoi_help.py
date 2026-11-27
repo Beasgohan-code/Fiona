@@ -35,7 +35,8 @@ HELP_DATA = {
         "HELP": (
             "Manage your coins and rewards:\n\n"
             "• `/balance` or `/bal` — Check your Coins & Tokens\n"
-            "• `/dailygift` or `/daily` — Claim your daily coin reward\n"
+            "• `/dailygift` or `/daily` — Claim your daily coin reward and build a streak\n"
+            "• `/streak` — View your current and longest daily reward streak\n"
             "• `/spin` — Claim one 24-hour coin spin\n"
             "• `/weekly` — Claim your weekly coin reward\n"
             "• `/pay <amount>` — Send coins to another user (reply or pass ID/@username)\n"

@@ -543,5 +543,15 @@
   "mines_replay_only_player": "❌ Hanya pemain game ini yang bisa main lagi!",
   "mines_replay_low_balance": "❌ Saldo kurang! Butuh {bet} koin.",
   "mines_replay_out_of_energy": "⚡ Energi habis ({rem_energy}/{max_energy})! Tunggu {time_str}.",
-  "mines_replay_started": "🎲 Game Baru Dimulai!"
+  "mines_replay_started": "🎲 Game Baru Dimulai!",
+  "daily_reward_title": "Koin harian diterima",
+  "daily_claimed_title": "Sudah diklaim hari ini",
+  "daily_claimed_tomorrow": "Hadiah berikutnya tersedia besok.",
+  "daily_reward_line": "+{amount} koin",
+  "wallet_balance_line": "Saldo dompet: {balance}",
+  "streak_title": "Streak harian",
+  "streak_current": "Streak saat ini: {streak} hari",
+  "streak_best": "Streak terpanjang: {streak} hari",
+  "streak_hint": "Klaim /daily setiap hari agar streak tetap berjalan.",
+  "daily_streak_line": "Streak: {streak} hari"
 }

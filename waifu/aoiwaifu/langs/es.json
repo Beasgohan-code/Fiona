@@ -553,5 +553,15 @@
   "mines_replay_only_player": "❌ ¡Solo el jugador puede repetir la partida!",
   "mines_replay_low_balance": "❌ ¡Saldo insuficiente! Necesitas {bet} monedas.",
   "mines_replay_out_of_energy": "⚡ ¡Sin energía ({rem_energy}/{max_energy})! Espera {time_str}.",
-  "mines_replay_started": "🎲 ¡Nueva partida iniciada!"
+  "mines_replay_started": "🎲 ¡Nueva partida iniciada!",
+  "daily_reward_title": "Monedas diarias recibidas",
+  "daily_claimed_title": "Ya reclamaste hoy",
+  "daily_claimed_tomorrow": "Tu próxima recompensa estará disponible mañana.",
+  "daily_reward_line": "+{amount} monedas",
+  "wallet_balance_line": "Saldo de cartera: {balance}",
+  "streak_title": "Racha diaria",
+  "streak_current": "Racha actual: {streak} días",
+  "streak_best": "Racha más larga: {streak} días",
+  "streak_hint": "Usa /daily cada día para mantener tu racha.",
+  "daily_streak_line": "Racha: {streak} días"
 }

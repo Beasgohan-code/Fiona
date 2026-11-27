@@ -543,5 +543,15 @@
   "mines_replay_only_player": "❌ Apenas o jogador pode repetir este jogo!",
   "mines_replay_low_balance": "❌ Saldo baixo! Precisa de {bet} moedas.",
   "mines_replay_out_of_energy": "⚡ Sem energia ({rem_energy}/{max_energy})! Aguarde {time_str}.",
-  "mines_replay_started": "🎲 Novo jogo iniciado!"
+  "mines_replay_started": "🎲 Novo jogo iniciado!",
+  "daily_reward_title": "Moedas diárias recebidas",
+  "daily_claimed_title": "Já resgatado hoje",
+  "daily_claimed_tomorrow": "Sua próxima recompensa estará disponível amanhã.",
+  "daily_reward_line": "+{amount} moedas",
+  "wallet_balance_line": "Saldo da carteira: {balance}",
+  "streak_title": "Sequência diária",
+  "streak_current": "Sequência atual: {streak} dias",
+  "streak_best": "Maior sequência: {streak} dias",
+  "streak_hint": "Resgate /daily todos os dias para manter sua sequência.",
+  "daily_streak_line": "Sequência: {streak} dias"
 }

@@ -1,6 +1,6 @@
 """User economy commands (/balance, /bal, /dailygift, /weekly, /pay)."""
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import html
 import time
 from pymongo import ReturnDocument
@@ -10,11 +10,35 @@ from pyrogram.types import Message
 
 from aoiwaifu import app, user_collection
 from aoiwaifu.admin.blocklist import is_user_blocklisted
-from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
+from aoiwaifu.unit.aoi_lang import get_effective_lang, t, tr
 from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_quote, reply_notice
 
 pay_in_flight = set()
 lock = {}
+
+
+def _as_date(value):
+    """Normalize the legacy datetime/string daily-claim values to a date."""
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    if isinstance(value, str):
+        try:
+            return datetime.fromisoformat(value).date()
+        except ValueError:
+            return None
+    return None
+
+
+def _daily_streak_after_claim(last_daily, current_streak, today):
+    """Return this claim's streak; a missed calendar day resets it to one."""
+    previous_date = _as_date(last_daily)
+    if previous_date == today:
+        return max(0, int(current_streak or 0))
+    if previous_date == today - timedelta(days=1):
+        return max(0, int(current_streak or 0)) + 1
+    return 1
 
 
 async def get_balance(user_id):
@@ -71,37 +95,77 @@ async def daily_gift(client: Client, message: Message):
         return
     lock[user_id] = time.time()
 
-    user_data = await user_collection.find_one({"id": user_id}, {"last_daily": 1, "balance": 1})
-    today = datetime.now().date()
-    if user_data and "last_daily" in user_data:
-        last_daily = user_data["last_daily"]
-        if isinstance(last_daily, datetime):
-            last_daily = last_daily.date()
-        elif isinstance(last_daily, str):
-            last_daily = datetime.fromisoformat(last_daily).date()
-        if last_daily == today:
-            await message.reply_text(
-                premium_text(rich_card("Daily reward claimed", rich_quote("Your next daily reward is available tomorrow."), "🎁")),
-                parse_mode=enums.ParseMode.HTML,
-            )
-            return
+    user_data = await user_collection.find_one(
+        {"id": user_id},
+        {"last_daily": 1, "daily_streak": 1, "longest_daily_streak": 1, "balance": 1},
+    ) or {}
+    now = datetime.now()
+    today = now.date()
+    last_daily = _as_date(user_data.get("last_daily"))
+    if last_daily == today:
+        await message.reply_text(
+            premium_text(rich_card(
+                t("daily_claimed_title", lang),
+                rich_quote(t("daily_claimed_tomorrow", lang)),
+                "🎁",
+            )),
+            parse_mode=enums.ParseMode.HTML,
+        )
+        return
 
     daily_amount = 100
+    streak = _daily_streak_after_claim(
+        user_data.get("last_daily"), user_data.get("daily_streak", 0), today
+    )
+    best_streak = max(streak, int(user_data.get("longest_daily_streak", 0) or 0))
     await user_collection.update_one(
         {"id": user_id},
-        {"$inc": {"balance": daily_amount}, "$set": {"last_daily": datetime.now()}},
+        {
+            "$inc": {"balance": daily_amount},
+            "$set": {
+                "last_daily": now,
+                "daily_streak": streak,
+                "longest_daily_streak": best_streak,
+            },
+        },
         upsert=True,
     )
     new_balance, _ = await get_balance(user_id)
     card = rich_card(
-        "Daily coins received",
+        t("daily_reward_title", lang),
         rich_quote(
-            f"🎁 Reward: <b>+{daily_amount:,} coins</b>\n"
-            f"💰 Wallet balance: <code>{new_balance:,}</code>"
+            f"🎁 {t('daily_reward_line', lang, amount=f'{daily_amount:,}')}\n"
+            f"🔥 {t('daily_streak_line', lang, streak=streak)}\n"
+            f"💰 {t('wallet_balance_line', lang, balance=f'{new_balance:,}')}"
         ),
         "🎁",
     )
-    await message.reply_text(premium_text(tr(card, lang)), parse_mode=enums.ParseMode.HTML)
+    await message.reply_text(premium_text(card), parse_mode=enums.ParseMode.HTML)
+
+
+@app.on_message(filters.command("streak"))
+async def daily_streak(client: Client, message: Message):
+    if not message.from_user:
+        return
+    lang = await get_effective_lang(message, user_id=message.from_user.id)
+    user = await user_collection.find_one(
+        {"id": message.from_user.id},
+        {"last_daily": 1, "daily_streak": 1, "longest_daily_streak": 1},
+    ) or {}
+    last_daily = _as_date(user.get("last_daily"))
+    today = datetime.now().date()
+    stored_streak = max(0, int(user.get("daily_streak", 0) or 0))
+    current_streak = stored_streak if last_daily in {today, today - timedelta(days=1)} else 0
+    best_streak = max(current_streak, int(user.get("longest_daily_streak", 0) or 0))
+    body = "\n".join((
+        t("streak_current", lang, streak=current_streak),
+        t("streak_best", lang, streak=best_streak),
+        t("streak_hint", lang),
+    ))
+    await message.reply_text(
+        premium_text(rich_card(t("streak_title", lang), rich_quote(body), "🔥")),
+        parse_mode=enums.ParseMode.HTML,
+    )
 
 
 @app.on_message(filters.command("weekly"))

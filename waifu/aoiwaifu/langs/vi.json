@@ -536,5 +536,15 @@
   "mines_replay_only_player": "❌ Chỉ người chơi ván này mới được chơi lại!",
   "mines_replay_low_balance": "❌ Không đủ xu! Cần {bet} xu.",
   "mines_replay_out_of_energy": "⚡ Hết năng lượng ({rem_energy}/{max_energy})! Đợi {time_str}.",
-  "mines_replay_started": "🎲 Đã bắt đầu ván mới!"
+  "mines_replay_started": "🎲 Đã bắt đầu ván mới!",
+  "daily_reward_title": "Đã nhận xu hằng ngày",
+  "daily_claimed_title": "Hôm nay đã nhận rồi",
+  "daily_claimed_tomorrow": "Phần thưởng tiếp theo có vào ngày mai.",
+  "daily_reward_line": "+{amount} xu",
+  "wallet_balance_line": "Số dư ví: {balance}",
+  "streak_title": "Chuỗi hằng ngày",
+  "streak_current": "Chuỗi hiện tại: {streak} ngày",
+  "streak_best": "Chuỗi dài nhất: {streak} ngày",
+  "streak_hint": "Dùng /daily mỗi ngày để duy trì chuỗi.",
+  "daily_streak_line": "Chuỗi: {streak} ngày"
 }

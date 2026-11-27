@@ -558,5 +558,15 @@
   "mines_replay_only_player": "❌ Только игрок может перезапустить эту игру!",
   "mines_replay_low_balance": "❌ Недостаточно монет! Нужно {bet}.",
   "mines_replay_out_of_energy": "⚡ Нет энергии ({rem_energy}/{max_energy})! Ждите {time_str}.",
-  "mines_replay_started": "🎲 Новая игра началась!"
+  "mines_replay_started": "🎲 Новая игра началась!",
+  "daily_reward_title": "Ежедневные монеты получены",
+  "daily_claimed_title": "Сегодня уже получено",
+  "daily_claimed_tomorrow": "Следующая награда будет доступна завтра.",
+  "daily_reward_line": "+{amount} монет",
+  "wallet_balance_line": "Баланс кошелька: {balance}",
+  "streak_title": "Ежедневная серия",
+  "streak_current": "Текущая серия: {streak} дн.",
+  "streak_best": "Лучшая серия: {streak} дн.",
+  "streak_hint": "Забирайте /daily каждый день, чтобы продолжить серию.",
+  "daily_streak_line": "Серия: {streak} дн."
 }

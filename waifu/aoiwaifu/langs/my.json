@@ -532,5 +532,15 @@
   "mines_replay_only_player": "❌ ကစားသူကိုယ်တိုင်သာ ပြန်ကစားနိုင်ပါသည်!",
   "mines_replay_low_balance": "❌ လက်ကျန်ငွေမလောက်ပါ! ဒင်္ဂါး {bet} လိုအပ်ပါသည်။",
   "mines_replay_out_of_energy": "⚡ Energy ကုန်နေပါသည် ({rem_energy}/{max_energy})! {time_str} စောင့်ပါ။",
-  "mines_replay_started": "🎲 ပွဲအသစ် စတင်ပါပြီ!"
+  "mines_replay_started": "🎲 ပွဲအသစ် စတင်ပါပြီ!",
+  "daily_reward_title": "နေ့စဉ်ဒင်္ဂါးများ ရရှိပါပြီ",
+  "daily_claimed_title": "ယနေ့ ရယူပြီးပါပြီ",
+  "daily_claimed_tomorrow": "နောက်ထပ်ဆုကို မနက်ဖြန်တွင် ရယူနိုင်ပါမည်။",
+  "daily_reward_line": "+{amount} ဒင်္ဂါး",
+  "wallet_balance_line": "ပိုက်ဆံအိတ်လက်ကျန်: {balance}",
+  "streak_title": "နေ့စဉ်ဆက်တိုက်ရယူမှု",
+  "streak_current": "လက်ရှိဆက်တိုက်ရယူမှု: {streak} ရက်",
+  "streak_best": "အရှည်ဆုံးဆက်တိုက်ရယူမှု: {streak} ရက်",
+  "streak_hint": "ဆက်တိုက်ရယူမှုကို ထိန်းရန် /daily ကို နေ့တိုင်းသုံးပါ။",
+  "daily_streak_line": "ဆက်တိုက်ရယူမှု: {streak} ရက်"
 }
