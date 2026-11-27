@@ -6,14 +6,13 @@ from bson import ObjectId
 from pyrogram import filters
 from pyrogram.enums import ParseMode
 from aoiwaifu import *
-from aoiwaifu.unit.rich_ui import premium_button, premium_text
+from aoiwaifu.unit.rich_ui import premium_button, premium_text, rich_card
 from pymongo import ReturnDocument
 user_shop_state = {}
 shop_claim_locks = set()
 SHOP_IMAGE_URL = WAIFU_SHOP_IMAGE
 RARITY_PRICE = {'Frequent 🫧': 1000, 'Superior 🎋': 3000, 'Elite 🪸': 8000, 'Pookie 🐣': 20000, 'Majestic 👑': 25000, 'Mythical 🧜\u200d♀️': 70000, 'DIY 🎨': 70000, 'Angelic 🪄': 100000, 'Galactic 🌌': 150000, 'Phantom 🧌': 200000, 'Imaginative 🍀': 300000, 'Exclusive \U0001fa8e': 350000, 'Habitual 👘': 500000, 'Winter ☃️': 25000, "Valentine's 💕": 25000, 'Summer 🏜️': 25000, 'Chibi 🎀': 5000, 'Cosplay 🗿': 40000, 'Rainy 🌧️': 25000, 'Seasonal 🍁': 25000}
 SHOP_RARITIES = [('Frequent 🫧', '🫧'), ('Superior 🎋', '🎋'), ('Elite 🪸', '🪸'), ('Majestic 👑', '👑'), ('Summer 🏜️', '🏜️')]
-SHOP_MAIN_CAPTION = '╭━〔 🌸 𝐀𝐎𝐈 𝐖𝐀𝐈𝐅𝐔 ✦ 𝐒𝐇𝐎𝐏 〕━╮\n\n<blockquote>🌟 <b>Choose a rarity emoji below to browse the Bazaar:</b>\n🫧 Frequent  •  🎋 Superior  •  🪸 Elite\n👑 Majestic  •  🏜️ Summer</blockquote>\n╰━━━━━━━━━━━━━━━━━━╯'
 
 def build_shop_keyboard() -> InlineKeyboardMarkup:
     buttons = [
@@ -54,7 +53,7 @@ async def shop_menu(client, message):
     lang = await get_effective_lang(message)
     await message.reply_photo(
         photo=SHOP_IMAGE_URL,
-        caption=premium_text(t('shop_main_caption', lang)),
+        caption=premium_text(rich_card('Fiona character shop', t('shop_main_caption', lang), '🌸')),
         reply_markup=build_shop_keyboard(),
         parse_mode=ParseMode.HTML,
     )
@@ -87,16 +86,19 @@ async def show_character(client, msg, user_id):
         1 for item in (user.get('characters') or [])
         if isinstance(item, dict) and str(item.get('id')) == str(char.get('id'))
     )
-    caption = (
-        f"╭━━〔 🛍️ <b>FIONA CHARACTER BAZAAR</b> 〕━━╮\n"
-        f"<blockquote>💎 <b>{html.escape(str(char.get('name', 'Unknown')))}</b>\n"
-        f"🏯 <b>Anime:</b> {html.escape(str(char.get('anime', 'Unknown')))}\n"
-        f"⭐ <b>Rarity:</b> {html.escape(str(char.get('rarity', 'Unknown')))}\n"
-        f"🆔 <b>ID:</b> <code>{html.escape(str(char.get('id', '?')))}</code>\n"
-        f"💰 <b>Price:</b> {price:,} coins\n"
-        f"👛 <b>Your wallet:</b> {balance:,} coins\n"
-        f"📦 <b>Already owned:</b> {owned}</blockquote>\n"
-        "<i>Review the details, then buy or keep browsing.</i>"
+    caption = rich_card(
+        "Fiona character bazaar",
+        "\n".join((
+            f"💎 <b>{html.escape(str(char.get('name', 'Unknown')))}</b>",
+            f"🏯 <b>Anime:</b> {html.escape(str(char.get('anime', 'Unknown')))}",
+            f"⭐ <b>Rarity:</b> {html.escape(str(char.get('rarity', 'Unknown')))}",
+            f"🆔 <b>ID:</b> <code>{html.escape(str(char.get('id', '?')))}</code>",
+            f"💰 <b>Price:</b> {price:,} coins",
+            f"👛 <b>Your wallet:</b> {balance:,} coins",
+            f"📦 <b>Already owned:</b> {owned}",
+            "<i>Review the details, then buy or keep browsing.</i>",
+        )),
+        "🛍️",
     )
     keyboard = [
         [
@@ -120,7 +122,7 @@ async def show_character(client, msg, user_id):
 @app.on_callback_query(filters.regex('^shop_back$'))
 async def shop_back_callback(client, callback_query):
     lang = await get_effective_lang(callback_query)
-    await _edit_shop_message_media(msg=callback_query.message, media_url=SHOP_IMAGE_URL, caption=SHOP_MAIN_CAPTION, reply_markup=build_shop_keyboard())
+    await _edit_shop_message_media(msg=callback_query.message, media_url=SHOP_IMAGE_URL, caption=premium_text(rich_card('Fiona character shop', t('shop_main_caption', lang), '🌸')), reply_markup=build_shop_keyboard())
     await callback_query.answer()
 
 @app.on_callback_query(filters.regex('^refresh_chars$'))

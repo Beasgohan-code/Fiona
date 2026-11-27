@@ -120,25 +120,19 @@ class AyuBot(Client):
                 tgcalls_version = _package_version("py-tgcalls")
                 owner_display = config.OWNER_ID[0] if config.OWNER_ID else "N/A"
                 start_msg = f"""
-╔══════════╗
-  🎵 **{self.mention}** 🎵
-╚══════════╝
+🎵 **{self.mention} started successfully**
 
-⚡ **ʙᴏᴛ sᴛᴀʀᴛᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ**
+🔑 **ID:** <code>{self.id}</code>
+🧑 **Name:** {self.name}
+🔗 **Username:** @{self.username}
+📡 **Owner:** {owner_display}
+🌐 **Platform:** Cloud Linux
+🐍 **Python:** {python_version}
+⚙️ **PyTgCalls:** v{tgcalls_version}
 
-┌────────────┐
-│ 🔑 **ɪᴅ :** <code>{self.id}</code>
-│ 🧑 **ɴᴀᴍᴇ :** {self.name}
-│ 🔗 **ᴜsᴇʀɴᴀᴍᴇ :** @{self.username}
-│ 📡 **ʜᴜɴᴛᴇʀ :** {owner_display}
-│ 🌐 **ᴘʟᴀᴛғᴏʀᴍ :** ᴄʟᴏᴜᴅ ʟɪɴᴜx
-│ 🐍 **ᴘʏᴛʜᴏɴ :** {python_version}
-│ ⚙️ **ᴘʏᴛɢᴄᴀʟʟs :** v{tgcalls_version}
-└────────────┘
-
-🚀 **ʀᴇᴀᴅʏ ᴛᴏ ᴘʟᴀʏ ᴍᴜsɪᴄ**
-💎 **ᴘʀᴇᴍɪᴜᴍ ᴜɪ ᴀᴄᴛɪᴠᴇ**
-🔥 **ᴠᴏɪᴄᴇᴄʜᴀᴛ ᴄᴏɴɴᴇᴄᴛᴇᴅ**
+🚀 Ready to play music
+💎 Premium UI active
+🔥 Voice chat connected
 """
                 await asyncio.wait_for(
                     self.send_message(

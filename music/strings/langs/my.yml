@@ -32,7 +32,7 @@ auth_4 : "❌ Authorized Users စာရင်းမှ ဖယ်ရှားပ
 auth_5 : "🚫 ဤအသုံးပြုသူသည် Authorized User မဟုတ်ပါ။"
 auth_6 : "🔄 Authorized Users စာရင်းကို ရယူနေပါသည်... ခဏစောင့်ပါ!"
 auth_7 : "**Authorized Users စာရင်း:**\n\n"
-auth_8 : "┗ ထည့်သွင်းသူ:-"
+auth_8 : "• ထည့်သွင်းသူ:-"
 
 # PLUGINS - Admins
 admin_1 : "🎶➻ သီချင်းကို ခေတ္တရပ်ထားပြီးသားဖြစ်ပါသည်။"

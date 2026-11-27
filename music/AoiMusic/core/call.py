@@ -443,6 +443,7 @@ async def _spawn_then_clean(_, chat_id, old_mystic, *spawn_args, **spawn_kw):
 class Call:
     def __init__(self):
         self.calls = []
+        self._reconcile_task = None
 
         for client in userbot.clients:
             pycall = PyTgCalls(client)
@@ -492,6 +493,62 @@ class Call:
                     LOGGER(__name__).debug(
                         "[Call] reconcile failed for %s: %s", chat_id, e
                     )
+
+    async def stop(self):
+        """Gracefully leave voice calls and cancel Call-owned background tasks.
+
+        PyTgCalls 3.x has no process-wide ``stop()`` method. Its calls must be
+        left individually before the underlying Pyrogram assistant sessions
+        are stopped by the unified launcher.
+        """
+        background_tasks = []
+        if self._reconcile_task is not None and not self._reconcile_task.done():
+            self._reconcile_task.cancel()
+            background_tasks.append(self._reconcile_task)
+        self._reconcile_task = None
+
+        for task in list(_idle_leave_tasks.values()):
+            if task is not asyncio.current_task() and not task.done():
+                task.cancel()
+                background_tasks.append(task)
+        _idle_leave_tasks.clear()
+        if background_tasks:
+            await asyncio.gather(*background_tasks, return_exceptions=True)
+
+        chat_ids = set()
+        try:
+            chat_ids.update(await get_active_chats())
+        except Exception as exc:
+            LOGGER(__name__).warning(
+                "[Call] Could not load active chats during shutdown (%s)",
+                type(exc).__name__,
+            )
+
+        for client in self.calls:
+            try:
+                chat_ids.update(await client._binding.calls())
+            except Exception as exc:
+                LOGGER(__name__).warning(
+                    "[Call] Could not inspect active voice calls during shutdown (%s)",
+                    type(exc).__name__,
+                )
+
+        async def leave_chat(chat_id):
+            try:
+                await asyncio.wait_for(self.stop_stream(chat_id), timeout=10)
+            except Exception as exc:
+                LOGGER(__name__).warning(
+                    "[Call] Shutdown cleanup failed for chat %s (%s)",
+                    chat_id,
+                    type(exc).__name__,
+                )
+
+        if chat_ids:
+            LOGGER(__name__).info(
+                "[Call] Leaving %d active voice chat(s) before stopping assistants",
+                len(chat_ids),
+            )
+            await asyncio.gather(*(leave_chat(chat_id) for chat_id in chat_ids))
 
     async def pause_stream(self, chat_id: int):
         assistant = await group_assistant(self, chat_id)
@@ -1343,7 +1400,10 @@ class Call:
         LOGGER(__name__).info(f"Starting PyTgCall Clients")
         await asyncio.gather(*[c.start() for c in self.calls])
         await self.decorators()
-        asyncio.create_task(self._reconcile_active_chats())
+        if self._reconcile_task is None or self._reconcile_task.done():
+            self._reconcile_task = asyncio.create_task(
+                self._reconcile_active_chats(), name="fiona-call-reconcile"
+            )
 
 
 

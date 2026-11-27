@@ -107,9 +107,16 @@ async def refer_list_callback(client: Client, callback_query: CallbackQuery):
             r_uname = r.get('referred_username')
             uname_str = f' (@{html.escape(r_uname)})' if r_uname else ''
             r_date = html.escape(str(r.get('date_str') or ''))
-            lines.append(f'{idx}. <a href="tg://user?id={r_uid}"><b>{r_name}</b></a>{uname_str} — <code>{r_uid}</code>\n    └ 📅 <i>{r_date}</i> • 🎁 <code>+${REFERRAL_DOLLARS} &amp; +{REFERRAL_COINS:,} coins</code>')
-        rec_text = '\n'.join(lines)
-    text = f'╭━━━〔 📋 𝐑𝐄𝐅𝐄𝐑𝐑𝐀𝐋 𝐑𝐄𝐂𝐎𝐑𝐃 〕━━━╮\nTotal Invited Users: <b>{len(records)}</b>\n╰━━━━━━━━━━━━━━━━━━━━━━╯\n\n<blockquote>{rec_text}\n\n🔗 <b>Invite Link:</b> <code>{ref_link}</code></blockquote>'
+            lines.append(
+                f'{idx}. <a href=\"tg://user?id={r_uid}\"><b>{r_name}</b></a>{uname_str} — <code>{r_uid}</code>\n'
+                f'📅 <i>{r_date}</i>  •  🎁 <code>+${REFERRAL_DOLLARS} &amp; +{REFERRAL_COINS:,} coins</code>'
+            )
+        rec_text = "\n".join(lines)
+    text = rich_card(
+        'Referral history',
+        f"👥 <b>Total invited:</b> {len(records)}\n\n{rec_text}\n\n🔗 <b>Invite link:</b> <code>{ref_link}</code>",
+        '📋',
+    )
     kb = InlineKeyboardMarkup([[
         premium_button('Back to referral card', emoji='BACK_ARROW', callback_data=f'refer_refresh:{target_user_id}')
     ]])
@@ -170,7 +177,7 @@ async def process_referral(client: Client, new_user, ref_arg: str, is_new_start:
     milestone_note = ''
     if new_count >= SECOND_CHAR_REFERRALS_REQUIRED:
         milestone_note = ''
-    notify_referrer_text = f'🎉 <b>New Referral Joined!</b>\n\n👤 <b>Invited User:</b> <a href="tg://user?id={new_user_id}"><b>{safe_new_name}</b></a> (<code>{new_user_id}</code>)\n📅 <b>Date:</b> <code>{date_str}</code>\n\n🎁 <b>Your Referral Bonus:</b>\n├ 💵 <b>+${REFERRAL_DOLLARS} Waifu Dollars</b>\n└ 💰 <b>+{REFERRAL_COINS:,} Coins</b>\n\n👥 <b>Total Friends Referred:</b> <code>{new_count} Users</code>{milestone_note}'
+    notify_referrer_text = f'🎉 <b>New Referral Joined!</b>\n\n👤 <b>Invited User:</b> <a href="tg://user?id={new_user_id}"><b>{safe_new_name}</b></a> (<code>{new_user_id}</code>)\n📅 <b>Date:</b> <code>{date_str}</code>\n\n🎁 <b>Your Referral Bonus:</b>\n• 💵 <b>+${REFERRAL_DOLLARS} Waifu Dollars</b>\n• 💰 <b>+{REFERRAL_COINS:,} Coins</b>\n\n👥 <b>Total Friends Referred:</b> <code>{new_count} Users</code>{milestone_note}'
     try:
         await client.send_message(chat_id=referrer_id, text=notify_referrer_text, parse_mode=enums.ParseMode.HTML)
     except Exception:
@@ -180,7 +187,7 @@ async def process_referral(client: Client, new_user, ref_arg: str, is_new_start:
         await client.send_message(chat_id=new_user_id, text=notify_new_user_text, parse_mode=enums.ParseMode.HTML)
     except Exception:
         pass
-    log_text = f'🔗 <b>#NEW_REFERRAL_LOG</b>\n\n├ 👤 <b>Referrer:</b> <a href="tg://user?id={referrer_id}"><b>{safe_ref_name}</b></a> (<code>{referrer_id}</code>)\n├ 🆕 <b>Referred User:</b> <a href="tg://user?id={new_user_id}"><b>{safe_new_name}</b></a> (<code>{new_user_id}</code>)\n├ 🎁 <b>Reward Given:</b> <code>+${REFERRAL_DOLLARS} &amp; +{REFERRAL_COINS:,} coins</code>\n└ 📊 <b>Referrer Total Invites:</b> <code>{new_count}</code>'
+    log_text = f'🔗 <b>#NEW_REFERRAL_LOG</b>\n\n• 👤 <b>Referrer:</b> <a href="tg://user?id={referrer_id}"><b>{safe_ref_name}</b></a> (<code>{referrer_id}</code>)\n• 🆕 <b>Referred User:</b> <a href="tg://user?id={new_user_id}"><b>{safe_new_name}</b></a> (<code>{new_user_id}</code>)\n• 🎁 <b>Reward Given:</b> <code>+${REFERRAL_DOLLARS} &amp; +{REFERRAL_COINS:,} coins</code>\n• 📊 <b>Referrer Total Invites:</b> <code>{new_count}</code>'
     try:
         await client.send_message(chat_id=GLOG, text=log_text, parse_mode=enums.ParseMode.HTML)
     except Exception:

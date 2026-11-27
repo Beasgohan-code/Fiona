@@ -78,7 +78,7 @@ async def ctop(client: Client, message: Message):
     )
 
 
-@app.on_message(filters.command("st"))
+@app.on_message(filters.command(["st", "server"]))
 async def stats(client: Client, message: Message):
     lang = await get_effective_lang(message)
     user_count = await user_collection.count_documents({})

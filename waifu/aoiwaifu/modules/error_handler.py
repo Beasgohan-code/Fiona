@@ -105,13 +105,11 @@ def _build_pyrogram_report(error: Exception, update) -> str:
     )
 
     return (
-        "🚨 BOT ERROR\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
+        "🚨 BOT ERROR\n\n"
         f"Command/Action: {command}\n"
         f"{_user_chat_info(update)}\n"
         f"Error Type: {type(error).__name__}\n"
         f"Error: {error}\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
         "TRACEBACK:\n"
         f"{traceback_text}"
     )
@@ -125,12 +123,10 @@ def _build_ptb_report(error: Exception, update) -> str:
 
     return (
         "🚨 PTB BOT ERROR\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
         f"Command/Action: {command}\n"
         f"Update: {type(update).__name__ if update else 'UNKNOWN'}\n"
         f"Error Type: {type(error).__name__}\n"
         f"Error: {error}\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
         "TRACEBACK:\n"
         f"{traceback_text}"
     )

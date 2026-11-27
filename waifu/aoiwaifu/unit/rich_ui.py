@@ -29,26 +29,22 @@ def rich_heading(title: str, emoji: str = "✨") -> str:
 def rich_table(headers, rows) -> str:
     """Render a compact, Telegram-safe table with clear row and column breaks.
 
-    Telegram's Bot API doesn't accept HTML <table> tags, so the table is
-    expressed with a bold header and pipe-separated rows inside the card.
+    Telegram's Bot API doesn't accept HTML <table> tags, so rows use compact
+    bullet separators and plain line breaks instead of drawing borders.
     Cell values may contain trusted HTML such as <code> or <b> tags.
     """
-    header = "  │  ".join(str(cell) for cell in headers)
+    header = "  •  ".join(str(cell) for cell in headers)
     lines = [f"<b>{header}</b>"]
     for row in rows:
-        lines.append("  │  ".join(str(cell) for cell in row))
+        lines.append("  •  ".join(str(cell) for cell in row))
     return "\n".join(lines)
 
 
 def rich_card(title: str, body: str, emoji: str = "✨") -> str:
-    """Wrap a short HTML body in Fiona's boxed Telegram card treatment."""
+    """Render an open, borderless Fiona panel with a clear title and body."""
     title = str(title or "Fiona")
-    body = str(body or "")
-    return (
-        f"╭━━〔 {rich_heading(title, emoji)} 〕━━╮\n"
-        f"<blockquote>{body}</blockquote>\n"
-        "╰━━━━━━━━━━━━━━━━━━╯"
-    )
+    body = str(body or "").strip()
+    return "\n\n".join((rich_heading(title, emoji), body)) if body else rich_heading(title, emoji)
 
 
 async def edit_panel(message, text: str, reply_markup=None) -> bool:

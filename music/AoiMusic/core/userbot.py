@@ -44,21 +44,17 @@ class Userbot(Client):
 
             if config.LOGGER_ID:
                 assistant_msg = f"""
-╔══════════╗
-  🤖 **ᴀssɪsᴛᴀɴᴛ sᴛᴀʀᴛᴇᴅ** 🤖
-╚══════════╝
+🤖 **Assistant started**
 
-┌────────────┐
-│ 🧑 **ɴᴀᴍᴇ :** {client.name}
-│ 🔑 **ɪᴅ :** <code>{client.id}</code>
-│ 🔗 **ᴜsᴇʀɴᴀᴍᴇ :** @{client.username}
-│ 🔢 **ɪɴsᴛᴀɴᴄᴇ :** #{index}
-│ 📡 **sᴛᴀᴛᴜs :** ✅ ᴀᴄᴛɪᴠᴇ
-│ 🎵 **ʀᴏʟᴇ :** ᴠᴏɪᴄᴇᴄʜᴀᴛ ᴀssɪsᴛᴀɴᴛ
-└────────────┘
+🧑 **Name:** {client.name}
+🔑 **ID:** <code>{client.id}</code>
+🔗 **Username:** @{client.username}
+🔢 **Instance:** #{index}
+📡 **Status:** Active
+🎵 **Role:** Voice chat assistant
 
-⚡ **ʀᴇᴀᴅʏ ᴛᴏ ᴊᴏɪɴ ᴠᴏɪᴄᴇᴄʜᴀᴛs**
-💎 **ᴘʀᴇᴍɪᴜᴍ sᴛʀᴇᴀᴍɪɴɢ ᴀᴄᴛɪᴠᴇ**
+⚡ Ready to join voice chats
+💎 Premium streaming active
 """
                 try:
                     await asyncio.wait_for(client.send_message(config.LOGGER_ID, assistant_msg), timeout=15)

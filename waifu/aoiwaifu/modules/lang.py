@@ -38,7 +38,7 @@ from aoiwaifu.unit.aoi_lang import (
     t,
 )
 from aoiwaifu.modules.start import generate_start_message
-from aoiwaifu.unit.rich_ui import edit_panel, premium_text
+from aoiwaifu.unit.rich_ui import edit_panel, premium_text, rich_card
 
 
 async def is_group_admin_or_owner(client: Client, chat_id: int, user_id: int) -> bool:
@@ -68,13 +68,11 @@ async def _get_group_ctime(chat_id: int) -> int:
 
 
 def build_dm_lang_menu_text(lang: str) -> str:
-    return (
-        "╭━〔 🌐 𝐀𝐎𝐈 𝐖𝐀𝐈𝐅𝐔 • 𝐋𝐀𝐍𝐆𝐔𝐀𝐆𝐄 〕━╮\n\n"
-        f"<blockquote>{t('lang_select_dm_title', lang)}\n"
-        f"{t('lang_select_dm_body', lang)}\n\n"
-        f"🌐 <b>Current:</b> <code>{get_lang_label(lang)}</code></blockquote>\n"
-        "╰━━━━━━━━━━━━━━━━━━━━━━╯"
-    )
+    body = "\n\n".join((
+        t('lang_select_dm_body', lang),
+        f"🌐 <b>Current:</b> <code>{get_lang_label(lang)}</code>",
+    ))
+    return rich_card(t('lang_select_dm_title', lang), body, "🌐")
 
 
 async def build_group_settings_text_and_markup(chat_id: int, group_title: str, lang: str = None) -> tuple[str, InlineKeyboardMarkup]:
@@ -82,11 +80,10 @@ async def build_group_settings_text_and_markup(chat_id: int, group_title: str, l
         lang = await get_chat_lang(chat_id)
     ctime = await _get_group_ctime(chat_id)
     safe_title = html.escape(str(group_title or f"Group {chat_id}"))
-    text = (
-        "╭━〔 ⚙️ 𝐆𝐑𝐎𝐔𝐏 𝐒𝐄𝐓𝐓𝐈𝐍𝐆𝐒 〕━╮\n\n"
-        f"<blockquote>{t('lang_select_group_title', lang)}\n\n"
-        f"{t('lang_select_group_body', lang, group_title=safe_title, lang_label=get_lang_label(lang), ctime=ctime)}</blockquote>\n"
-        "╰━━━━━━━━━━━━━━━━━━━━━━╯"
+    text = rich_card(
+        t('lang_select_group_title', lang),
+        t('lang_select_group_body', lang, group_title=safe_title, lang_label=get_lang_label(lang), ctime=ctime),
+        "⚙️",
     )
     markup = build_language_keyboard(
         callback_prefix="set_grp_lang",

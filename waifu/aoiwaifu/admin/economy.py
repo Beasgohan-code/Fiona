@@ -6,6 +6,7 @@ from pyrogram.types import Message
 
 from aoiwaifu import app, require_power, user_collection
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
+from aoiwaifu.unit.rich_ui import rich_card
 
 
 async def _get_balance(user_id: int) -> tuple[int, int]:
@@ -172,16 +173,13 @@ async def admin_add_currency_handler(client: Client, message: Message):
 
     new_coins, new_tokens = await _get_balance(target_id)
     safe_target = html.escape(str(target_name))
+    body = "\n".join((
+        f"👤 <b>Target:</b> {safe_target} (<code>{target_id}</code>)",
+        f"✨ <b>Updated:</b> {added_label}",
+        f"💰 <b>Coins:</b> <code>{new_coins:,}</code>",
+        f"🪙 <b>Tokens:</b> <code>{new_tokens:,}</code>",
+    ))
     await message.reply_text(
-        tr(
-            f"╭━━━〔 ⚡ 𝐀𝐃𝐌𝐈𝐍 𝐂𝐑𝐄𝐃𝐈𝐓 〕━━━╮\n"
-            f"│ 👤 <b>Target:</b> {safe_target} (<code>{target_id}</code>)\n"
-            f"│ ✨ <b>Updated:</b> {added_label}\n"
-            f"├━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"│ 💰 <b>Coins:</b> <code>{new_coins:,}</code>\n"
-            f"│ 🪙 <b>Tokens:</b> <code>{new_tokens:,}</code>\n"
-            f"╰━━━━━━━━━━━━━━━━━━━━━━╯",
-            lang,
-        ),
+        tr(rich_card("Admin credit", body, "⚡"), lang),
         parse_mode=enums.ParseMode.HTML,
     )

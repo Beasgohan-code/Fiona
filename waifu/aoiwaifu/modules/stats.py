@@ -7,7 +7,8 @@ from pyrogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 from aoiwaifu import STATS_IMG, app, collection, rarity_map, rarity_map2, user_collection
 from aoiwaifu.admin.blocklist import get_blocklisted_id_variants, is_user_blocklisted
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_heading, rich_table
+from aoiwaifu.unit.profile_card import build_profile_card
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card, rich_heading, rich_table
 
 
 async def get_user_stats(user_id: int, username: str = "", first_name: str = "Collector"):
@@ -87,16 +88,21 @@ async def get_user_stats(user_id: int, username: str = "", first_name: str = "Co
 def _build_profile_view(stats: dict, lang: str = "en") -> tuple[str, InlineKeyboardMarkup]:
     """Single source of truth for /profile and profile_refresh caption & keyboard."""
     global_rank = f"#{stats['rank']} / {stats['total_users']}" if stats.get("rank") else "Unranked"
-    caption = (
-        f"╭━━━〔 🌸 𝐂𝐎𝐋𝐋𝐄𝐂𝐓𝐎𝐑 𝐏𝐑𝐎𝐅𝐈𝐋𝐄 〕━━━╮\n\n"
-        f"<blockquote>👤 <b>Name:</b> {stats['first_name']}\n"
-        f"🆔 <b>User ID:</b> <code>{stats['user_id']}</code>\n"
-        f"🏆 <b>Global Rank:</b> <code>{global_rank}</code>\n\n"
-        f"💰 <b>Coins:</b> <code>{stats['balance']:,}</code>\n"
-        f"🪙 <b>Tokens:</b> <code>{stats['tokens']:,}</code>\n\n"
-        f"🎴 <b>Total Waifus:</b> <code>{stats['character_count']:,}</code>\n"
-        f"✨ <b>Unique:</b> <code>{stats['unique_character_count']:,} / {stats['total_characters']:,}</code>\n"
-        f"📊 <b>Progress:</b> <code>{stats['progress_bar']}</code> ({stats['progress_percentage']:.1f}%)"
+    caption = rich_card(
+        "Collector profile",
+        "\n".join((
+            f"👤 <b>Name:</b> {stats['first_name']}",
+            f"🆔 <b>User ID:</b> <code>{stats['user_id']}</code>",
+            f"🏆 <b>Global rank:</b> <code>{global_rank}</code>",
+            "",
+            f"💰 <b>Coins:</b> <code>{stats['balance']:,}</code>",
+            f"🪙 <b>Tokens:</b> <code>{stats['tokens']:,}</code>",
+            "",
+            f"🎴 <b>Total waifus:</b> <code>{stats['character_count']:,}</code>",
+            f"✨ <b>Unique:</b> <code>{stats['unique_character_count']:,} / {stats['total_characters']:,}</code>",
+            f"📊 <b>Progress:</b> <code>{stats['progress_bar']}</code> ({stats['progress_percentage']:.1f}%)",
+        )),
+        "🌸",
     )
 
     non_zero_rarities = [(rarity, count) for rarity, count in stats["rarity_counts"].items() if count > 0]
@@ -110,7 +116,6 @@ def _build_profile_view(stats: dict, lang: str = "en") -> tuple[str, InlineKeybo
             ],
         )
 
-    caption += "</blockquote>\n╰━━━━━━━━━━━━━━━━━━━━━━╯"
 
     uid = stats["user_id"]
     keyboard = InlineKeyboardMarkup(
@@ -168,7 +173,7 @@ async def _resolve_target_user(client: Client, message: Message):
     return (u.id, u.username or "", u.first_name or "Collector")
 
 
-@app.on_message(filters.command("profile"))
+@app.on_message(filters.command(["profile", "me", "hstats"]))
 async def profile_and_stats_handler(client: Client, message: Message):
     lang = await get_effective_lang(message)
     target_user_id, target_username, target_first_name = await _resolve_target_user(client, message)
@@ -184,8 +189,9 @@ async def profile_and_stats_handler(client: Client, message: Message):
 
     caption, keyboard = _build_profile_view(stats, lang=lang)
     try:
+        card = build_profile_card(stats)
         await message.reply_photo(
-            photo=stats["photo_url"],
+            photo=card,
             caption=caption,
             reply_markup=keyboard,
             parse_mode=enums.ParseMode.HTML,
@@ -193,7 +199,7 @@ async def profile_and_stats_handler(client: Client, message: Message):
     except Exception:
         try:
             await message.reply_photo(
-                photo=STATS_IMG[0],
+                photo=stats["photo_url"] or STATS_IMG[0],
                 caption=caption,
                 reply_markup=keyboard,
                 parse_mode=enums.ParseMode.HTML,

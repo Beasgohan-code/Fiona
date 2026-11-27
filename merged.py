@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import asyncio
 import importlib
+import inspect
 import os
+import signal
 import sys
 import time
 from datetime import datetime, timezone
@@ -80,8 +82,10 @@ async def _set_unified_menu(app) -> None:
         BotCommandScopeAllChatAdministrators,
         BotCommandScopeAllGroupChats,
         BotCommandScopeAllPrivateChats,
+        BotCommandScopeChat,
     )
     from unified_commands import ADMIN_COMMANDS, GROUP_COMMANDS, PRIVATE_COMMANDS
+    from aoiwaifu import OWNER_ID
 
     def convert(rows):
         return [BotCommand(command, description) for command, description in rows]
@@ -89,14 +93,67 @@ async def _set_unified_menu(app) -> None:
     await app.set_bot_commands(convert(PRIVATE_COMMANDS), scope=BotCommandScopeAllPrivateChats())
     await app.set_bot_commands(convert(GROUP_COMMANDS), scope=BotCommandScopeAllGroupChats())
     await app.set_bot_commands(convert(ADMIN_COMMANDS), scope=BotCommandScopeAllChatAdministrators())
+    if OWNER_ID:
+        owner_commands = (*PRIVATE_COMMANDS, ("owner", "Open owner tools"))
+        await app.set_bot_commands(
+            convert(owner_commands), scope=BotCommandScopeChat(chat_id=OWNER_ID)
+        )
 
 
-async def _health_heartbeat() -> None:
+async def _health_heartbeat(bot_client, assistant_client) -> None:
+    """Publish event-loop heartbeats together with Telegram connection health."""
     from AoiMusic.core.keep_alive import beat
 
     while True:
+        beat(
+            {
+                "telegram_bot": bool(getattr(bot_client, "is_connected", False)),
+                "assistant_session": bool(getattr(assistant_client, "is_connected", False)),
+            }
+        )
         await asyncio.sleep(30)
-        beat()
+
+
+async def _wait_for_shutdown_signal(logger) -> str:
+    """Wait for a host shutdown signal and log which signal initiated teardown."""
+    loop = asyncio.get_running_loop()
+    shutdown_event = asyncio.Event()
+    received: list[str] = []
+    loop_signals = []
+    fallback_signals = []
+
+    def request_shutdown(signum: int) -> None:
+        if received:
+            return
+        name = signal.Signals(signum).name
+        received.append(name)
+        logger.info("Received %s; beginning graceful shutdown.", name)
+        shutdown_event.set()
+
+    for signum in (signal.SIGINT, signal.SIGTERM):
+        try:
+            loop.add_signal_handler(signum, request_shutdown, signum)
+            loop_signals.append(signum)
+        except (NotImplementedError, RuntimeError):
+            previous = signal.getsignal(signum)
+
+            def fallback_handler(received_signal, _frame):
+                loop.call_soon_threadsafe(request_shutdown, received_signal)
+
+            signal.signal(signum, fallback_handler)
+            fallback_signals.append((signum, previous))
+
+    if not loop_signals and not fallback_signals:
+        raise RuntimeError("Could not register a graceful-shutdown signal handler")
+
+    try:
+        await shutdown_event.wait()
+        return received[0]
+    finally:
+        for signum in loop_signals:
+            loop.remove_signal_handler(signum)
+        for signum, previous in fallback_signals:
+            signal.signal(signum, previous)
 
 
 async def run() -> None:
@@ -113,8 +170,7 @@ async def run() -> None:
     from AoiMusic.utils.database import get_banned_users, get_gbanned
     from AoiMusic.utils.premium import install_text_entities_patch, validate_db
     from AoiMusic.utils.premium_emoji import patch_pyrogram_premium_emoji
-    from pyrogram import idle
-    from AoiMusic.core.keep_alive import set_ready, start_server, stop_server
+    from AoiMusic.core.keep_alive import beat, set_ready, start_server, stop_server
     from aoiwaifu.unit.event_logger import send_event_logs
 
     if not config.STRING_SESSIONS:
@@ -136,9 +192,21 @@ async def run() -> None:
     heartbeat_task = None
     runtime_started_at = time.monotonic()
     service_ready = False
+    shutdown_trigger = None
+
+    async def shutdown_step(name, operation, timeout: float = 20) -> None:
+        """Keep one cleanup failure from skipping the remaining shutdown steps."""
+        try:
+            result = operation()
+            if inspect.isawaitable(result):
+                await asyncio.wait_for(result, timeout=timeout)
+        except Exception as exc:
+            LOGGER("Fiona").warning(
+                "Shutdown step '%s' failed (%s).", name, type(exc).__name__
+            )
+
     try:
         health_server = start_server()
-        heartbeat_task = asyncio.create_task(_health_heartbeat(), name="fiona-health-heartbeat")
         await app.start()
         client_started = True
 
@@ -169,6 +237,15 @@ async def run() -> None:
         await userbot.start()
         userbot_started = True
         await AoiCall.start()
+        beat(
+            {
+                "telegram_bot": bool(getattr(app, "is_connected", False)),
+                "assistant_session": bool(getattr(userbot, "is_connected", False)),
+            }
+        )
+        heartbeat_task = asyncio.create_task(
+            _health_heartbeat(app, userbot), name="fiona-health-heartbeat"
+        )
         try:
             await _set_unified_menu(app)
         except Exception as exc:
@@ -185,49 +262,73 @@ async def run() -> None:
             f"<b>Time (UTC):</b> {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}",
             logger_name="Fiona.Lifecycle",
         )
-        await idle()
+        shutdown_trigger = await _wait_for_shutdown_signal(LOGGER("Fiona"))
     finally:
         set_ready(False)
         if service_ready:
             uptime = max(0, int(time.monotonic() - runtime_started_at))
             hours, remainder = divmod(uptime, 3600)
             minutes, seconds = divmod(remainder, 60)
-            await send_event_logs(
-                app,
-                [aoiwaifu.GLOG, config.LOGGER_ID],
-                "<b>🔴 Fiona stopping</b>\n"
-                f"<b>Uptime:</b> {hours}h {minutes}m {seconds}s\n"
-                f"<b>Time (UTC):</b> {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}",
-                logger_name="Fiona.Lifecycle",
+            await shutdown_step(
+                "lifecycle notification",
+                lambda: send_event_logs(
+                    app,
+                    [aoiwaifu.GLOG, config.LOGGER_ID],
+                    "<b>🔴 Fiona stopping</b>\n"
+                    f"<b>Uptime:</b> {hours}h {minutes}m {seconds}s\n"
+                    f"<b>Shutdown trigger:</b> {shutdown_trigger or 'runtime exit'}\n"
+                    f"<b>Time (UTC):</b> {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}",
+                    logger_name="Fiona.Lifecycle",
+                ),
+                timeout=10,
             )
         if heartbeat_task:
             heartbeat_task.cancel()
-            await asyncio.gather(heartbeat_task, return_exceptions=True)
-        stop_server(health_server)
+            await shutdown_step(
+                "health heartbeat",
+                lambda: asyncio.gather(heartbeat_task, return_exceptions=True),
+                timeout=3,
+            )
+        await shutdown_step(
+            "health HTTP server",
+            lambda: asyncio.to_thread(stop_server, health_server),
+            timeout=20,
+        )
         if trim_task:
             trim_task.cancel()
-        if AoiCall.calls:
-            await asyncio.gather(*(call.stop() for call in AoiCall.calls), return_exceptions=True)
+            await shutdown_step(
+                "temporary-file cleanup task",
+                lambda: asyncio.gather(trim_task, return_exceptions=True),
+                timeout=3,
+            )
+        await shutdown_step("voice calls", AoiCall.stop, timeout=25)
         if userbot_started:
-            await userbot.stop()
+            await shutdown_step("assistant sessions", userbot.stop, timeout=20)
         if client_started:
-            await app.stop()
+            await shutdown_step("Telegram bot client", app.stop, timeout=20)
         if ptb.running:
-            await ptb.stop()
-        await ptb.shutdown()
+            await shutdown_step("collection bot application", ptb.stop, timeout=15)
+        await shutdown_step("collection bot shutdown", ptb.shutdown, timeout=15)
+
         for client_name in ("ddw", "backup_ddw"):
             client = getattr(aoiwaifu, client_name, None)
             if client is not None:
-                client.close()
+                await shutdown_step(
+                    f"collection database client {client_name}", client.close, timeout=5
+                )
         try:
             from AoiMusic.core import mongo as music_mongo
 
             for client_name in ("_mongo_async_", "_mongo_sync_"):
                 client = getattr(music_mongo, client_name, None)
                 if client is not None:
-                    client.close()
-        except Exception:
-            LOGGER("Fiona").debug("Music database cleanup skipped.", exc_info=True)
+                    await shutdown_step(
+                        f"music database client {client_name}", client.close, timeout=5
+                    )
+        except Exception as exc:
+            LOGGER("Fiona").debug(
+                "Music database cleanup unavailable (%s).", type(exc).__name__
+            )
 
 
 def main() -> None:
@@ -236,7 +337,7 @@ def main() -> None:
     except KeyboardInterrupt:
         pass
     except Exception as exc:
-        print(f"Fiona could not start: {type(exc).__name__}: {exc}", file=sys.stderr)
+        print(f"Fiona exited with an unhandled error: {type(exc).__name__}: {exc}", file=sys.stderr)
         raise
 
 

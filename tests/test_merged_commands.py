@@ -1,4 +1,5 @@
 import ast
+import json
 import re
 import unittest
 from collections import defaultdict
@@ -148,6 +149,49 @@ class MergedCommandTests(unittest.TestCase):
         self.assertIn("premium_button(\n                        tr('Next', lang)", harem)
         self.assertIn("rich_table(('ID', 'RARITY', 'CHARACTER', 'OWNED'), rows)", harem)
         self.assertIn("rich_table(\n            ('RARITY', 'CHARACTERS')", profile)
+
+    def test_summon_compatible_commands_use_fiona_handlers_and_menu(self):
+        registered = set(commands_in_tree(WAIFU, is_music=False))
+        for name in ("spin", "achievements", "ach", "badges", "me", "hstats", "rarities", "server", "search", "claimlist", "summon", "panel"):
+            self.assertIn(name, registered)
+        private_names = {name for name, _ in PRIVATE_COMMANDS}
+        for name in ("spin", "achievements", "me", "hstats", "rarity", "server", "search", "claimlist", "summon"):
+            self.assertIn(name, private_names)
+        spin = (WAIFU / "modules/spin.py").read_text(encoding="utf-8")
+        self.assertIn("find_one_and_update", spin)
+        self.assertIn("SPIN_COOLDOWN = timedelta(hours=24)", spin)
+        self.assertNotIn("sqlite", spin.lower())
+
+    def test_collection_ui_uses_open_rich_layouts_without_box_art(self):
+        ui = (WAIFU / "unit/rich_ui.py").read_text(encoding="utf-8")
+        self.assertIn("bullet separators", ui)
+        self.assertIn("borderless Fiona panel", ui)
+        forbidden = re.compile(r"[╭╮╯╰╔╗╚╝┏┓┗┛┌┐└┘├┤┬┴┼╋━═─│〔〕]")
+        for source in list((WAIFU / "modules").glob("*.py")) + list((WAIFU / "admin").glob("*.py")):
+            contents = source.read_text(encoding="utf-8")
+            self.assertNotRegex(contents, forbidden, str(source))
+            self.assertNotIn("<blockquote>", contents, str(source))
+        for locale in (WAIFU / "langs").glob("*.json"):
+            data = json.loads(locale.read_text(encoding="utf-8"))
+            self.assertNotRegex(json.dumps(data, ensure_ascii=False), forbidden, str(locale))
+            self.assertNotIn("<blockquote>", json.dumps(data, ensure_ascii=False), str(locale))
+
+    def test_profile_uses_generated_card_and_keeps_photo_fallback(self):
+        profile = (WAIFU / "modules/stats.py").read_text(encoding="utf-8")
+        card = (WAIFU / "unit/profile_card.py").read_text(encoding="utf-8")
+        self.assertIn("build_profile_card(stats)", profile)
+        self.assertIn('photo=stats["photo_url"] or STATS_IMG[0]', profile)
+        self.assertIn('image.save(output, format="PNG", optimize=True)', card)
+        self.assertIn("COLLECTION PROGRESS", card)
+
+    def test_owner_command_is_private_and_owner_id_gated(self):
+        owner = (WAIFU / "modules/owner.py").read_text(encoding="utf-8")
+        self.assertIn('filters.command(["owner", "panel"]) & filters.private', owner)
+        self.assertIn("message.from_user.id != OWNER_ID", owner)
+        self.assertNotIn('("owner",', (ROOT / "unified_commands.py").read_text(encoding="utf-8"))
+        merged = (ROOT / "merged.py").read_text(encoding="utf-8")
+        self.assertIn('("owner", "Open owner tools")', merged)
+        self.assertIn("BotCommandScopeChat(chat_id=OWNER_ID)", merged)
 
     def test_missing_origin_chat_is_guarded_before_rich_send(self):
         rich_msg = (MUSIC / "utils/rich_msg.py").read_text(encoding="utf-8")

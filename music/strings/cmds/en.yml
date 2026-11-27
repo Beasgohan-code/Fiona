@@ -7,7 +7,7 @@
 PING_COMMAND : ["ping", "alive", "aalive"]
 PRIVACY_COMMAND : ["privacy"]
 START_COMMAND : ["start"]
-HELP_COMMAND : ["help"]
+HELP_COMMAND : ["help", "menu", "commands"]
 SETTINGS_COMMAND : ["settings", "setting"]
 RELOAD_COMMAND : ["admincache", "reload"]
 GSTATS_COMMAND : ["gstats"]

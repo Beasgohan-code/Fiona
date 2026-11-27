@@ -23,7 +23,7 @@ from aoiwaifu import (
     user_collection,
 )
 from aoiwaifu.unit.aoi_help import HELP_DATA
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card
 from aoiwaifu.unit.aoi_lang import (
     DEFAULT_LANG,
     build_language_keyboard,
@@ -60,14 +60,16 @@ def get_uptime():
 
 
 def build_dm_first_start_lang_prompt() -> tuple[str, InlineKeyboardMarkup]:
-    caption = (
-        f"╭━〔 🌐 𝐅𝐈𝐎𝐍𝐀 • 𝐋𝐀𝐍𝐆𝐔𝐀𝐆𝐄 〕━╮\n\n"
-        f"<blockquote>{t('lang_select_dm_title', 'en')}\n"
-        f"{t('lang_select_dm_body', 'en')}\n\n"
-        f"🇺🇸 <b>English</b> • 🇷🇺 <b>Русский</b> • 🇪🇸 <b>Español</b> • 🇧🇷 <b>Português</b>\n"
-        f"🇮🇩 <b>Indonesia</b> • 🇮🇳 <b>हिन्दी</b> • 🇲🇲 <b>မြန်မာစာ</b> • 🇸🇦 <b>العربية</b>\n"
-        f"🇹🇷 <b>Türkçe</b> • 🇻🇳 <b>Tiếng Việt</b></blockquote>\n"
-        f"╰━━━━━━━━━━━━━━━━━━━━━━╯"
+    caption = rich_card(
+        t('lang_select_dm_title', 'en'),
+        "\n".join((
+            t('lang_select_dm_body', 'en'),
+            "",
+            "🇺🇸 <b>English</b> • 🇷🇺 <b>Русский</b> • 🇪🇸 <b>Español</b> • 🇧🇷 <b>Português</b>",
+            "🇮🇩 <b>Indonesia</b> • 🇮🇳 <b>हिन्दी</b> • 🇲🇲 <b>မြန်မာစာ</b> • 🇸🇦 <b>العربية</b>",
+            "🇹🇷 <b>Türkçe</b> • 🇻🇳 <b>Tiếng Việt</b>",
+        )),
+        "🌐",
     )
     markup = build_language_keyboard(
         callback_prefix="set_dm_lang", current_lang=None, back_callback=None, extra_suffix=":start"

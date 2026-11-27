@@ -32,7 +32,7 @@ auth_4 : "❌ Removed from authorized users list of this group."
 auth_5 : "🚫 Targeted user is not an authorized user."
 auth_6 : "🔄 Fetching authorized users...please wait!"
 auth_7 : "**Authorized users list[aul]:**\n\n"
-auth_8 : "┗ Added by:-"
+auth_8 : "• Added by:-"
 
 # PLUGINS - Admins
 admin_1 : "🎶➻ Music is already paused!"

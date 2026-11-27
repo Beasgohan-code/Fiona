@@ -1,6 +1,6 @@
 # Render Blueprint for the unified Fiona bot.
 # Choose a paid always-on instance for reliable long-running Telegram polling.
-# A free web instance may sleep; this health server does not bypass Render's limits.
+# The optional public self-ping is best-effort; an always-on paid plan is recommended.
 services:
   - type: web
     name: fiona
@@ -29,3 +29,9 @@ services:
         value: /etc/secrets/youtube-cookies.txt
       - key: PORT
         value: "10000"
+      - key: KEEP_ALIVE_SELF_PING
+        value: "true"
+      - key: KEEP_ALIVE_SELF_PING_INTERVAL
+        value: "300"
+      - key: KEEP_ALIVE_PING_TIMEOUT
+        value: "10"

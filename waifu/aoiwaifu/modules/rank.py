@@ -7,10 +7,10 @@ import html
 from aoiwaifu import app as Client
 from aoiwaifu import PHOTO_URL, user_collection, top_global_groups_collection
 from aoiwaifu.admin.blocklist import get_blocklisted_id_variants
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card
 
 def leaderboard_header(title, subtitle):
-    return f'🎀 <b>ＡＬＹＡ  ＷＡＩ𝐅Ｕ</b> 🎀\n╭──────────────╮\n  🏆 <b>{title}</b>\n  <i>{subtitle}</i>\n╰──────────────╯\n\n'
+    return "\n\n".join((rich_card(title, f"<i>{subtitle}</i>", "🏆"), ""))
 
 def leaderboard_buttons(active_button=None):
     specs = [
@@ -44,7 +44,7 @@ def add_rank_line(rank, name, value, user_id=None, label=''):
     suffix = f'  <i>{label}</i>' if label else ''
     return f'{medal} {safe_name}  ➜  <b>{value}</b>{suffix}\n'
 
-@Client.on_message(filters.command('rank'))
+@Client.on_message(filters.command(['rank', 'top']))
 async def rank(client, message):
     lang = await get_effective_lang(message)
 

@@ -1,17 +1,39 @@
-from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
-import asyncio
-from pyrogram import filters, enums
-from pyrogram.errors import PeerIdInvalid, FloodWait
-from aoiwaifu import user_collection, app, top_global_groups_collection, SUDO, OWNER_ID
+"""Owner and Sudo broadcast to registered users and groups."""
 
-@app.on_message(filters.command(['waifubcast', 'waifubroadcast']) & filters.user(SUDO + [OWNER_ID]))
+import asyncio
+
+from pyrogram import enums, filters
+from pyrogram.errors import FloodWait, PeerIdInvalid
+
+from aoiwaifu import OWNER_ID, SUDO, app, top_global_groups_collection, user_collection
+from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
+from aoiwaifu.unit.rich_ui import premium_text, rich_card
+
+
+@app.on_message(filters.command(["waifubcast", "waifubroadcast"]) & filters.user(SUDO + [OWNER_ID]))
 async def broadcast(_, message):
     lang = await get_effective_lang(message)
     replied_message = message.reply_to_message
     if not replied_message:
-        await message.reply_text(tr('📢 <b>𝖡𝖱𝖮𝖠𝖣𝖢𝖠𝖲𝖳</b>\n\n<blockquote>❌ Please reply to a message to broadcast it.</blockquote>', lang), parse_mode=enums.ParseMode.HTML)
+        await message.reply_text(
+            premium_text(tr(rich_card("Broadcast", "❌ Reply to a message to broadcast it.", "📢"), lang)),
+            parse_mode=enums.ParseMode.HTML,
+        )
         return
-    progress_message = await message.reply_text(tr('📢 <b>𝖡𝖱𝖮𝖠𝖣𝖢𝖠𝖲𝖳</b>\n\n<blockquote>Starting the broadcast. Forwarding the message to all users and groups...</blockquote>', lang), parse_mode=enums.ParseMode.HTML)
+
+    progress_message = await message.reply_text(
+        premium_text(
+            tr(
+                rich_card(
+                    "Broadcast",
+                    "Starting. Your replied message will be sent to registered users and groups.",
+                    "📢",
+                ),
+                lang,
+            )
+        ),
+        parse_mode=enums.ParseMode.HTML,
+    )
     fail_count = 0
     message_count = 0
     user_success = 0
@@ -28,35 +50,55 @@ async def broadcast(_, message):
         except PeerIdInvalid:
             fail_count += 1
             return False
-        except FloodWait as e:
-            await asyncio.sleep(e.value)
+        except FloodWait as error:
+            await asyncio.sleep(error.value)
             return await forward_message(target_id)
-        except Exception as e:
-            print(f'Error forwarding to {target_id}: {e}')
+        except Exception as error:
+            print(f"Error forwarding to {target_id}: {error}")
             fail_count += 1
             return False
 
     async def update_progress():
+        body = "\n".join(
+            (
+                f"✅ <b>Users sent:</b> {user_success}",
+                f"✅ <b>Groups sent:</b> {group_success}",
+                f"❌ <b>Failed attempts:</b> {fail_count}",
+            )
+        )
         try:
-            await progress_message.edit_text(tr(f'📢 <b>𝖡𝖱𝖮𝖠𝖣𝖢𝖠𝖲𝖳 𝖨𝖭 𝖯𝖱𝖮𝖦𝖱𝖤𝖲𝖲</b>\n\n<blockquote>✅ <b>Users sent:</b> {user_success}\n✅ <b>Groups sent:</b> {group_success}\n❌ <b>Failed attempts:</b> {fail_count}</blockquote>', lang), parse_mode=enums.ParseMode.HTML)
+            await progress_message.edit_text(
+                premium_text(tr(rich_card("Broadcast in progress", body, "📢"), lang)),
+                parse_mode=enums.ParseMode.HTML,
+            )
         except Exception:
             pass
-    user_cursor = user_collection.find({})
-    async for user in user_cursor:
-        user_id = user.get('id')
-        if user_id:
-            if await forward_message(user_id):
-                user_success += 1
-            if (user_success + fail_count) % 100 == 0:
-                await update_progress()
-    group_cursor = top_global_groups_collection.find({})
+
+    async for user in user_collection.find({}):
+        user_id = user.get("id")
+        if user_id and await forward_message(user_id):
+            user_success += 1
+        if (user_success + fail_count) and (user_success + fail_count) % 100 == 0:
+            await update_progress()
+
     unique_group_ids = set()
-    async for group in group_cursor:
-        group_id = group.get('chat_id')
+    async for group in top_global_groups_collection.find({}):
+        group_id = group.get("chat_id")
         if group_id and group_id not in unique_group_ids:
             unique_group_ids.add(group_id)
             if await forward_message(group_id):
                 group_success += 1
             if (user_success + group_success + fail_count) % 100 == 0:
                 await update_progress()
-    await progress_message.edit_text(tr(f'✅ <b>𝖡𝖱𝖮𝖠𝖣𝖢𝖠𝖲𝖳 𝖢𝖮𝖬𝖯𝖫𝖤𝖳𝖤𝖣</b>\n\n<blockquote>👤 <b>Users sent:</b> {user_success}\n👥 <b>Groups sent:</b> {group_success}\n❌ <b>Failed attempts:</b> {fail_count}</blockquote>', lang), parse_mode=enums.ParseMode.HTML)
+
+    body = "\n".join(
+        (
+            f"👤 <b>Users sent:</b> {user_success}",
+            f"👥 <b>Groups sent:</b> {group_success}",
+            f"❌ <b>Failed attempts:</b> {fail_count}",
+        )
+    )
+    await progress_message.edit_text(
+        premium_text(tr(rich_card("Broadcast complete", body, "✅"), lang)),
+        parse_mode=enums.ParseMode.HTML,
+    )

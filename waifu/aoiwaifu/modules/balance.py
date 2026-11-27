@@ -62,7 +62,7 @@ async def credit_user_currency(
     }
 
 
-@app.on_message(filters.command("dailygift"))
+@app.on_message(filters.command(["dailygift", "daily"]))
 async def daily_gift(client: Client, message: Message):
     lang = await get_effective_lang(message)
     user_id = message.from_user.id

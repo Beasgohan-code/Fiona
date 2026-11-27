@@ -42,21 +42,19 @@ async def play_logs(message, streamtype, thumbnail=None):
     bot_name = rich_esc(getattr(app, "name", None) or "AoiMusic")
 
     text = (
-        "╔══════════╗\n"
-        f"  🎵 {bot_name} ᴘʟᴀʏ ʟᴏɢ\n"
-        "╚══════════╝\n\n"
-        "🏰 ᴄʜᴀᴛ ɪɴꜰᴏ\n"
-        f"├ 🏷 ᴄʜᴀᴛ : {chat_name}\n"
-        f"├ 🆔 ᴄʜᴀᴛ ɪᴅ : <code>{_or_dash(message.chat.id)}</code>\n"
-        f"└ 🔗 ᴜsᴇʀɴᴀᴍᴇ : {rich_esc(username)}\n\n"
-        "👤 ʀᴇǫᴜᴇꜱᴛᴇᴅ ʙʏ\n"
-        f"├ 🧑 ɴᴀᴍᴇ : {user.mention}\n"
-        f"├ 🆔 ᴜꜱᴇʀ ɪᴅ : <code>{_or_dash(user.id)}</code>\n"
-        f"└ 🔗 ᴜsᴇʀɴᴀᴍᴇ : {rich_esc('@' + user.username) if user.username else '—'}\n\n"
-        "🎶 ᴛʀᴀᴄᴋ ᴅᴇᴛᴀɪʟs\n"
-        f"├ 🔎 ᴏᴜᴇʀʏ : {rich_esc(query)}\n"
-        f"└ 📡 ꜱᴛʀᴇᴀᴍ : {rich_esc(str(streamtype))}\n\n"
-        "⚡ ᴍᴏᴅᴇ : ᴅɪʀᴇᴄᴛ ꜱᴛʀᴇᴀᴍ · ᴘʀᴇᴍɪᴜᴍ ᴜɪ"
+        f"🎵 <b>{bot_name} play log</b>\n\n"
+        "🏰 <b>Chat info</b>\n"
+        f"• Chat: {chat_name}\n"
+        f"• Chat ID: <code>{_or_dash(message.chat.id)}</code>\n"
+        f"• Username: {rich_esc(username)}\n\n"
+        "👤 <b>Requested by</b>\n"
+        f"• Name: {user.mention}\n"
+        f"• User ID: <code>{_or_dash(user.id)}</code>\n"
+        f"• Username: {rich_esc('@' + user.username) if user.username else '—'}\n\n"
+        "🎶 <b>Track details</b>\n"
+        f"• Query: {rich_esc(query)}\n"
+        f"• Stream: {rich_esc(str(streamtype))}\n\n"
+        "⚡ Mode: Direct stream · Premium UI"
     )
 
     if thumbnail and str(thumbnail).startswith(("http://", "https://")):

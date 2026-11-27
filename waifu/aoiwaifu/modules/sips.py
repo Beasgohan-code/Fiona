@@ -67,7 +67,7 @@ async def handle_search(client, message, query=None, page=1, is_callback=False):
             await message.reply_text(error_message, parse_mode=ParseMode.HTML)
 
 
-@app.on_message(filters.command("sips"))
+@app.on_message(filters.command(["sips", "search"]))
 async def search_characters(client, message):
     await handle_search(client, message)
 

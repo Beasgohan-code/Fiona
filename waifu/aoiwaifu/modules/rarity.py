@@ -8,7 +8,7 @@ from aoiwaifu import app, collection
 from pyrogram import filters, enums
 
 
-@app.on_message(filters.command("rarity"))
+@app.on_message(filters.command(["rarity", "rarities"]))
 async def rarity_count(client, message):
     lang = await get_effective_lang(message)
     try:

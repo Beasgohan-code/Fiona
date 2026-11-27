@@ -101,7 +101,7 @@ async def reupload_handler(client, message):
             if update_result.modified_count == 0:
                 results.append(f'⚠️ `{char_id}` ({name}) — matched but not modified (same URL?)')
             else:
-                results.append(f'✅ `{char_id}` **{name}**\n   └ `{new_url}`')
+                results.append(f'✅ `{char_id}` **{name}**\n   • `{new_url}`')
                 success += 1
         except Exception as e:
             results.append(f'❌ `{char_id}` — `{str(e)[:120]}`')

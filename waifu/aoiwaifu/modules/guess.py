@@ -23,7 +23,7 @@ from aoiwaifu.unit.aoi_lang import get_effective_lang, t, tr
 from aoiwaifu.unit.rich_ui import premium_button, premium_text, rich_card
 
 
-@app.on_message(filters.command(["guess", "protecc", "collect", "grab", "hunt"]))
+@app.on_message(filters.command(["guess", "protecc", "collect", "grab", "hunt", "summon"]))
 async def guess(client: Client, message: Message):
     chat_id = message.chat.id
     user_id = message.from_user.id
@@ -112,13 +112,17 @@ async def guess(client: Client, message: Message):
         new_balance = int((updated_user or {}).get("balance", 40) or 40)
 
         char = last_characters[chat_id]
-        caption = (
-            f"<b><a href='tg://user?id={user_id}'>{escape(message.from_user.first_name or 'Player')}</a> caught a character!</b>\n\n"
-            f"<blockquote>💮 <b>Name:</b> {escape(str(char['name']))}\n"
-            f"🌸 <b>Anime:</b> {escape(str(char['anime']))}\n"
-            f"💎 <b>Rarity:</b> {escape(str(char['rarity']))}\n"
-            f"⏱ <b>Time:</b> {escape(time_taken_str)}\n"
-            f"💰 <b>Reward:</b> +40 coins (Total: {new_balance:,})</blockquote>"
+        caption = rich_card(
+            "Character caught",
+            "\n".join((
+                f"🎉 <b><a href='tg://user?id={user_id}'>{escape(message.from_user.first_name or 'Player')}</a></b> caught a character!",
+                f"💮 <b>Name:</b> {escape(str(char['name']))}",
+                f"🌸 <b>Anime:</b> {escape(str(char['anime']))}",
+                f"💎 <b>Rarity:</b> {escape(str(char['rarity']))}",
+                f"⏱ <b>Time:</b> {escape(time_taken_str)}",
+                f"💰 <b>Reward:</b> +40 coins (Total: {new_balance:,})",
+            )),
+            "🎉",
         )
         keyboard = InlineKeyboardMarkup([[
             premium_button(t("btn_view_in_harem", lang), emoji='USERS_GROUP', switch_inline_query_current_chat=f"collection.{user_id}")

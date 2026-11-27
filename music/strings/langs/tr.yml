@@ -32,7 +32,7 @@ auth_4 : "Bu grubun yetkili kullanıcılar listesinden çıkarıldı."
 auth_5 : "Hedef kullanıcı yetkili bir kullanıcı değil."
 auth_6 : "Yetkili kullanıcılar getiriliyor... Lütfen bekleyin!"
 auth_7 : "**Yetkili kullanıcılar listesi[aul]:**\n\n"
-auth_8 : "┗ Ekleyen:-"
+auth_8 : "• Ekleyen:-"
 
 # PLUGINS - Admins
 admin_1 : "➻ Müzik zaten duraklatılmış!"

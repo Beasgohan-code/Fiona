@@ -5,14 +5,14 @@ HELP_DATA = {
         "HELP_NAME": "Catch",
         "HELP": (
             "Catch anime characters that spawn in groups:\n\n"
-            "• `/guess <name>` (or `/protecc`, `/collect`, `/grab`, `/hunt`) — Catch the spawned character and earn coins."
+            "• `/guess <name>` (or `/summon`, `/protecc`, `/collect`, `/grab`, `/hunt`) — Catch the spawned character and earn coins."
         ),
     },
     "harem": {
         "HELP_NAME": "Collection",
         "HELP": (
             "Manage and browse your character collection:\n\n"
-            "• `/harem` or `/collection` — View your collected characters\n"
+            "• `/harem`, `/collection`, or `/claimlist` — View your collected characters\n"
             "• `/hmode` — Filter your harem by rarity\n"
             "• `/fav <id>` — Set your favorite character\n"
             "• `/hpin <id>` / `/hunpin <id>` / `/pinlist` — Pin or unpin collection characters. Group-message pinning uses `/pin` and `/unpin`."
@@ -22,10 +22,12 @@ HELP_DATA = {
         "HELP_NAME": "Profile",
         "HELP": (
             "View collector stats and rankings:\n\n"
-            "• `/profile` — View your collector profile, rank, and rarity breakdown\n"
-            "• `/rank` — View global top collectors\n"
+            "• `/profile`, `/me`, or `/hstats` — View your collector profile, rank, and rarity breakdown\n"
+            "• `/rank` or `/top` — View global top collectors\n"
+            "• `/achievements` — Track collection, rarity, coin, and referral milestones\n"
             "• `/ctop` — Top collectors in the current group\n"
-            "• `/TopGroups` — Top 10 groups globally"
+            "• `/TopGroups` — Top 10 groups globally\n"
+            "• `/server` — View Fiona community totals"
         ),
     },
     "balance": {
@@ -33,7 +35,8 @@ HELP_DATA = {
         "HELP": (
             "Manage your coins and rewards:\n\n"
             "• `/balance` or `/bal` — Check your Coins & Tokens\n"
-            "• `/dailygift` — Claim your daily coin reward\n"
+            "• `/dailygift` or `/daily` — Claim your daily coin reward\n"
+            "• `/spin` — Claim one 24-hour coin spin\n"
             "• `/weekly` — Claim your weekly coin reward\n"
             "• `/pay <amount>` — Send coins to another user (reply or pass ID/@username)\n"
             "• `/shop` — Buy characters with coins\n"
@@ -55,8 +58,8 @@ HELP_DATA = {
         "HELP": (
             "Explore the character database:\n\n"
             "• `/check <id>` — View details of a character by ID\n"
-            "• `/sips <name>` — Search characters by name with inline preview\n"
-            "• `/rarity` — View all character rarities\n"
+            "• `/sips` or `/search <name>` — Search characters by name with inline preview\n"
+            "• `/rarity` or `/rarities` — View every rarity currently in the catalog\n"
             "• `/total` — Total characters in the database\n"
             "• `/addchar <name> <anime>` — Reply to an image to request adding a character\n"
             "• Inline mode: type `@BotUsername <query>` in any chat"

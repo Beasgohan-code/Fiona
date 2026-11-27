@@ -46,12 +46,7 @@ async def _async_main() -> None:
     if inspect.isawaitable(start_res):
         await start_res
 
-    LOGGER("Fiona").info(
-        "╔═══════════════════════════════════════════════╗\n"
-        "║                🌸  FIONA BOT  🌸               ║\n"
-        "║         Anime Character Catcher Bot           ║\n"
-        "╚═══════════════════════════════════════════════╝"
-    )
+    LOGGER("Fiona").info("🌸 Fiona bot started successfully — anime character catcher is online.")
     await asyncio.to_thread(send_start_message)
 
     try:

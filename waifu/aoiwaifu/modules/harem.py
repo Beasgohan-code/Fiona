@@ -1,5 +1,5 @@
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_heading, rich_table
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card, rich_heading, rich_table
 from aoiwaifu import *
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
@@ -110,7 +110,7 @@ async def pinlist_handler(client: Client, message: Message):
     lines.append(f'\n{len(pinned)}/10 pinned')
     await message.reply_text(tr('\n'.join(lines), lang), parse_mode=enums.ParseMode.HTML)
 
-@app.on_message(filters.command(['harem', 'collection']))
+@app.on_message(filters.command(['harem', 'collection', 'claimlist']))
 async def harem_handler(client: Client, message: Message):
     lang = await get_effective_lang(message)
     user_id = message.from_user.id
@@ -139,7 +139,11 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
             if not filtered_characters:
                 keyboard = [[premium_button(tr('Remove filter', lang), emoji='CLOSE', style='DANGER', callback_data=f'remove_filter:{user_id}')]]
                 reply_markup = InlineKeyboardMarkup(keyboard)
-                empty_filter_text = f'╭━━〔 🔎 <b>COLLECTION FILTER</b> 〕━━╮\n\n<blockquote>No characters found with rarity: <b>{escape(str(filter_rarity))}</b>. Clear this filter to browse your full collection.</blockquote>'
+                empty_filter_text = rich_card(
+                    'Collection filter',
+                    f"No characters found with rarity: <b>{escape(str(filter_rarity))}</b>. Clear this filter to browse your full collection.",
+                    '🔎',
+                )
                 if is_initial:
                     return await message.reply_text(
                         premium_text(tr(empty_filter_text, lang)),
@@ -158,8 +162,7 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
             page = 0
         lang = await get_effective_lang(callback_query or message, user_id=user_id)
         harem_message = (
-            f"╭━━〔 🎴 <b>COLLECTION</b> • {escape(user_first_name)} 〕━━╮\n"
-            f"<blockquote>📄 <b>Page:</b> {page + 1}/{total_pages}  •  "
+            f"📄 <b>Page:</b> {page + 1}/{total_pages}  •  "
             f"✨ <b>Unique:</b> {len(unique_characters):,}  •  🎴 <b>Cards:</b> {total_characters:,}"
         )
         if filter_rarity:
@@ -183,7 +186,7 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                     f"×{count}",
                 ))
             harem_message += rich_table(('ID', 'RARITY', 'CHARACTER', 'OWNED'), rows)
-        harem_message += '</blockquote>\n╰━━━━━━━━━━━━━━━━━━╯'
+        harem_message = rich_card(f'Collection · {escape(user_first_name)}', harem_message, '🎴')
         keyboard = [
             [
                 premium_button(
@@ -338,10 +341,10 @@ async def hmode_handler(client: Client, message: Message):
         )
     ])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    prompt = (
-        "╭━━〔 💎 <b>COLLECTION FILTER</b> 〕━━╮\n\n"
-        "<blockquote>Choose a rarity to focus your collection.\n"
-        "Your choice is saved for the next /harem view.</blockquote>"
+    prompt = rich_card(
+        'Collection filter',
+        "Choose a rarity to focus your collection.\nYour choice is saved for the next /harem view.",
+        '💎',
     )
     await message.reply_text(
         premium_text(tr(prompt, lang)),
