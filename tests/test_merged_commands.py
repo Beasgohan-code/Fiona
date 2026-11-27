@@ -139,35 +139,6 @@ class MergedCommandTests(unittest.TestCase):
                 if emoji:
                     self.assertIn(emoji, emoji_keys)
 
-    def test_collection_modes_sort_by_anime_recent_and_favorite(self):
-        source_path = WAIFU / "modules/harem.py"
-        tree = ast.parse(source_path.read_text(encoding="utf-8"))
-        helper = next(
-            node for node in tree.body
-            if isinstance(node, ast.FunctionDef) and node.name == "_sort_collection_characters"
-        )
-        namespace = {}
-        exec(compile(ast.Module(body=[helper], type_ignores=[]), str(source_path), "exec"), namespace)
-        sort_characters = namespace["_sort_collection_characters"]
-        caught = [
-            {"id": 2, "anime": "B"},
-            {"id": 1, "anime": "A"},
-            {"id": 2, "anime": "B"},
-            {"id": 3, "anime": "A"},
-        ]
-        self.assertEqual(
-            [item["id"] for item in sort_characters(caught, "anime")],
-            [1, 3, 2, 2],
-        )
-        self.assertEqual(
-            [item["id"] for item in sort_characters(caught, "recent")],
-            [2, 1, 2, 3],
-        )
-        self.assertEqual(
-            [item["id"] for item in sort_characters(caught, "fav", [2])],
-            [2, 2, 1, 3],
-        )
-
     def test_harem_and_profile_use_shared_rich_ui_without_timed_message_deletion(self):
         harem = (WAIFU / "modules/harem.py").read_text(encoding="utf-8")
         profile = (WAIFU / "modules/stats.py").read_text(encoding="utf-8")
@@ -180,9 +151,6 @@ class MergedCommandTests(unittest.TestCase):
         self.assertIn("premium_button(\n                        tr('Next', lang)", harem)
         self.assertIn("items_per_page = 10", harem)
         self.assertIn("owned_in_anime", harem)
-        self.assertIn("latest_catch_order", harem)
-        self.assertIn("collection_mode = (user_db or {}).get('collection_mode', 'anime')", harem)
-        self.assertIn("filters.regex('^set_collection_mode:')", harem)
         self.assertIn("×{count}", harem)
         self.assertNotIn("rich_table(('ID', 'RARITY', 'CHARACTER', 'OWNED'), rows)", harem)
         self.assertIn("rich_table(\n            ('RARITY', 'CHARACTERS')", profile)
@@ -372,7 +340,6 @@ class MergedCommandTests(unittest.TestCase):
         self.assertIn("`/pincharacter <id>`", help_text)
         self.assertIn("`/unpincharacter <id>`", help_text)
         self.assertIn("`/pinnedcharacters`", help_text)
-        self.assertIn("Sort by anime, newest catch, or favorite", help_text)
         self.assertIn("`/hpin`", help_text)
         self.assertIn("`/hunpin`", help_text)
         self.assertNotIn("`/pin <id>`", help_text)

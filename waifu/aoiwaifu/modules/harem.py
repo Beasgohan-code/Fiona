@@ -5,6 +5,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
 from pyrogram.errors import ChatAdminRequired, UserNotParticipant
 from collections import Counter
+from itertools import groupby
 import math
 from html import escape
 from pyrogram import enums
@@ -35,26 +36,6 @@ async def fetch_user_characters(user_id):
     if not characters:
         return (None, 'No valid characters found in your collection.')
     return (characters, None)
-
-
-def _sort_collection_characters(characters, mode, favorite_ids=None):
-    """Apply Summon-style collection modes without losing recent-catch order."""
-    characters = list(characters)
-    if mode == 'anime':
-        return sorted(characters, key=lambda char: (str(char.get('anime', '')), str(char.get('id', ''))))
-    if mode == 'fav':
-        favorite_order = {str(cid): index for index, cid in enumerate(favorite_ids or [])}
-        return sorted(
-            characters,
-            key=lambda char: (
-                0 if str(char.get('id')) in favorite_order else 1,
-                favorite_order.get(str(char.get('id')), len(favorite_order)),
-                str(char.get('anime', '')),
-                str(char.get('id', '')),
-            ),
-        )
-    return characters
-
 
 @app.on_message(filters.command(['pincharacter', 'hpin']))
 async def pin_character_handler(client: Client, message: Message):
@@ -153,12 +134,8 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                 return await message.reply_text(error_text, parse_mode=enums.ParseMode.HTML)
             await edit_panel(callback_query.message, error_text)
             return
-        all_characters = list(characters)
-        collection_mode = (user_db or {}).get('collection_mode', 'anime')
-        if collection_mode not in {'anime', 'recent', 'fav'}:
-            collection_mode = 'anime'
-        favorite_ids = [str(cid) for cid in (user_db or {}).get('favorites') or []]
-        characters = _sort_collection_characters(characters, collection_mode, favorite_ids)
+        characters = sorted(characters, key=lambda x: (str(x.get('anime', '')), str(x.get('id', ''))))
+        all_characters = characters
         if filter_rarity:
             filtered_characters = [c for c in characters if c.get('rarity') == filter_rarity]
             if not filtered_characters:
@@ -181,35 +158,20 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
         total_characters = len(characters)
         amv_characters = len([c for c in characters if 'vid_url' in c])
         character_counts = Counter(str(character.get('id', '')) for character in characters)
-        unique_by_id = {str(character.get('id')): character for character in characters}
-        unique_characters = list(unique_by_id.values())
-        if collection_mode == 'recent':
-            latest_catch_order = {
-                str(character.get('id')): index
-                for index, character in enumerate(characters)
-            }
-            unique_characters.sort(
-                key=lambda character: latest_catch_order.get(str(character.get('id')), -1),
-                reverse=True,
-            )
+        unique_characters = list({str(character.get('id')): character for character in characters}.values())
         items_per_page = 10
         total_pages = max(1, math.ceil(len(unique_characters) / items_per_page))
         if page < 0 or page >= total_pages:
             page = 0
         lang = await get_effective_lang(callback_query or message, user_id=user_id)
-        mode_title = tr({"anime": "Anime order", "recent": "Recently caught", "fav": "Favorites first"}[collection_mode], lang)
         harem_message = (
-            f"🗂 <b>{escape(mode_title)}</b>\n"
             f"📄 <b>Page:</b> {page + 1}/{total_pages}  •  "
             f"✨ <b>Unique:</b> {len(unique_characters):,}  •  🎴 <b>Cards:</b> {total_characters:,}"
         )
         if filter_rarity:
             harem_message += f"\n{t('harem_filtered_by', lang, rarity=escape(str(filter_rarity)))}"
         current_characters = unique_characters[page * items_per_page:(page + 1) * items_per_page]
-        current_grouped_characters = {}
-        for character in current_characters:
-            anime = character.get('anime', 'Unknown Anime')
-            current_grouped_characters.setdefault(anime, []).append(character)
+        current_grouped_characters = {k: list(v) for k, v in groupby(current_characters, key=lambda x: x.get('anime', 'Unknown Anime'))}
         for anime, chars in current_grouped_characters.items():
             total_anime_chars = await collection.count_documents({'anime': anime})
             owned_in_anime = len({
@@ -368,89 +330,33 @@ async def harem_refresh_callback(client: Client, callback_query: CallbackQuery):
 async def hmode_handler(client: Client, message: Message):
     lang = await get_effective_lang(message)
     user_id = message.from_user.id
-    user = await user_collection.find_one(
-        {'id': user_id},
-        {'collection_mode': 1, 'filter_rarity': 1},
-    ) or {}
-    current_mode = user.get('collection_mode', 'anime')
-    if current_mode not in {'anime', 'recent', 'fav'}:
-        current_mode = 'anime'
-    current_rarity = user.get('filter_rarity')
-    keyboard = [[
-        premium_button(
-            f"{'✅ ' if current_mode == mode else ''}{label}",
-            emoji=emoji,
-            callback_data=f'set_collection_mode:{user_id}:{mode}',
-        )
-        for mode, label, emoji in (
-            ('anime', 'Anime', 'GRID'),
-            ('recent', 'Recent', 'REFRESH'),
-            ('fav', 'Fav first', 'HEART'),
-        )
-    ]]
+    keyboard = []
     row = []
     for i, (rarity, emoji) in enumerate(rarity_map2.items(), 1):
-        label = f"{'✅ ' if current_rarity == rarity else ''}{emoji} {rarity}"
-        row.append(InlineKeyboardButton(label, callback_data=f'set_rarity:{user_id}:{rarity}'))
-        if i % 2 == 0:
+        row.append(InlineKeyboardButton(emoji, callback_data=f'set_rarity:{user_id}:{rarity}'))
+        if i % 4 == 0:
             keyboard.append(row)
             row = []
     if row:
         keyboard.append(row)
     keyboard.append([
         premium_button(
-            f"{'✅ ' if not current_rarity else ''}{tr('All rarities', lang)}",
+            tr('All rarities', lang),
             emoji='GRID',
             callback_data=f'set_rarity:{user_id}:None',
         )
     ])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    mode_title = tr({'anime': 'Anime order', 'recent': 'Recently caught', 'fav': 'Favorites first'}[current_mode], lang)
-    rarity_title = escape(str(current_rarity)) if current_rarity else tr('All rarities', lang)
     prompt = rich_card(
-        'Collection display',
-        f"🗂 <b>Sort:</b> {escape(mode_title)}\n"
-        f"💎 <b>Rarity:</b> {rarity_title}\n\n"
-        "Choose a sort order and an optional rarity filter. Your choices are saved for /harem.",
-        '🎛️',
+        'Collection filter',
+        "Choose a rarity to focus your collection.\nYour choice is saved for the next /harem view.",
+        '💎',
     )
     await message.reply_text(
         premium_text(tr(prompt, lang)),
         reply_markup=reply_markup,
         parse_mode=enums.ParseMode.HTML,
     )
-
-
-@app.on_callback_query(filters.regex('^set_collection_mode:'))
-async def set_collection_mode_callback(client: Client, callback_query: CallbackQuery):
-    lang = await get_effective_lang(callback_query)
-    try:
-        _, user_id, collection_mode = callback_query.data.split(':')
-        user_id = int(user_id)
-        if callback_query.from_user.id != user_id:
-            await callback_query.answer(tr("It's not your Harem!", lang), show_alert=True)
-            return
-        if collection_mode not in {'anime', 'recent', 'fav'}:
-            await callback_query.answer(tr('Invalid collection sort mode.', lang), show_alert=True)
-            return
-        await user_collection.update_one(
-            {'id': user_id},
-            {'$set': {'collection_mode': collection_mode}},
-            upsert=True,
-        )
-        await callback_query.answer(tr(f"Collection sorted: {collection_mode}", lang))
-        user = await user_collection.find_one({'id': user_id}, {'filter_rarity': 1}) or {}
-        await display_harem(
-            client,
-            callback_query.message,
-            user_id,
-            page=0,
-            filter_rarity=user.get('filter_rarity'),
-            is_initial=False,
-            callback_query=callback_query,
-        )
-    except Exception as exc:
-        print(f'Error in collection mode callback: {exc}')
 
 @app.on_callback_query(filters.regex('^set_rarity'))
 async def set_rarity_callback(client: Client, callback_query: CallbackQuery):
