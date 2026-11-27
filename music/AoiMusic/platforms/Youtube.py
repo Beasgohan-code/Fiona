@@ -474,7 +474,107 @@ def extract_info_with_fallback(link, opts, return_options=False):
             _log("warning", "extract_info_with_fallback: %s failed: %s", label, exc)
             errors.append(f"{label}: {exc}")
             last_error = exc
-    summary = " | ".join(errors[-4:])
+
+    # Some videos expose formats but reject yt-dlp's normal selector (for
+    # example, SABR/client-specific ladders). Ask yt-dlp for the raw extractor
+    # result without processing/choosing a format, then select an ID that was
+    # actually returned. This also means the subsequent download reuses the
+    # same client and exact format instead of repeating the failed selector.
+    source_format = str(opts.get("format", "")).lower()
+    wants_video = "+" in source_format or "bestvideo" in source_format or "height" in source_format
+    wants_audio = not wants_video
+    configured_clients = (
+        opts.get("extractor_args", {})
+        .get("youtube", {})
+        .get("player_client", [])
+    )
+    if isinstance(configured_clients, str):
+        configured_clients = [configured_clients]
+    # Keep the rescue probes bounded: every yt-dlp extraction can take several
+    # seconds, so retry the configured lead client and one independent ladder
+    # rather than multiplying an already exhaustive client matrix.
+    raw_clients = list(configured_clients[:1])
+    for client in ("tv_samsung", "web_embedded"):
+        if client not in raw_clients:
+            raw_clients.append(client)
+        if len(raw_clients) >= 2:
+            break
+    if not raw_clients:
+        raw_clients = [None]
+
+    for client in raw_clients:
+        raw_opts = copy.deepcopy(opts)
+        raw_opts.pop("format", None)
+        if client:
+            youtube_args = raw_opts.setdefault("extractor_args", {}).setdefault("youtube", {})
+            youtube_args["player_client"] = [client]
+        if runtimes and runtimes[0]:
+            raw_opts["js_runtime"] = runtimes[0]
+        label = f"raw-formats-{client or 'default'}"
+        try:
+            _log("info", "extract_info_with_fallback: probing raw formats via %s", label)
+            with _get_youtube_dl()(raw_opts) as ydl:
+                info = ydl.extract_info(link, download=False, process=False)
+            formats = info.get("formats") or []
+            if not formats and info.get("url"):
+                formats = [info]
+
+            def has_codec(fmt, key):
+                value = fmt.get(key)
+                return value not in (None, "", "none")
+
+            def quality(fmt):
+                try:
+                    return float(fmt.get("height") or fmt.get("abr") or fmt.get("tbr") or 0)
+                except (TypeError, ValueError):
+                    return 0
+
+            usable = [fmt for fmt in formats if fmt.get("format_id") is not None]
+            audio_formats = [fmt for fmt in usable if has_codec(fmt, "acodec")]
+            video_formats = [fmt for fmt in usable if has_codec(fmt, "vcodec")]
+            selected = None
+            selected_expr = None
+            if wants_audio and audio_formats:
+                audio_only = [fmt for fmt in audio_formats if not has_codec(fmt, "vcodec")]
+                candidates = audio_only or audio_formats
+                candidates.sort(key=quality, reverse=True)
+                selected = candidates[0]
+                selected_expr = str(selected["format_id"])
+            elif wants_video and video_formats:
+                combined = [fmt for fmt in video_formats if has_codec(fmt, "acodec")]
+                if combined:
+                    combined.sort(key=quality, reverse=True)
+                    selected = combined[0]
+                    selected_expr = str(selected["format_id"])
+                elif audio_formats:
+                    video_formats.sort(key=quality, reverse=True)
+                    audio_only = [fmt for fmt in audio_formats if not has_codec(fmt, "vcodec")]
+                    audio_formats = audio_only or audio_formats
+                    audio_formats.sort(key=quality, reverse=True)
+                    selected = video_formats[0]
+                    selected_expr = f"{selected['format_id']}+{audio_formats[0]['format_id']}"
+                else:
+                    video_formats.sort(key=quality, reverse=True)
+                    selected = video_formats[0]
+                    selected_expr = str(selected["format_id"])
+
+            if selected is None:
+                raise ValueError("raw extractor result contained no compatible audio/video formats")
+
+            download_opts = copy.deepcopy(raw_opts)
+            download_opts["format"] = selected_expr
+            output_ext = opts.get("merge_output_format") if wants_video and "+" in selected_expr else None
+            info["ext"] = output_ext or selected.get("ext") or info.get("ext") or "mp4"
+            _log("info", "extract_info_with_fallback: selected discovered format %s via %s", selected_expr, label)
+            if return_options:
+                return info, download_opts
+            return info
+        except Exception as exc:
+            _log("warning", "extract_info_with_fallback: %s failed: %s", label, exc)
+            errors.append(f"{label}: {exc}")
+            last_error = exc
+
+    summary = " | ".join(errors[-6:])
     raise Exception(f"All extract attempts failed: {summary or last_error}") from last_error
 
 
