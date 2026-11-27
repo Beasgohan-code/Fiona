@@ -31,10 +31,15 @@ RENDER
 ------
 A Render Blueprint is included in render.yaml. Create a Blueprint from this
 repository, then provide the required Telegram, MongoDB, owner, and assistant
-session environment variables in Render. The Docker process exposes /health on
-the Render-provided PORT. Choose an always-on paid web instance for continuous
-bot availability: a free Render web instance can sleep, and an HTTP health
-endpoint or self-ping script cannot guarantee that it stays awake.
+session environment variables in Render. The health server is part of the
+Music runtime and exposes `/health` (readiness) on the Render-provided PORT;
+`/live` reports process liveness, and `/ready` is an explicit readiness alias.
+The event loop sends a heartbeat every 30 seconds, and `/health` returns 503 if
+startup is incomplete or the heartbeat is stale. Set `KEEP_ALIVE_MAX_AGE` to
+change the stale threshold (default 120 seconds). Choose an always-on paid web
+instance for continuous bot availability: a free Render web instance can sleep,
+and an HTTP health endpoint or self-ping script cannot guarantee that it stays
+awake.
 
 FIXING `WEBPAGE_CURL_FAILED` ON /START
 --------------------------------------

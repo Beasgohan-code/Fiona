@@ -90,7 +90,7 @@ async def _set_unified_menu(app) -> None:
 
 
 async def _health_heartbeat() -> None:
-    from keep_alive import beat
+    from AoiMusic.core.keep_alive import beat
 
     while True:
         await asyncio.sleep(30)
@@ -112,7 +112,7 @@ async def run() -> None:
     from AoiMusic.utils.premium import install_text_entities_patch, validate_db
     from AoiMusic.utils.premium_emoji import patch_pyrogram_premium_emoji
     from pyrogram import idle
-    from keep_alive import set_ready, start_server, stop_server
+    from AoiMusic.core.keep_alive import set_ready, start_server, stop_server
 
     if not config.STRING_SESSIONS:
         raise RuntimeError("Music voice playback requires at least one STRING_SESSIONS assistant session.")
