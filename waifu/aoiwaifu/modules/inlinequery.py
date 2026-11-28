@@ -6,6 +6,7 @@ from aoiwaifu.unit.rich_ui import (
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 import re
 import time
+from collections import Counter
 from html import escape
 from cachetools import TTLCache
 
@@ -140,6 +141,16 @@ async def inlinequery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             else ""
         )
 
+    # Count the requested collector's copies once per inline render instead of
+    # re-scanning their whole collection for every result (was O(results × collection)).
+    user_char_counts = None
+    if user:
+        user_char_counts = Counter(
+            str(char.get("id"))
+            for char in (user.get("characters") or [])
+            if isinstance(char, dict) and char.get("id") is not None
+        )
+
     results = []
 
     for character in characters:
@@ -155,11 +166,7 @@ async def inlinequery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             ('ID', f"<code>#{char_id}</code>"),
         ]
         if user:
-            user_character_count = sum(
-                1
-                for char in (user.get("characters") or [])
-                if isinstance(char, dict) and str(char.get("id")) == str(character.get("id"))
-            )
+            user_character_count = (user_char_counts or {}).get(str(character.get("id")), 0)
             owner_name = escape(str(user.get("first_name", "Collector")))
             details.insert(0, (
                 'Collector',
