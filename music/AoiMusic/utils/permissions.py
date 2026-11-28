@@ -59,12 +59,12 @@ async def unauthorised(
     if bot_lacking_permission:
         text = (
             "I don't have the required permission to perform this action."
-            + f"\n**Permission:** __{permission}__"
+            + f"\n<b>Permission:</b> <u>{permission}</u>"
         )
     else:
         text = (
             "You don't have the required permission to perform this action."
-            + f"\n**Permission:** __{permission}__"
+            + f"\n<b>Permission:</b> <u>{permission}</u>"
         )
     try:
         await reply_note(message, text)

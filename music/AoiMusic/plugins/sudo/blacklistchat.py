@@ -1,3 +1,4 @@
+import html
 
 #
 from pyrogram.types import Message
@@ -55,7 +56,7 @@ async def all_chats(client, message: Message, _):
         except Exception:
             title = "Private"
         j = 1
-        text += f"**{count}. {title}** [`{chat_id}`]\n"
+        text += f"<b>{count}. {html.escape(str(title))}</b> <code>{chat_id}</code>\n"
     if j == 0:
         await reply_note(message, _["black_8"])
     else:

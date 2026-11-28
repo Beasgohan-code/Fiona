@@ -114,7 +114,8 @@ async def progress(current, total, message, start, type_of_ps, file_name=None):
         if file_name:
             try:
                 await message.edit(
-                    f"{type_of_ps}\n**File Name:** `{file_name}`\n{tmp}"
+                    f"{type_of_ps}\n**File Name:** `{file_name}`\n{tmp}",
+                    parse_mode=enums.ParseMode.MARKDOWN,
                     )
             except FloodWait as e:
                 await asyncio.sleep(e.x)

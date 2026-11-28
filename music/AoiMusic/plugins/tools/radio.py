@@ -3,6 +3,7 @@
 
 
 import asyncio
+import html
 import logging
 
 from pyrogram import filters
@@ -43,7 +44,8 @@ RADIO_STATION = {
     "Aaj Tak": "https://www.youtube.com/live/Nq2wYlWFucg?si=usY4UYiSBInKA0S1",
 }
 
-valid_stations = "\n".join([f"`{name}`" for name in sorted(RADIO_STATION.keys())])
+valid_stations = "\n".join(f"• {name}" for name in sorted(RADIO_STATION.keys()))
+valid_stations_html = "\n".join(f"<code>{name}</code>" for name in sorted(RADIO_STATION.keys()))
 
 
 @app.on_message(
@@ -59,11 +61,11 @@ async def radio(client, message: Message):
             get = await app.get_chat_member(message.chat.id, userbot.id)
         except ChatAdminRequired:
             return await msg.edit_text(
-                f"» ɪ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴs ᴛᴏ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ғᴏʀ ɪɴᴠɪᴛɪɴɢ {userbot.mention} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {message.chat.title}."
+                f"» ɪ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴs ᴛᴏ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ғᴏʀ ɪɴᴠɪᴛɪɴɢ {rich_user_link(userbot)} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {html.escape(str(message.chat.title))}."
             )
         if get.status == ChatMemberStatus.BANNED:
             return await msg.edit_text(
-                text=f"» {userbot.mention} ᴀssɪsᴛᴀɴᴛ ɪs ʙᴀɴɴᴇᴅ ɪɴ {message.chat.title}\n\n𖢵 ɪᴅ : `{userbot.id}`\n𖢵 ɴᴀᴍᴇ : {userbot.mention}\n𖢵 ᴜsᴇʀɴᴀᴍᴇ : @{userbot.username}\n\nᴘʟᴇᴀsᴇ ᴜɴʙᴀɴ ᴛʜᴇ ᴀssɪsᴛᴀɴᴛ ᴀɴᴅ ᴘʟᴀʏ ᴀɢᴀɪɴ...",
+                text=f"» {rich_user_link(userbot)} ᴀssɪsᴛᴀɴᴛ ɪs ʙᴀɴɴᴇᴅ ɪɴ {html.escape(str(message.chat.title))}\n\n𖢵 ɪᴅ : <code>{userbot.id}</code>\n𖢵 ɴᴀᴍᴇ : {rich_user_link(userbot)}\n𖢵 ᴜsᴇʀɴᴀᴍᴇ : @{html.escape(str(userbot.username or ''))}\n\nᴘʟᴇᴀsᴇ ᴜɴʙᴀɴ ᴛʜᴇ ᴀssɪsᴛᴀɴᴛ ᴀɴᴅ ᴘʟᴀʏ ᴀɢᴀɪɴ...",
             )
     except UserNotParticipant:
         if message.chat.username:
@@ -77,34 +79,34 @@ async def radio(client, message: Message):
                 invitelink = await client.export_chat_invite_link(message.chat.id)
             except ChatAdminRequired:
                 return await msg.edit_text(
-                    f"» ɪ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴs ᴛᴏ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ғᴏʀ ɪɴᴠɪᴛɪɴɢ {userbot.mention} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {message.chat.title}."
+                    f"» ɪ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴs ᴛᴏ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ғᴏʀ ɪɴᴠɪᴛɪɴɢ {rich_user_link(userbot)} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {html.escape(str(message.chat.title))}."
                 )
             except InviteRequestSent:
                 try:
                     await app.approve_chat_join_request(message.chat.id, userbot.id)
                 except Exception as e:
                     return await msg.edit(
-                        f"ғᴀɪʟᴇᴅ ᴛᴏ ɪɴᴠɪᴛᴇ {userbot.mention} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {message.chat.title}.\n\n**ʀᴇᴀsᴏɴ :** `{e}`"
+                        f"ғᴀɪʟᴇᴅ ᴛᴏ ɪɴᴠɪᴛᴇ {rich_user_link(userbot)} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {html.escape(str(message.chat.title))}.\n\n<b>ʀᴇᴀsᴏɴ:</b> {e}"
                     )
             except Exception as ex:
                 if "channels.JoinChannel" in str(ex) or "Username not found" in str(ex):
                     return await msg.edit_text(
-                        f"» ɪ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴs ᴛᴏ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ғᴏʀ ɪɴᴠɪᴛɪɴɢ {userbot.mention} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {message.chat.title}."
+                        f"» ɪ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴs ᴛᴏ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ғᴏʀ ɪɴᴠɪᴛɪɴɢ {rich_user_link(userbot)} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {html.escape(str(message.chat.title))}."
                     )
                 else:
                     return await msg.edit_text(
-                        f"ғᴀɪʟᴇᴅ ᴛᴏ ɪɴᴠɪᴛᴇ {userbot.mention} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {message.chat.title}.\n\n**ʀᴇᴀsᴏɴ :** `{ex}`"
+                        f"ғᴀɪʟᴇᴅ ᴛᴏ ɪɴᴠɪᴛᴇ {rich_user_link(userbot)} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {html.escape(str(message.chat.title))}.\n\n<b>ʀᴇᴀsᴏɴ:</b> {ex}"
                     )
         if invitelink.startswith("https://t.me/+"):
             invitelink = invitelink.replace("https://t.me/+", "https://t.me/joinchat/")
         await msg.edit_text(
-            f"ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ...\n\nɪɴᴠɪᴛɪɴɢ {userbot.mention} ᴛᴏ {message.chat.title}."
+            f"ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ...\n\nɪɴᴠɪᴛɪɴɢ {rich_user_link(userbot)} ᴛᴏ {html.escape(str(message.chat.title))}."
         )
         try:
             await userbot.join_chat(invitelink)
             await asyncio.sleep(2)
             await msg.edit_text(
-                f"{userbot.mention} ᴊᴏɪɴᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ,\n\nsᴛᴀʀᴛɪɴɢ sᴛʀᴇᴀᴍ..."
+                f"{rich_user_link(userbot)} ᴊᴏɪɴᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ,\n\nsᴛᴀʀᴛɪɴɢ sᴛʀᴇᴀᴍ..."
             )
         except UserAlreadyParticipant:
             pass
@@ -113,16 +115,16 @@ async def radio(client, message: Message):
                 await app.approve_chat_join_request(message.chat.id, userbot.id)
             except Exception as e:
                 return await msg.edit(
-                    f"ғᴀɪʟᴇᴅ ᴛᴏ ɪɴᴠɪᴛᴇ {userbot.mention} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {message.chat.title}.\n\n**ʀᴇᴀsᴏɴ :** `{e}`"
+                    f"ғᴀɪʟᴇᴅ ᴛᴏ ɪɴᴠɪᴛᴇ {rich_user_link(userbot)} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {html.escape(str(message.chat.title))}.\n\n<b>ʀᴇᴀsᴏɴ:</b> {e}"
                 )
         except Exception as ex:
             if "channels.JoinChannel" in str(ex) or "Username not found" in str(ex):
                 return await msg.edit_text(
-                    f"» ɪ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴs ᴛᴏ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ғᴏʀ ɪɴᴠɪᴛɪɴɢ {userbot.mention} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {message.chat.title}."
+                    f"» ɪ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴs ᴛᴏ ɪɴᴠɪᴛᴇ ᴜsᴇʀs ᴠɪᴀ ʟɪɴᴋ ғᴏʀ ɪɴᴠɪᴛɪɴɢ {rich_user_link(userbot)} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {html.escape(str(message.chat.title))}."
                 )
             else:
                 return await msg.edit_text(
-                    f"ғᴀɪʟᴇᴅ ᴛᴏ ɪɴᴠɪᴛᴇ {userbot.mention} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {message.chat.title}.\n\n**ʀᴇᴀsᴏɴ :** `{ex}`"
+                    f"ғᴀɪʟᴇᴅ ᴛᴏ ɪɴᴠɪᴛᴇ {rich_user_link(userbot)} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {html.escape(str(message.chat.title))}.\n\n<b>ʀᴇᴀsᴏɴ:</b> {ex}"
                 )
 
         try:
@@ -185,4 +187,12 @@ async def radio(client, message: Message):
 
 
 __MODULE__ = "Rᴀᴅɪᴏ"
-__HELP__ = f"\n/streamstation [ꜱᴛᴀᴛɪᴏɴ ɴᴀᴍᴇ] - ᴛᴏ ᴘʟᴀʏ **ꜱᴛᴀᴛɪᴏɴ ɪɴ ᴠᴏɪᴄᴇ ᴄʜᴀᴛ**\n\nʙᴇʟᴏᴡ ᴀʀᴇ sᴏᴍᴇ sᴛᴀᴛɪᴏɴ ɴᴀᴍᴇ:\n{valid_stations}"
+__HELP__ = f"""
+<b>ʀᴀᴅɪᴏ sᴛʀᴇᴀᴍɪɴɢ</b>
+
+<code>/streamstation [ꜱᴛᴀᴛɪᴏɴ ɴᴀᴍᴇ]</code> — ᴘʟᴀʏ ᴀ ʀᴀᴅɪᴏ sᴛᴀᴛɪᴏɴ ɪɴ ᴛʜᴇ ᴠᴏɪᴄᴇ ᴄʜᴀᴛ
+<code>/radio</code>, <code>/cradio</code>, <code>/radioplayforce</code> — ᴀʟɪᴀꜱᴇꜱ
+
+<b>sᴛᴀᴛɪᴏɴ ɴᴀᴍᴇs:</b>
+{valid_stations_html}
+"""

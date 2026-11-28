@@ -2,8 +2,11 @@
 
 import asyncio
 import contextlib
+import html
 import logging
 import socket
+
+from pyrogram import enums
 
 from strings import command
 from AoiMusic import app
@@ -71,17 +74,17 @@ def _run_test(progress=None):
     with _ipv4_only():
         import speedtest
 
-        say("⇆ Finding nearest **working** server …")
+        say("⇆ Finding nearest working server …")
         test = speedtest.Speedtest()
         # get_best_server() alone was taking 30s+ because the bundled server
         # list points at distant servers; ask for the cheapest first and let
         # the caller bail out if nothing answers.
         test.get_best_server()
 
-        say("⇆ Running **Download** Speedtest …")
+        say("⇆ Running download speedtest …")
         test.download()
 
-        say("⇆ Running **Upload** Speedtest …")
+        say("⇆ Running upload speedtest …")
         test.upload()
 
         try:
@@ -120,16 +123,16 @@ async def testspeed(m):
             timeout=ST_RUN_DEADLINE,
         )
     except asyncio.TimeoutError:
-        await _safe_edit(m, "❌ **Speedtest timed out** — no server responded.")
+        await _safe_edit(m, "❌ <b>Speedtest timed out</b> — no server responded.")
         return None
     except Exception as e:
         logger.warning(f"[SPEEDTEST] failed: {e}")
-        await _safe_edit(m, f"❌ **Speedtest failed**\n\n`{e}`")
+        await _safe_edit(m, f"❌ <b>Speedtest failed</b>\n\n{e}")
         return None
 
     if not result or not result.get("download") or not result.get("upload"):
         await _safe_edit(
-            m, "❌ **Speedtest failed** — the server reported 0 Mbps."
+            m, "❌ <b>Speedtest failed</b> — the server reported 0 Mbps."
         )
         return None
 
@@ -155,22 +158,23 @@ async def speedtest_function(client, message):
             d = d.get(k)
         return default if d in (None, "") else d
 
-    output = f"""**Speedtest Results**
+    esc = lambda value: html.escape(str(value))
+    output = f"""<b>Speedtest Results</b>
 
-<u>**Client:**</u>
-**ISP :** {g(client_info, 'isp')}
-**Country :** {g(client_info, 'country')}
-**IP :** {g(client_info, 'ip')}
+<u><b>Client:</b></u>
+<b>ISP:</b> {esc(g(client_info, 'isp'))}
+<b>Country:</b> {esc(g(client_info, 'country'))}
+<b>IP:</b> {esc(g(client_info, 'ip'))}
 
-<u>**Server:**</u>
-**Name :** {g(server, 'name')}
-**Country:** {g(server, 'country')} ({g(server, 'cc')})
-**Sponsor:** {g(server, 'sponsor')}
-**Latency:** {g(server, 'latency')} ms
-**Ping :** {g(result, 'ping')} ms
+<u><b>Server:</b></u>
+<b>Name:</b> {esc(g(server, 'name'))}
+<b>Country:</b> {esc(g(server, 'country'))} ({esc(g(server, 'cc'))})
+<b>Sponsor:</b> {esc(g(server, 'sponsor'))}
+<b>Latency:</b> {esc(g(server, 'latency'))} ms
+<b>Ping:</b> {esc(g(result, 'ping'))} ms
 
-⬇️ **Download:** {result['download'] / 1e6:.2f} Mbps
-⬆️ **Upload:** {result['upload'] / 1e6:.2f} Mbps"""
+⬇️ <b>Download:</b> {result['download'] / 1e6:.2f} Mbps
+⬆️ <b>Upload:</b> {result['upload'] / 1e6:.2f} Mbps"""
 
     share = result.get("share")
     try:
@@ -180,6 +184,7 @@ async def speedtest_function(client, message):
                 photo=share,
                 caption=output,
                 has_spoiler=True,
+                parse_mode=enums.ParseMode.HTML,
             )
         else:
             await edit_any(m, output)

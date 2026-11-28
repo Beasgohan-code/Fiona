@@ -1019,7 +1019,7 @@ class Call:
                 except NoActiveGroupCall:
                     continue
             else:
-                raise AssistantErr("**No Active Voice Chat Found**")
+                raise AssistantErr("No active voice chat found.")
         except AlreadyJoinedError:
             # The assistant is already in the call: the behaviour users need
             # is a clean source switch, not an error splash. A short settle
@@ -1037,11 +1037,11 @@ class Call:
                     chat_id, type(e).__name__, e,
                 )
                 raise AssistantErr(
-                    "**ASSISTANT IS ALREADY IN VOICECHAT **\n\nMusic bot system detected that assistant is already in the voicechat, if the problem continues restart the videochat and try again."
+                    "The assistant is already in the voice chat.\n\nIf the problem continues, restart the videochat and try again."
                 )
         except TelegramServerError:
             raise AssistantErr(
-                "**TELEGRAM SERVER ERROR**\n\nPlease restart Your voicechat."
+                "Telegram server error.\n\nPlease restart your voicechat."
             )
         # Fresh join: the stream begins now. Covers every replay path above
         # since this is the common tail of join_call.

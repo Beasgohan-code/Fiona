@@ -8,8 +8,9 @@ import secrets
 import string
 import asyncio
 from datetime import datetime
-from pyrogram import Client, filters
+from pyrogram import Client, filters, enums
 from pyrogram.types import Message, InlineKeyboardMarkup, CallbackQuery
+from html import escape
 from aoiwaifu import app, user_collection, require_power, db, application
 from aoiwaifu.admin.blocklist import is_user_blocklisted
 transfer_in_progress = False
@@ -111,7 +112,10 @@ async def confirm_transfer_callback(client: Client, callback_query: CallbackQuer
             return
         user_chars = user.get('characters', [])
         if not user_chars:
-            await callback_query.edit_message_text(tr(f'❌ User `{user_id}` has no characters to transfer.', lang))
+            await callback_query.edit_message_text(
+                tr(f'❌ User <code>{escape(str(user_id))}</code> has no characters to transfer.', lang),
+                parse_mode=enums.ParseMode.HTML,
+            )
             transfer_in_progress = False
             active_transfer = None
             return
@@ -119,7 +123,10 @@ async def confirm_transfer_callback(client: Client, callback_query: CallbackQuer
         await user_collection.update_one({'id': {'$in': [int(user_id), user_id]}}, {'$set': {'characters': []}})
         transfer_doc = {'_id': transfer_id, 'user_id': user_id, 'owner_id': owner_id, 'characters': user_chars, 'timestamp': time.time(), 'createdAt': datetime.utcnow(), 'status': 'completed'}
         await transfer_logs.insert_one(transfer_doc)
-        await callback_query.edit_message_text(tr(f'✅ **Transfer Successful!**\n\n👤 From: `{user_id}`\n➡️ To: `{owner_id}`\n📦 Characters Transferred: `{len(user_chars)}`\n\n🆔 **Transfer ID:** `{transfer_id}`\n🕒 *This transfer can be reverted within 1 hour using `/backtransfer {transfer_id}`*', lang))
+        await callback_query.edit_message_text(
+            tr(f'✅ <b>Transfer Successful!</b>\n\n👤 From: <code>{escape(str(user_id))}</code>\n➡️ To: <code>{escape(str(owner_id))}</code>\n📦 Characters Transferred: <code>{len(user_chars)}</code>\n\n🆔 <b>Transfer ID:</b> <code>{escape(str(transfer_id))}</code>\n🕒 <i>This transfer can be reverted within 1 hour using <code>/backtransfer {escape(str(transfer_id))}</code></i>', lang),
+            parse_mode=enums.ParseMode.HTML,
+        )
         transfer_in_progress = False
         active_transfer = None
     finally:

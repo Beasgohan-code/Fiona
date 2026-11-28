@@ -10,7 +10,7 @@ from AoiMusic.utils.rich_msg import reply_note, status_card
 
 @app.on_message(command("AUTOEND_COMMAND") & SUDOERS)
 async def auto_end_stream(client, message):
-    usage = "**ᴜsᴀɢᴇ:**\n\n/autoend [enable|disable]"
+    usage = "<b>ᴜsᴀɢᴇ:</b>\n\n/autoend [enable|disable]"
     if len(message.command) != 2:
         return await reply_note(message, usage)
     state = message.text.split(None, 1)[1].strip()

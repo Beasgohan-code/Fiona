@@ -72,7 +72,7 @@ def PlayWrapper(command):
         if PRIVATE_BOT_MODE == str(True):
             if not await is_served_private_chat(message.chat.id):
                 await reply_note(message,
-                    "**PRIVATE MUSIC BOT**\n\nOnly For Authorized chats from the owner ask my owner to allow your chat first."
+                    "<b>Private music bot</b>\n\nOnly authorized chats can use me — ask my owner to allow your chat first."
                 )
                 return await app.leave_chat(message.chat.id)
         if await is_commanddelete_on(message.chat.id):
@@ -128,7 +128,7 @@ def PlayWrapper(command):
                     is_call_active = (await app.get_chat(chat_id)).is_call_active
                     if not is_call_active:
                         return await reply_note(message,
-                            "**No active video chat found **\n\nPlease make sure you started the voicechat."
+                            "<b>No active video chat found</b>\n\nPlease make sure you started the voicechat."
                         )
                     _CALL_ACTIVE_CACHE[chat_id] = now + _CALL_ACTIVE_TTL
                 except Exception:

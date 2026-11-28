@@ -1,6 +1,7 @@
 
 #
 import glob
+import re
 from functools import partial
 import random
 
@@ -66,12 +67,11 @@ wrong = {}
 
 async def _rich_status_edit(CallbackQuery: CallbackQuery, txt: str, chat_id: int):
     """Status line on a panel — rich edit first, pyrogram fallback."""
-    if await replace_panel(
-        chat_id, CallbackQuery.message.id, txt.replace("**", "")
-    ):
+    if await replace_panel(chat_id, CallbackQuery.message.id, txt):
         return
     try:
-        await CallbackQuery.edit_message_text(txt)
+        # Plain-text fallback: drop the markup so tags never leak to users.
+        await CallbackQuery.edit_message_text(re.sub(r"<[^>]+>", "", txt))
     except Exception:
         pass
 
@@ -387,7 +387,7 @@ async def admin_callback(client, CallbackQuery, _):
             if (duration_played - duration_to_skip) <= 10:
                 bet = seconds_to_min(duration_played)
                 return await CallbackQuery.answer(
-                    f"Bot is unable to seek because duration exceeds.\n\nCurrently played:** {bet}** minutes out of **{duration}** minutes.",
+                    f"Bot is unable to seek because the duration would exceed the limit.\n\nCurrently played: {bet} minutes out of {duration} minutes.",
                     show_alert=True,
                 )
             to_seek = duration_played - duration_to_skip + 1
@@ -395,7 +395,7 @@ async def admin_callback(client, CallbackQuery, _):
             if (duration_seconds - (duration_played + duration_to_skip)) <= 10:
                 bet = seconds_to_min(duration_played)
                 return await CallbackQuery.answer(
-                    f"Bot is unable to seek because duration exceeds.\n\nCurrently played:** {bet}** minutes out of **{duration}** minutes.",
+                    f"Bot is unable to seek because the duration would exceed the limit.\n\nCurrently played: {bet} minutes out of {duration} minutes.",
                     show_alert=True,
                 )
             to_seek = duration_played + duration_to_skip + 1

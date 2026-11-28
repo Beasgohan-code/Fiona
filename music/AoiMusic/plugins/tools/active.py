@@ -1,3 +1,4 @@
+import html
 
 #
 from pyrogram.errors import ChannelInvalid
@@ -33,9 +34,9 @@ async def activevc(_, message: Message):
             title = (await app.get_chat(x)).title
             if (await app.get_chat(x)).username:
                 user = (await app.get_chat(x)).username
-                text += f"<b>{j + 1}.</b>  [{title}](https://t.me/{user})[`{x}`]\n"
+                text += f"<b>{j + 1}.</b>  <a href='https://t.me/{html.escape(str(user), quote=True)}'>{html.escape(str(title))}</a> <code>{x}</code>\n"
             else:
-                text += f"<b>{j + 1}. {title}</b> [`{x}`]\n"
+                text += f"<b>{j + 1}. {html.escape(str(title))}</b> <code>{x}</code>\n"
             j += 1
         except ChannelInvalid:
             await _clear_(x)
@@ -44,7 +45,7 @@ async def activevc(_, message: Message):
         await mystic.edit_text("No active Chats Found")
     else:
         await mystic.edit_text(
-            f"**Active Voice Chat's:-**\n\n{text}",
+            f"<b>Active Voice Chat's</b>\n\n{text}",
         )
 
 
@@ -59,9 +60,9 @@ async def activevi_(_, message: Message):
             title = (await app.get_chat(x)).title
             if (await app.get_chat(x)).username:
                 user = (await app.get_chat(x)).username
-                text += f"<b>{j + 1}.</b>  [{title}](https://t.me/{user})[`{x}`]\n"
+                text += f"<b>{j + 1}.</b>  <a href='https://t.me/{html.escape(str(user), quote=True)}'>{html.escape(str(title))}</a> <code>{x}</code>\n"
             else:
-                text += f"<b>{j + 1}. {title}</b> [`{x}`]\n"
+                text += f"<b>{j + 1}. {html.escape(str(title))}</b> <code>{x}</code>\n"
             j += 1
         except ChannelInvalid:
             await _clear_(x)
@@ -70,7 +71,7 @@ async def activevi_(_, message: Message):
         await mystic.edit_text("No active Chats Found")
     else:
         await mystic.edit_text(
-            f"**Active Video Chat's:-**\n\n{text}",
+            f"<b>Active Video Chat's</b>\n\n{text}",
         )
 
 

@@ -18,7 +18,7 @@ from AoiMusic.utils.rich_msg import reply_note, rich_user_link, status_card
 async def useradd(client, message: Message, _):
     if not MONGO_DB_URI:
         return await reply_note(message,
-            "**Due to privacy issues, You can't manage sudoers when you are on AoiMusic Database.\n\n Please fill Your MONGO_DB_URI in your vars to use this features**"
+            "<b>Due to privacy issues, You can't manage sudoers when you are on AoiMusic Database.\n\n Please fill Your MONGO_DB_URI in your vars to use this features</b>"
         )
     if not message.reply_to_message:
         if len(message.command) != 2:
@@ -56,7 +56,7 @@ async def useradd(client, message: Message, _):
 async def userdel(client, message: Message, _):
     if not MONGO_DB_URI:
         return await reply_note(message,
-            "**Due to privacy issues, You can't manage sudoers when you are on AoiMusic Database.\n\n Please fill Your MONGO_DB_URI in your vars to use this features**"
+            "<b>Due to privacy issues, You can't manage sudoers when you are on AoiMusic Database.\n\n Please fill Your MONGO_DB_URI in your vars to use this features</b>"
         )
     if not message.reply_to_message:
         if len(message.command) != 2:

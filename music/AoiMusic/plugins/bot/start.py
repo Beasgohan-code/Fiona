@@ -298,7 +298,7 @@ async def welcome(client, message: Message):
         if not await is_served_private_chat(message.chat.id):
             await send_note(
                 chat_id,
-                "**ᴛʜɪꜱ ʙᴏᴛ'ꜱ ᴘʀɪᴠᴀᴛᴇ ᴍᴏᴅᴇ ʜᴀꜱ ʙᴇᴇɴ ᴇɴᴀʙʟᴇᴅ ᴏɴʟʏ ᴍʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴜꜱᴇ ᴛʜɪꜱ ɪꜰ ᴡᴀɴᴛ ᴛᴏ ᴜꜱᴇ ᴛʜɪꜱ ɪɴ ʏᴏᴜʀ ᴄʜᴀᴛ ꜱᴏ ꜱᴀʏ ᴛᴏ ᴍʏ ᴏᴡɴᴇʀ ᴛᴏ ᴀᴜᴛʜᴏʀɪᴢᴇ ʏᴏᴜʀ ᴄʜᴀᴛ."
+                "<b>ᴛʜɪꜱ ʙᴏᴛ'ꜱ ᴘʀɪᴠᴀᴛᴇ ᴍᴏᴅᴇ ʜᴀꜱ ʙᴇᴇɴ ᴇɴᴀʙʟᴇᴅ ᴏɴʟʏ ᴍʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴜꜱᴇ ᴛʜɪꜱ ɪꜰ ᴡᴀɴᴛ ᴛᴏ ᴜꜱᴇ ᴛʜɪꜱ ɪɴ ʏᴏᴜʀ ᴄʜᴀᴛ ꜱᴏ ꜱᴀʏ ᴛᴏ ᴍʏ ᴏᴡɴᴇʀ ᴛᴏ ᴀᴜᴛʜᴏʀɪᴢᴇ ʏᴏᴜʀ ᴄʜᴀᴛ.</b>"
             )
             return await app.leave_chat(message.chat.id)
     else:
