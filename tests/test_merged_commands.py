@@ -491,6 +491,16 @@ class MergedCommandTests(unittest.TestCase):
                     if keyword.arg == "emoji" and isinstance(keyword.value, ast.Constant):
                         self.assertIn(keyword.value.value, keys, f"{path.name}: {keyword.value.value}")
 
+    def test_help_module_emojis_exist_in_registry(self):
+        keys = premium_emoji_keys()
+        source = (WAIFU / "modules/start.py").read_text(encoding="utf-8")
+        match = re.search(r"HELP_MODULE_EMOJIS = (\{.*?\})\n", source, re.DOTALL)
+        self.assertIsNotNone(match, "HELP_MODULE_EMOJIS mapping not found in start.py")
+        mapping = ast.literal_eval(match.group(1))
+        self.assertTrue(mapping, "HELP_MODULE_EMOJIS should not be empty")
+        for module_name, emoji_key in mapping.items():
+            self.assertIn(emoji_key, keys, f"{module_name}: {emoji_key} missing from PREMIUM_EMOJIS")
+
     def test_group_registry_and_event_log_failures_are_contained(self):
         registry_source = (WAIFU / "modules/joinlog.py").read_text(encoding="utf-8")
         sender_source = (WAIFU / "unit/event_logger.py").read_text(encoding="utf-8")
