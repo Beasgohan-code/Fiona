@@ -3,9 +3,9 @@ name : 🏴󠁧󠁢󠁥󠁮󠁧󠁿 English
 # General Strings
 general_1 : "🔄 Reply to a user's message or give username/user_id."
 general_2 : "❌ Error! Wrong usage of command."
-general_3 : "⚠️ Some **exception occurred** while processing your query.\n\nException type: {0}"
+general_3 : "⚠️ Some <b>exception occurred</b> while processing your query.\n\nException type: {0}"
 general_4 : "👤 You're an anonymous admin in this chat group!\nRevert back to user account for admin rights."
-general_5 : "🔑 You need to be an admin with **manage video chat** rights to perform this action."
+general_5 : "🔑 You need to be an admin with <b>manage video chat</b> rights to perform this action."
 general_6 : "📺 Bot isn't streaming on video chat."
 
 # Classes - Telegram.py
@@ -13,15 +13,15 @@ tg_1 : "⚠️ Bot is <b>overloaded</b> with downloads right now.\n\n<b>Try afte
 tg_2 : "❌ Failed to download the media from Telegram."
 
 # Core - Call.py
-call_1 : "🤖 Bot requires **admin** permission to invite assistant account to your channel."
-call_2 : "🚫 Assistant is banned in your group or channel.\nPlease unban and play song again\n\n**Assistant username:** @{0}\n**Assistant ID:** {1}"
-call_3 : "❗ Exception occurred while inviting assistant account to your.\n\n**Reason**: {0}"
-call_4 : "🔗 Bot requires **invite users via link** permission to invite assistant account to your chat group."
+call_1 : "🤖 Bot requires <b>admin</b> permission to invite assistant account to your channel."
+call_2 : "🚫 Assistant is banned in your group or channel.\nPlease unban and play song again\n\n<b>Assistant username:</b> @{0}\n<b>Assistant ID:</b> {1}"
+call_3 : "❗ Exception occurred while inviting assistant account to your.\n\n<b>Reason</b>: {0}"
+call_4 : "🔗 Bot requires <b>invite users via link</b> permission to invite assistant account to your chat group."
 call_5 : "⏳ Assistant account will be joining in 5 seconds, please wait..."
 call_6 : "✅ Assistant account of {0} joined successfully.\n\nStarting music now."
 call_7 : "❌ <b>Failed to switch stream</b>\nPlease use /skip to change track again."
 call_8 : "📥 Downloading next track from playlist...."
-call_9 : "📉 Assistant is joined too many chats, therefore assistant can't join here\nContact [Support Group]({0}) to fix and inform this problem."
+call_9 : "📉 Assistant is joined too many chats, therefore assistant can't join here\nContact <a href='{0}'>Support Group</a> to fix and inform this problem."
 call_10: "⏳ Assistant is on FloodWait due to join/leave please wait {0} seconds."
 
 # PLUGINS - Auth.py
@@ -31,7 +31,7 @@ auth_3 : "⚠️ Already in the authorized users list."
 auth_4 : "❌ Removed from authorized users list of this group."
 auth_5 : "🚫 Targeted user is not an authorized user."
 auth_6 : "🔄 Fetching authorized users...please wait!"
-auth_7 : "**Authorized users list[aul]:**\n\n"
+auth_7 : "<b>Authorized users list[aul]:</b>\n\n"
 auth_8 : "• Added by:-"
 
 # PLUGINS - Admins
@@ -58,7 +58,7 @@ admin_20 : "✅ Admin cache reloaded successfully."
 admin_21 : "❌ Nothing inside queue to shuffle"
 admin_22 : "🚫 Failed to shuffle.\n\nCheck queue: /queue"
 admin_23 : "<b>Queue Shuffled by {0}</b>\n\nCheck shuffled queue: /queue"
-admin_24 : "**Usage:**\n/loop [enable/disable] or [Number between 1-10]\n\nExample: `/loop 5`"
+admin_24 : "<b>Usage:</b>\n/loop [enable/disable] or [Number between 1-10]\n\nExample: `/loop 5`"
 admin_25 : "🔁 Loop enabled by <b>{0}</b> for <b>{1}</b> times. Bot will now repeat the current playing music on voice chat for <b>{1}</b> times"
 admin_26 : "⚠️ Please use numbers between 1-10 for loop play"
 admin_27 : "🔁 Loop Play has been disabled"
@@ -78,7 +78,7 @@ start_1 : "<blockquote><tg-emoji emoji-id=\"6066656509784237873\">✨</tg-emoji>
 start_2 : "<blockquote><tg-emoji emoji-id=\"6066465456754009142\">🤖</tg-emoji> <b>ᴛʜᴀɴᴋs ғᴏʀ ᴀᴅᴅɪɴɢ {0}!</b> <tg-emoji emoji-id=\"6066426591594946706\">✔️</tg-emoji>\n\n<tg-emoji emoji-id=\"6066607426897977062\">🎵</tg-emoji> ᴜsᴇ <code>/play</code> ᴛᴏ sᴛʀᴇᴀᴍ ʜᴅ ᴍᴜsɪᴄ &amp; ᴠɪᴅᴇᴏ ɪɴ ᴠᴄ.\n<tg-emoji emoji-id=\"6068943987891250263\">👤</tg-emoji> <b>ᴀssɪsᴛᴀɴᴛ :</b> @{1} (<code>{2}</code>)</blockquote>"
 start_3 : "The owner of {0}, {1} just joined your chat."
 start_4 : "The sudo user of {0}, {1} just joined your chat."
-start_5 : "🦸 **Supergroup needed** 🦸\n\nPlease convert your **group** to **supergroup** and then add me back.\n\n**How to make supergroup?**\n🥱 Make your group's chat history **visible** once."
+start_5 : "🦸 <b>Supergroup needed</b> 🦸\n\nPlease convert your <b>group</b> to <b>supergroup</b> and then add me back.\n\n<b>How to make supergroup?</b>\n🥱 Make your group's chat history <b>visible</b> once."
 start_6 : "<b>Blacklisted chat</b>\n\nThis chat is blacklisted for using the bot. Request a sudo user to whitelist your chat, sudo users <a href='{0}'>list</a>."
 start_7 : "<blockquote><tg-emoji emoji-id=\"6066465456754009142\">🤖</tg-emoji> <b>ɪ'ᴍ ᴀʟɪᴠᴇ &amp; ʀᴇᴀᴅʏ!</b> <tg-emoji emoji-id=\"6066426591594946706\">✔️</tg-emoji>\n\n<tg-emoji emoji-id=\"6066884624087262867\">🕘</tg-emoji> <b>ᴜᴘᴛɪᴍᴇ :</b> {0}</blockquote>"
 
@@ -87,7 +87,7 @@ help_1 : "<blockquote><tg-emoji emoji-id=\"6066788180596629769\">🖊</tg-emoji>
 help_2 : "<tg-emoji emoji-id=\"6066788180596629769\">🖊</tg-emoji> ᴄʟɪᴄᴋ ᴏɴ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ ᴛᴏ ɢᴇᴛ ᴍʏ ʜᴇʟᴘ ᴍᴇɴᴜ ɪɴ ʏᴏᴜʀ ᴘᴍ."
 
 # Settings Messages
-setting_1 : "⚙️ **Music Bot Settings**\n\n🖇**Group:** {0}\n🔖**Group ID:** `{1}`\n\n💡**Choose the function buttons from below which you want to edit or change.**"
+setting_1 : "⚙️ <b>Music Bot Settings</b>\n\n🖇<b>Group:</b> {0}\n🔖<b>Group ID:</b> `{1}`\n\n💡<b>Choose the function buttons from below which you want to edit or change.</b>"
 setting_3 : "⁉️ What is This?\n\n1) Direct: Plays search queries directly. Use -v to play videos in direct mode.\n\n2) Inline: Returns Inline Markup Buttons for choosing between video & audio."
 setting_4 : "⁉️ What is This?\n\n👥 Everyone: Anyone can use admin commands(skip, pause, resume etc) present in this group.\n\n🙍 Admin Only: Only admins and authorized users can use admin commands."
 setting_5 : "No Authorized Users Found\n\nYou can allow any non-admin to use my admin commands by /auth and delete by using /unauth."
@@ -141,21 +141,21 @@ cplay_5: "🚫 Only channels are supported."
 cplay_6: "🔑 You need to be the <b>owner</b> of the channel [{0}] to connect it with this group.\n<b>Channel's owner:</b> @{1}\n\nAlternatively, you can link your group to that channel and then try connecting with `/channelplay linked`."
 
 # Play Messages
-play_1: "🔎 **Searching for your track...**\n\n✨ Hang tight — the music is on its way!"
+play_1: "🔎 <b>Searching for your track...</b>\n\n✨ Hang tight — the music is on its way!"
 play_2: "📺 <b>Channel play mode</b>\nProcessing query... please wait!\n\n<b>Linked channel:</b> {0}"
 play_3: "❌ Failed to process query!"
 play_4: "🔒 <b>Admins only play</b>\nOnly admins and auth users can play music in this group.\n\nChange mode via /playmode and if you're already admin, reload admincache via /admincache or /reload."
 play_5: "❌ Failed to process audio file.\n\nAudio file size should be less than 100 MB."
-play_6: "⏳ **Duration limit exceeded**\n\n**Allowed duration:** {0} minutes\n**Received duration:** {1} minutes"
+play_6: "⏳ <b>Duration limit exceeded</b>\n\n<b>Allowed duration:</b> {0} minutes\n<b>Received duration:</b> {1} minutes"
 play_7: "🚫 Sorry! Bot only allows limited number of video calls due to CPU overload issues. Many other chats are using video call right now. Try switching to audio or try again later."
-play_8: "❌ Not a valid video file extension!\n\n**Supported formats:** {0}"
+play_8: "❌ Not a valid video file extension!\n\n<b>Supported formats:</b> {0}"
 play_9: "❌ Video file size should be less than 1 GB."
-play_10: "📋 **YouTube playlist feature**\n\nSelect the mode in which you want to play the whole YouTube playlist."
-play_11: "**Title:** {0}\n\n🕕**Duration:** {1} mins"
-play_12: "🎵 **Spotify playlists**\n\nRequested by: {0}"
-play_13: "🍏 **Apple playlists**\n\nRequested by: {0}"
-play_14: "❌ **Unable to verify the URL.**\nBot wonders if this URL belongs to any of the following platforms: YouTube, Apple Music, Spotify, Resso, and SoundCloud.\n\nYou can use /stream for m3u8 or remote links."
-play_15: "🔴 **Live stream detected**\n\nSystems have detected your track link as a live stream. Want to play live stream?"
+play_10: "📋 <b>YouTube playlist feature</b>\n\nSelect the mode in which you want to play the whole YouTube playlist."
+play_11: "<b>Title:</b> {0}\n\n🕕<b>Duration:</b> {1} mins"
+play_12: "🎵 <b>Spotify playlists</b>\n\nRequested by: {0}"
+play_13: "🍏 <b>Apple playlists</b>\n\nRequested by: {0}"
+play_14: "❌ <b>Unable to verify the URL.</b>\nBot wonders if this URL belongs to any of the following platforms: YouTube, Apple Music, Spotify, Resso, and SoundCloud.\n\nYou can use /stream for m3u8 or remote links."
+play_15: "🔴 <b>Live stream detected</b>\n\nSystems have detected your track link as a live stream. Want to play live stream?"
 play_16: "❌ Failed to fetch track details; maybe that track is age restricted on YouTube. Try playing any other."
 play_17: "🚫 Unable to play this type of Spotify query!\n\nI can only play Spotify tracks, albums, artists, and playlists."
 play_18: "🔊 <b>No active voice chat</b>\n\nTo use force play, there must be an active voice chat."
@@ -199,7 +199,7 @@ playmode_1: "🎮 Select the mode in which you want to play the queries inside y
 playmode_2: "✅ Settings changed and saved successfully by {0}."
 
 # Instant Play
-instantplay_1: "⚡ **Instant Play Settings**\n\n**Chat:** {0}\n**Status:** {1}\n\nWhen enabled, YouTube tracks stream instantly without downloading.\nWhen disabled, tracks are downloaded first (slower)."
+instantplay_1: "⚡ <b>Instant Play Settings</b>\n\n<b>Chat:</b> {0}\n<b>Status:</b> {1}\n\nWhen enabled, YouTube tracks stream instantly without downloading.\nWhen disabled, tracks are downloaded first (slower)."
 instantplay_2: "✅ Instant Play settings updated by {0}."
 
 # Stream
@@ -208,31 +208,31 @@ str_2: "✅ Valid stream verified\n\nPlease wait processing link..."
 str_3: "❌ Unable to stream YouTube live streams. No live format found."
 
 # TopPlay
-tracks_1: "**🔄 Processing {0} top 10 playlist**\n\n**Requested by:** {1}\n\nCheck top 10 tracks by /gstats."
-tracks_2: "❌ **Error**\n\nThere's no **{0} top 10 playlist** on bot's servers. Please try any other playlist."
+tracks_1: "<b>🔄 Processing {0} top 10 playlist</b>\n\n<b>Requested by:</b> {1}\n\nCheck top 10 tracks by /gstats."
+tracks_2: "❌ <b>Error</b>\n\nThere's no <b>{0} top 10 playlist</b> on bot's servers. Please try any other playlist."
 
 # TOOLS
 
 # Lyrics
-lyrics_1: "**USAGE:**\n\n/lyrics [music name]"
+lyrics_1: "<b>USAGE:</b>\n\n/lyrics [music name]"
 lyrics_2: "🔍 searching lyrics..."
-lyrics_3: "❌ Failed to fetch lyrics 🥲.\n\n**Tried searching for:** {0}"
+lyrics_3: "❌ Failed to fetch lyrics 🥲.\n\n<b>Tried searching for:</b> {0}"
 lyrics_4: "Click on the button below and get searched lyrics to avoid long spam types lyrics search."
 
 # Ping
 ping_1: "» {0} is pinging..."
-ping_2: "**» PONG**: `{0}`ms \n\n<b><u>{1} system stat's :</u></b>\n\n⏱ Uptime : {2}\n💾 RAM : {3} \n⚡ CPU : {4} \n💿 Disk : {5} \n📡 Py-tgcalls : `{6} ms`"
+ping_2: "<b>» PONG</b>: `{0}`ms \n\n<b><u>{1} system stat's :</u></b>\n\n⏱ Uptime : {2}\n💾 RAM : {3} \n⚡ CPU : {4} \n💿 Disk : {5} \n📡 Py-tgcalls : `{6} ms`"
 
 # Song
 song_1: "🚫 You can download music or video from YouTube only in private chat. Please start me in private chat."
 song_2: "<b>USAGE:</b>\n\n/song [music name] or [YouTube link]"
 song_3: "❌ Live link detected. I am not able to download live YouTube videos."
-song_4: "**TITLE**: {0}\n\nSelect the type in which you want to download."
+song_4: "<b>TITLE</b>: {0}\n\nSelect the type in which you want to download."
 song_5: "❌ Not a valid YouTube link."
 song_6: "🔄 Getting formats...\n\nPlease wait..."
 song_7: "❌ Failed to get available formats for the video. Please try any other track."
 song_8: "📥 Download started\n\nPlease hold on for a few seconds..."
-song_9: "❌ Failed to download song from yt-dl\n\n**Reason:** {0}"
+song_9: "❌ Failed to download song from yt-dl\n\n<b>Reason:</b> {0}"
 song_10: "❌ Failed to upload on Telegram servers."
 song_11: "📤 Uploading started\nPlease hold on..."
 
@@ -244,11 +244,11 @@ queue_4: "<b>➕ Added to queue at #{0}</b>\n\n<b>🎵 Title:</b> {1}\n<b>⏱ Du
 queue_5: "🚫 Only one track is in queue; add some more tracks in the queue to check the whole queue."
 
 # All Streaming Lines
-stream_1: "**💫 Started Streaming**\n\n**🎵 Title:** [{0}]({1})\n**⏱ Duration:** {2} minutes\n**👤 By:** {3}"
-stream_2: "**🔗 Started Streaming |**\n\n**▶ Stream type:** live stream [url]\n**👤 By:** {0}"
+stream_1: "<b>💫 Started Streaming</b>\n\n<b>🎵 Title:</b> [{0}]({1})\n<b>⏱ Duration:</b> {2} minutes\n<b>👤 By:</b> {3}"
+stream_2: "<b>🔗 Started Streaming |</b>\n\n<b>▶ Stream type:</b> live stream [url]\n<b>👤 By:</b> {0}"
 
 V_C_1: "🔄 Fetching participants list...."
-V_C_2: "**Name:** {0}\n    **ID:** {1}\n    **Username:** {2}\n    **Video sharing:** {3}\n    **Screen sharing:** {4}\n    **Is hand raised:** {5}\n    **Muted:** {6}\n    **Speaking:** {7}\n    **Left from group:** {8}"
+V_C_2: "<b>Name:</b> {0}\n    <b>ID:</b> {1}\n    <b>Username:</b> {2}\n    <b>Video sharing:</b> {3}\n    <b>Screen sharing:</b> {4}\n    <b>Is hand raised:</b> {5}\n    <b>Muted:</b> {6}\n    <b>Speaking:</b> {7}\n    <b>Left from group:</b> {8}"
 V_C_3: "🚫 No participants in voice chat."
 V_C_4: "[🔗 You can check all details of voice chat participants from here]({0})"
 V_C_5: "❌ There is no active call in this chat."
@@ -370,8 +370,8 @@ sudo_1: "{0} is already a sudo user."
 sudo_2: "✅ Added <b>{0}</b> to sudo users."
 sudo_3: "❌ Not a part of bot's sudo."
 sudo_4: "🚫 Removed from bot's sudo user."
-sudo_5: "🔥 <u>**owners:**</u>\n"
-sudo_6: "\n🔥 <u>**sudoers:**</u>\n"
+sudo_5: "🔥 <u><b>owners:</b></u>\n"
+sudo_6: "\n🔥 <u><b>sudoers:</b></u>\n"
 sudo_7: "🔍 No sudo users found."
 
 # Block
@@ -381,7 +381,7 @@ block_3: "🆓 User is already free."
 block_4: "✅ Removed user from the block list. User will be able to use bot now."
 block_5: "🔍 No blocked users found."
 block_6: "⏳ Getting blocked users list...please wait!"
-block_7: "**Blocked users:**\n\n"
+block_7: "<b>Blocked users:</b>\n\n"
 
 # Blacklist Chats
 black_1: "<b>Usage:</b>\n/blacklistchat [CHAT_ID]"
@@ -390,17 +390,17 @@ black_3: "✅ Chat has been successfully blacklisted."
 black_4: "<b>Usage:</b>\n/whitelistchat [CHAT_ID]"
 black_5: "✅ Chat is already whitelisted."
 black_6: "✅ Chat has been successfully whitelisted."
-black_7: "**Blacklisted chats:**\n\n"
+black_7: "<b>Blacklisted chats:</b>\n\n"
 black_8: "🔍 No blacklisted chats."
 
 # Video Limit
-vid_1: "**Usage:**\n/set_video_limit [number of chats] or [disable]"
+vid_1: "<b>Usage:</b>\n/set_video_limit [number of chats] or [disable]"
 vid_2: "🔢 Please use numeric numbers for setting limit."
 vid_3: "📊 Video calls maximum limit defined to {0} chats."
 vid_4: "🚫 Video calls disabled."
 
 # Maintenance
-maint_1: "**Usage:**\n/maintenance [enable|disable]"
+maint_1: "<b>Usage:</b>\n/maintenance [enable|disable]"
 maint_2: "🔧 Enabled for maintenance."
 maint_3: "🔧 Maintenance mode disabled."
 maint_4: "🛠️ The bot is under maintenance. Visit support to know the reason."
@@ -408,19 +408,19 @@ maint_5: "Maintenance Mode is already Disabled."
 maint_6: "Maintenance Mode is already enabled."
 
 # Log
-log_1: "**Usage:**\n/logger [enable|disable]"
+log_1: "<b>Usage:</b>\n/logger [enable|disable]"
 log_2: "✅ Enabled logging."
 log_3: "❌ Disabled logging."
 
 # Video Mode
-vidmode_1: "**Usage:**\n/videomode [download|m3u8]"
+vidmode_1: "<b>Usage:</b>\n/videomode [download|m3u8]"
 vidmode_2: "📥 Video play mode set as downloader. Bot will be downloading tracks now."
 vidmode_3: "🔗 Video play mode set as m3u8. Bot will be able to play tracks live now."
 
 # Broadcast
 broad_1: "<b>📢 Broadcasted message in {0} chats with {1} pins from bot.</b>"
 broad_2: "🔊 Started assistant broadcast..."
-broad_3: "**Assistant broadcast:\n\n"
+broad_3: "<b>Assistant broadcast:</b>\n\n"
 broad_4: "🗣️ Assistant {0} broadcasted in {1} chats\n"
 broad_5: "<b>Usage</b>:\n/broadcast [MESSAGE] or [Reply to a Message]"
 broad_6: "❗ Please provide some text to broadcast."
@@ -429,12 +429,12 @@ broad_7: "<b>📬 Broadcasted message to {0} users with {1} pins from bot.</b>"
 # Heroku
 heroku_1: "🔑 Please make sure your <b>Heroku API Key</b>, your <b>App Name</b> are configured correctly in Heroku."
 heroku_2: "📜 You can only get logs of Heroku apps."
-heroku_3: "**Usage:**\n/get_var [Var Name]"
+heroku_3: "<b>Usage:</b>\n/get_var [Var Name]"
 heroku_4: "🚫 Unable to find any such var."
 heroku_5: "❌ .env file not found."
-heroku_6: "**Usage:**\n/del_var [Var Name]"
+heroku_6: "<b>Usage:</b>\n/del_var [Var Name]"
 heroku_7: "✅ {0} deleted."
-heroku_8: "**Usage:**\n/set_var [Var Name] [Var Value]"
+heroku_8: "<b>Usage:</b>\n/set_var [Var Name] [Var Value]"
 heroku_9: "✅ {0} has been updated successfully."
 heroku_10: "✅ {0} has been added successfully."
 heroku_11: "🛠️ Only for Heroku apps."
