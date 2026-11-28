@@ -297,10 +297,19 @@ class AoiMusicApi:
 
             disposition = resp.headers.get("content-disposition", "")
             written = 0
-            with open(path, "wb") as fh:
-                async for chunk in resp.content.iter_chunked(65536):
-                    fh.write(chunk)
-                    written += len(chunk)
+            part_path = f"{path}.part"
+            try:
+                with open(part_path, "wb") as fh:
+                    async for chunk in resp.content.iter_chunked(65536):
+                        fh.write(chunk)
+                        written += len(chunk)
+                os.replace(part_path, path)
+            except BaseException:
+                try:
+                    os.remove(part_path)
+                except OSError:
+                    pass
+                raise
         LOGGER(__name__).info(
             f"AoiMusic API wrote {written} bytes to {path} ({disposition})")
         return path

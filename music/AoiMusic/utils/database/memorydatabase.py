@@ -1,12 +1,15 @@
 
 #
 
-import json
+import logging
 import os
 from typing import Dict, List, Union
 
 import config
 from AoiMusic.core.mongo import mongodb
+from AoiMusic.utils.atomic_io import atomic_write_json, load_json
+
+_log = logging.getLogger(__name__)
 
 channeldb = mongodb.cplaymode
 commanddb = mongodb.commands
@@ -455,27 +458,19 @@ COMMAND_DB = os.path.join(config.TEMP_DB_FOLDER, "command.json")
 
 
 def load_cleanmode():
-    if os.path.exists(CLEANMODE_DB):
-        with open(CLEANMODE_DB, "r") as file:
-            return json.load(file)
-    return []
+    return load_json(CLEANMODE_DB, [], logger=_log)
 
 
 def load_command():
-    if os.path.exists(COMMAND_DB):
-        with open(COMMAND_DB, "r") as file:
-            return json.load(file)
-    return []
+    return load_json(COMMAND_DB, [], logger=_log)
 
 
 def save_cleanmode():
-    with open(CLEANMODE_DB, "w") as file:
-        json.dump(cleanmode, file)
+    atomic_write_json(CLEANMODE_DB, cleanmode)
 
 
 def save_command():
-    with open(COMMAND_DB, "w") as file:
-        json.dump(command, file)
+    atomic_write_json(COMMAND_DB, command)
 
 
 cleanmode = load_cleanmode()
@@ -672,15 +667,11 @@ VIDEO_FILE = os.path.join(config.TEMP_DB_FOLDER, "video.json")
 
 
 def load_data(file_path):
-    if os.path.exists(file_path):
-        with open(file_path, "r") as file:
-            return json.load(file)
-    return {}
+    return load_json(file_path, {}, logger=_log)
 
 
 def save_data(file_path, data):
-    with open(file_path, "w") as file:
-        json.dump(data, file, indent=4)
+    atomic_write_json(file_path, data, indent=4)
 
 
 audio = load_data(AUDIO_FILE)

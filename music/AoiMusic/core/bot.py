@@ -96,8 +96,9 @@ class AyuBot(Client):
 
         try:
             if not _BOT_SESSION_FILE.exists():
-                _BOT_SESSION_FILE.parent.mkdir(parents=True, exist_ok=True)
-                _BOT_SESSION_FILE.write_text(await self.export_session_string())
+                from ..utils.atomic_io import atomic_write_text
+
+                atomic_write_text(_BOT_SESSION_FILE, await self.export_session_string())
         except Exception:
             pass
 
