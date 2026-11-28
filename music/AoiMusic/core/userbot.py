@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-from pyrogram import Client
+from pyrogram import Client, enums
 from pyrogram.errors import ChatWriteForbidden
 import config
 
@@ -43,25 +43,29 @@ class Userbot(Client):
             LOGGER(__name__).info("Assistant #%d Started as %s (@%s)", index, client.name, client.username)
 
             if config.LOGGER_ID:
+                import html as _html
+                safe_name = _html.escape(str(client.name))
+                safe_username = _html.escape(str(client.username))
+                safe_mention = f"<a href='tg://user?id={int(client.id)}'>{safe_name}</a>"
                 assistant_msg = f"""
-🤖 **Assistant started**
+🤖 <b>Assistant started</b>
 
-🧑 **Name:** {client.name}
-🔑 **ID:** <code>{client.id}</code>
-🔗 **Username:** @{client.username}
-🔢 **Instance:** #{index}
-📡 **Status:** Active
-🎵 **Role:** Voice chat assistant
+🧑 <b>Name:</b> {safe_mention}
+🔑 <b>ID:</b> <code>{int(client.id)}</code>
+🔗 <b>Username:</b> @{safe_username}
+🔢 <b>Instance:</b> <code>#{index}</code>
+📡 <b>Status:</b> Active
+🎵 <b>Role:</b> Voice chat assistant
 
 ⚡ Ready to join voice chats
 💎 Premium streaming active
 """
                 try:
-                    await asyncio.wait_for(client.send_message(config.LOGGER_ID, assistant_msg), timeout=15)
+                    await asyncio.wait_for(client.send_message(config.LOGGER_ID, assistant_msg, parse_mode=enums.ParseMode.HTML), timeout=15)
                 except ChatWriteForbidden:
                     try:
                         await asyncio.wait_for(client.join_chat(config.LOGGER_ID), timeout=15)
-                        await asyncio.wait_for(client.send_message(config.LOGGER_ID, assistant_msg), timeout=15)
+                        await asyncio.wait_for(client.send_message(config.LOGGER_ID, assistant_msg, parse_mode=enums.ParseMode.HTML), timeout=15)
                     except Exception as ex:
                         LOGGER(__name__).warning(
                             "Assistant Account %d could not access log group (non-fatal): %s",
