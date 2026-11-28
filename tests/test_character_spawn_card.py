@@ -38,8 +38,12 @@ class SpawnCardTests(unittest.TestCase):
         for call in answer_calls:
             self.assertNotIn('state.get("name")', call)
             self.assertNotIn("name,", call)
-        # Stale spawns (replaced or expired) are rejected via message id match.
-        self.assertIn('.get("message_id")', hint_handler)
+        # Stale spawns (replaced or expired) are rejected via message id match,
+        # implemented in the shared resolver used by both the pyrogram and the PTB twin.
+        self.assertIn("spawn_hint_answer(chat_id, message_id", hint_handler)
+        resolver = self.spawn_source[self.spawn_source.index("def spawn_hint_answer"):]
+        self.assertIn('.get("message_id")', resolver)
+        self.assertIn('state.get("ranaway")', resolver)
 
     def test_catch_caption_mentions_hunt_alias(self):
         self.assertIn("/hunt &lt;name&gt;", self.spawn_source)

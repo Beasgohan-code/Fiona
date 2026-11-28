@@ -223,6 +223,37 @@ async def _expire_spawn(bot, chat_id: int, spawn_token: str) -> None:
         logger.warning("Could not post character escape notice in %s: %s", chat_id, exc)
 
 
+def build_spawn_hint(name) -> str | None:
+    """Safe, deterministic clue for the Hint button; None when unusable."""
+    name = str(name or "").strip()
+    if not name or name.lower() == "unknown":
+        return None
+    words = [word for word in name.split() if word]
+    letters = sum(1 for ch in name if ch.isalnum())
+    vowels = sum(1 for ch in name.lower() if ch in "aeiou")
+    first = words[0][0].upper()
+    word_label = f"{len(words)} word{'s' if len(words) != 1 else ''}"
+    vowel_label = f"{vowels} vowel{'s' if vowels != 1 else ''}"
+    return f"💡 {letters} letters · {word_label} · starts with “{first}” · {vowel_label}"
+
+
+def spawn_hint_answer(chat_id: int, message_id, state) -> str:
+    """Resolve the ephemeral Hint answer, rejecting stale or caught spawns."""
+    state_message_id = (state or {}).get("message_id")
+    if (
+        not state
+        or state.get("ranaway")
+        or chat_id in first_correct_guesses
+        or (
+            message_id is not None
+            and state_message_id is not None
+            and int(state_message_id) != int(message_id)
+        )
+    ):
+        return "This spawn already ended."
+    return build_spawn_hint((state or {}).get("name")) or "No hint available for this one."
+
+
 async def spawn_character(bot, chat_id: int, *, manual: bool = False) -> str:
     """Create and post a character round, returning a small status for callers."""
     if await db["blocked_character_drop_groups"].find_one({"_id": chat_id}):

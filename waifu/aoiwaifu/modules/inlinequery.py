@@ -20,10 +20,11 @@ from telegram import (
     InlineKeyboardMarkup,
 )
 
-from telegram.ext import InlineQueryHandler, ContextTypes
+from telegram.ext import CallbackQueryHandler, InlineQueryHandler, ContextTypes
 
-from aoiwaifu import app, application, user_collection, PHOTO_URL
+from aoiwaifu import app, application, last_characters, user_collection, PHOTO_URL
 from aoiwaifu.unit.aoi_inline import *
+from aoiwaifu.unit.aoi_send_img import spawn_hint_answer
 
 all_characters_cache = TTLCache(maxsize=10000, ttl=36000)
 user_collection_cache = TTLCache(maxsize=10000, ttl=60)
@@ -230,6 +231,29 @@ async def inlinequery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
 # PTB Application owns the InlineQueryHandler.
 application.add_handler(InlineQueryHandler(inlinequery, block=False))
+
+
+
+async def _spawn_hint_ptb(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """PTB twin of the pyrogram spawn_hint callback.
+
+    Only needed when a spawn card had to be posted through the PTB fallback
+    (Richgram unavailable); the pyrogram client answers the normal case.
+    """
+    query = update.callback_query
+    match = re.match(r"^spawn_hint:(-?\d+)$", query.data or "")
+    if not match:
+        return
+    chat_id = int(match.group(1))
+    message = query.message
+    message_id = getattr(message, "message_id", None)
+    answer = spawn_hint_answer(chat_id, message_id, last_characters.get(chat_id))
+    await query.answer(text=answer, show_alert=True)
+
+
+application.add_handler(
+    CallbackQueryHandler(_spawn_hint_ptb, pattern=re.compile(r"^spawn_hint:-?\d+$"))
+)
 
 
 @app.on_inline_query(group=100)
