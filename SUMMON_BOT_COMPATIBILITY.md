@@ -23,7 +23,7 @@ are not copied wholesale.
 | `/profile`, `/hstats`, `/me` | `/profile`, `/hstats`, `/me` |
 | `/achievements`, `/ach`, `/badges` | `/achievements` and aliases; milestones are derived from Fiona's Mongo user data |
 | Rarity catalog | Fiona's canonical upload/shop/spawn/filter options follow Summon-bot's rarity order and names, with rarity 15 customized to `🔞 Ecchi` at the user's request; `/rarity` and `/rarities` show the configured options plus a grouped legacy count, without deleting catalog characters or user collection entries |
-| `/claim`, `/hclaim`, `/redeem`, `/setclaim` | Fiona's `/claim`, `/hclaim`, `/redeem`; owner-only `/setclaim <rarity_id> <weight>` persists daily-claim weights, shown with `/claimweights` (Fiona keeps `/claimlist` for a user's collected characters) |
+| `/claim`, `/hclaim`, `/redeem`, `/setclaim` | Fiona's `/claim`, `/hclaim`, `/redeem`; owner-only `/setclaim <rarity_id> <weight>` persists daily-claim weights (0–1,000,000), shown with configured odds in `/claimweights` (rarities unavailable for a particular draw are excluded; Fiona keeps `/claimlist` for a user's collected characters) |
 | `/transfer`, `/addchar`, `/give` | Fiona's `/transfer`, `/addchar`; owner-only `/give <character_id>` replies to a user and grants the catalog character |
 | `/removeall` | Owner-only `/removeall <user_id>` clears only the target's character copies after a one-use confirmation; economy and profile data are preserved |
 | `/add`, `/update`, `/deletechar` | Fiona's `/add`, `/update`, `/deletechar`, with existing aliases `/gupload`, `/gupdate`, and `/gdelete` retained |

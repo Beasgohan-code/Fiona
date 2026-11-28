@@ -22,6 +22,7 @@ from aoiwaifu.unit.rich_ui import (
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 import asyncio
 import html
+import math
 import random
 from pyrogram import Client, filters, types as t_types
 from pyrogram.types import InlineKeyboardMarkup
@@ -39,6 +40,8 @@ async def format_time_delta(delta):
     return f'{int(hours)}h {int(minutes)}m {int(seconds)}s' if hours or minutes or seconds else '0s'
 
 
+MAX_CLAIM_WEIGHT = 1_000_000
+
 DEFAULT_CLAIM_WEIGHTS = {
     1: 400.0, 2: 0.0, 3: 1200.0, 4: 600.0, 5: 300.0, 6: 50.0,
     7: 50.0, 8: 50.0, 9: 50.0, 10: 0.0, 11: 2.0, 12: 50.0,
@@ -50,11 +53,16 @@ _claim_weights_loaded = False
 
 def pick_claim_rarity(available_ids, weights, rng=None):
     """Weighted-pick a claim rarity from the available, enabled IDs."""
-    choices = sorted(
-        (int(rarity_id), max(0.0, float(weights.get(int(rarity_id), 0))))
-        for rarity_id in available_ids
-        if max(0.0, float(weights.get(int(rarity_id), 0))) > 0
-    )
+    choices = []
+    for raw_id in available_ids:
+        try:
+            rarity_id = int(raw_id)
+            weight = float(weights.get(rarity_id, 0))
+        except (TypeError, ValueError, OverflowError):
+            continue
+        if math.isfinite(weight) and weight > 0:
+            choices.append((rarity_id, weight))
+    choices.sort()
     if not choices:
         return None
     rng = rng or random.SystemRandom()
@@ -69,10 +77,15 @@ async def load_claim_rarity_weights():
     try:
         documents = await db["claim_rarity_chances"].find({}).to_list(length=None)
         for document in documents:
-            rarity_id = int(document.get("rarity_id", 0))
+            try:
+                rarity_id = int(document.get("rarity_id", 0))
+                weight = float(document.get("weight", 0))
+            except (AttributeError, TypeError, ValueError, OverflowError):
+                continue
             if rarity_id not in rarity_map:
                 continue
-            weight = max(0.0, float(document.get("weight", 0)))
+            if not math.isfinite(weight) or not 0 <= weight <= MAX_CLAIM_WEIGHT:
+                continue
             claim_rarity_weights[rarity_id] = weight
     except Exception as exc:
         print(f"Could not load claim rarity weights; using defaults: {exc}")
@@ -84,6 +97,8 @@ async def set_claim_rarity_weight(rarity_id: int, weight: float, updated_by: int
     global _claim_weights_loaded
     rarity_id = int(rarity_id)
     weight = float(weight)
+    if not math.isfinite(weight) or not 0 <= weight <= MAX_CLAIM_WEIGHT:
+        raise ValueError(f"Claim weight must be between 0 and {MAX_CLAIM_WEIGHT}.")
     await db["claim_rarity_chances"].update_one(
         {"rarity_id": rarity_id},
         {"$set": {
