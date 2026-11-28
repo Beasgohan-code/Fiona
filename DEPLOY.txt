@@ -87,6 +87,23 @@ for a channel, grant permission to post. A public channel username such as
 log delivery is best-effort and failures are recorded locally without stopping
 bot commands or group-membership handling.
 
+TELEGRAM MEDIA STORE (OPTIONAL)
+-------------------------------
+Set STORE_ID to a private Telegram channel ID (usually a numeric -100... id)
+that Fiona can post in. Audio-only `/play` tracks are cached there after the
+first successful local download. A later request searches that Store channel by
+the exact YouTube video ID, downloads the cached audio, and plays it without a
+second YouTube download. No MongoDB records are created for this cache. Set
+STORE_MAX_MB (default 45) to cap file uploads. Channel search is tried through
+the bot first; if the installed Telegram client does not expose channel search
+to bots, Fiona automatically tries the first configured assistant user session.
+In that case add the assistant account to the same private Store channel too.
+If neither client can search, playback automatically falls back to the
+configured media API, YouTube stream, and yt-dlp flow. Direct stream URLs that never produce a local file are not
+uploaded; only successfully downloaded audio is cached. The Store may contain
+copyrighted material in private, so keep it private and only enable it where
+you are allowed to store that content.
+
 YOUTUBE MEDIA API (OPTIONAL)
 ----------------------------
 Fiona can use the configured media API before falling back to yt-dlp. The

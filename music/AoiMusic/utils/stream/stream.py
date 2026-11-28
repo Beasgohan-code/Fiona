@@ -28,6 +28,7 @@ from AoiMusic.utils.database import (
 from AoiMusic.utils.exceptions import AssistantErr
 from AoiMusic.utils.formatters import time_to_seconds
 from AoiMusic.utils.inline.playlist import close_markup
+from AoiMusic.utils.media_store import download_cached_audio, schedule_store_audio
 from AoiMusic.utils.pastebin import AoiBin
 from AoiMusic.utils.rich_msg import edit_any
 from AoiMusic.utils.rich_panels import (
@@ -226,7 +227,7 @@ def _youtube_download_error_hint(exc: Exception) -> str:
     return "Could not download this track. Check the Render logs near this time for the yt-dlp error details."
 
 
-async def play_youtube_source(vidid, video, mystic, play, instant=True):
+async def play_youtube_source(vidid, video, mystic, play, instant=True, title=""):
     """Fastest & most reliable playback path: local 1-hop API download for BOTH
     audio (MP3) and video (MP4), avoiding remote FFmpeg probe/Range failures
     during /vplay, /skip, and Autoplay."""
@@ -240,6 +241,25 @@ async def play_youtube_source(vidid, video, mystic, play, instant=True):
     )
     has_api = has_aoi_api or has_shizumusic_api
     mtype = "video" if video else "audio"
+    # Persistent Store cache first: if this exact track was uploaded earlier, fetch
+    # it from the private channel and play without another YouTube request.
+    if not video:
+        cached_path = await download_cached_audio(vidid)
+        if cached_path:
+            await _update_play_status(mystic, "⚡ Loading this track from Fiona’s Store…")
+            try:
+                await play(cached_path)
+                return cached_path
+            except (*MEDIA_ERRORS, aiohttp.ClientError, OSError) as exc:
+                slog.warning(
+                    "Store cache playback failed for %s (%s: %s) -> continuing with providers",
+                    vidid, type(exc).__name__, exc,
+                )
+                try:
+                    if os.path.exists(cached_path) and os.path.basename(cached_path).startswith("store_"):
+                        os.remove(cached_path)
+                except OSError:
+                    pass
     # Primary fast-path: download MP3/MP4 locally from Music API (0ms if cached/prefetched),
     # then play directly from local disk so FFmpeg never fails on remote MP4 probing or /skip!
     if has_api:
@@ -252,6 +272,8 @@ async def play_youtube_source(vidid, video, mystic, play, instant=True):
         if api_path:
             try:
                 await play(api_path)
+                if not video:
+                    schedule_store_audio(vidid, api_path, title=title)
                 return api_path
             except (*MEDIA_ERRORS, aiohttp.ClientError, OSError) as exc:
                 slog.warning(
@@ -327,6 +349,8 @@ async def play_youtube_source(vidid, video, mystic, play, instant=True):
         await play(path)
     except MEDIA_ERRORS as exc:
         raise AssistantErr(f"Could not play the downloaded media ({type(exc).__name__}).") from exc
+    if not video:
+        schedule_store_audio(vidid, path, title=title)
     return path
 
 
@@ -345,6 +369,8 @@ def _play_source_tag(stream_link) -> str | None:
     if stream_link is None:
         return None
     s = str(stream_link)
+    if s.startswith("downloads/store_"):
+        return "Fiona Store"
     if s.startswith("downloads/shizumusic/"):
         return "ShizuMusic API"
     if (
@@ -479,6 +505,7 @@ async def _stream(
                     vidid, status, mystic,
                     partial(AoiCall.join_call, chat_id, original_chat_id, video=status, image=thumbnail),
                     instant=instant,
+                    title=title,
                 )
                 # The playlist path joins the call but never told the lyrics
                 # display anything, so a track started from a playlist produced no
@@ -568,6 +595,7 @@ async def _stream(
                 vidid, status, mystic,
                 partial(AoiCall.join_call, chat_id, original_chat_id, video=status, image=thumbnail),
                 instant=await get_instant_play(chat_id),
+                title=result.get("title", ""),
             )
             asyncio.create_task(
                 _start_lyrics(chat_id, title, duration_min,

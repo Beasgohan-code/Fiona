@@ -285,6 +285,68 @@ class YouTubeExtractFallbackTests(unittest.TestCase):
         )
         self.assertNotIn("private-key", repr(logs))
 
+    def test_store_cache_plays_before_media_api_or_ytdlp(self):
+        tree = ast.parse(STREAM_FILE.read_text(encoding="utf-8"))
+        helper = next(
+            node for node in tree.body
+            if isinstance(node, ast.AsyncFunctionDef) and node.name == "play_youtube_source"
+        )
+        attempted = []
+
+        class FakeYoutube:
+            async def _api_download(self, *args, **kwargs):
+                attempted.append(("api-download", args, kwargs))
+                return None
+
+            async def stream_url(self, *args, **kwargs):
+                attempted.append(("yt-dlp-stream", args, kwargs))
+                return 0, None
+
+        class FakeLogger:
+            def warning(self, *args, **kwargs):
+                pass
+
+        async def fake_play(path):
+            attempted.append(("play", path))
+
+        async def fake_download_cached_audio(vidid):
+            attempted.append(("store-search", vidid))
+            return "downloads/store_vid123.mp3"
+
+        async def update_status(mystic, text):
+            pass
+
+        config = types.SimpleNamespace(
+            MEDIA_API_URL="https://media.example.test",
+            MEDIA_API_KEY="configured",
+            SHIZUMUSIC_API_URL="",
+            SHIZUMUSIC_API_KEY="",
+        )
+        namespace = {
+            "config": config,
+            "Platform": types.SimpleNamespace(youtube=FakeYoutube()),
+            "MEDIA_ERRORS": (RuntimeError,),
+            "aiohttp": types.SimpleNamespace(ClientError=RuntimeError),
+            "slog": FakeLogger(),
+            "_update_play_status": update_status,
+            "_await_with_progress": lambda awaitable, mystic, label: awaitable,
+            "_api_stream_url": lambda *args, **kwargs: None,
+            "_youtube_download_error_hint": str,
+            "AssistantErr": RuntimeError,
+            "os": os,
+            "_STREAM_LOG": "Stream",
+            "download_cached_audio": fake_download_cached_audio,
+            "schedule_store_audio": lambda *args, **kwargs: None,
+        }
+        exec(compile(ast.Module(body=[helper], type_ignores=[]), str(STREAM_FILE), "exec"), namespace)
+
+        result = asyncio.run(namespace["play_youtube_source"]("vid123", False, object(), fake_play))
+
+        self.assertEqual(result, "downloads/store_vid123.mp3")
+        self.assertIn(("store-search", "vid123"), attempted)
+        self.assertIn(("play", "downloads/store_vid123.mp3"), attempted)
+        self.assertFalse(any(item[0] in {"api-download", "yt-dlp-stream"} for item in attempted))
+
     def test_shizumusic_configured_playback_uses_its_local_download_first(self):
         tree = ast.parse(STREAM_FILE.read_text(encoding="utf-8"))
         helper = next(
@@ -312,6 +374,13 @@ class YouTubeExtractFallbackTests(unittest.TestCase):
         async def fake_play(path):
             attempted.append(("play", path))
 
+        async def fake_download_cached_audio(vidid):
+            return None
+
+        def fake_schedule_store_audio(*args, **kwargs):
+            attempted.append(("store", args, kwargs))
+            return None
+
         async def update_status(mystic, text):
             pass
 
@@ -336,6 +405,8 @@ class YouTubeExtractFallbackTests(unittest.TestCase):
             "AssistantErr": RuntimeError,
             "os": os,
             "_STREAM_LOG": "Stream",
+            "download_cached_audio": fake_download_cached_audio,
+            "schedule_store_audio": fake_schedule_store_audio,
         }
         exec(compile(ast.Module(body=[helper], type_ignores=[]), str(STREAM_FILE), "exec"), namespace)
         result = asyncio.run(namespace["play_youtube_source"]("vid123", False, object(), fake_play))
@@ -380,6 +451,13 @@ class YouTubeExtractFallbackTests(unittest.TestCase):
         async def fake_play(url):
             attempted.append(("play", url))
 
+        async def fake_download_cached_audio(vidid):
+            return None
+
+        def fake_schedule_store_audio(*args, **kwargs):
+            attempted.append(("store", args, kwargs))
+            return None
+
         class FakeMystic:
             async def edit_text(self, text):
                 statuses.append(text)
@@ -407,6 +485,8 @@ class YouTubeExtractFallbackTests(unittest.TestCase):
             "AssistantErr": RuntimeError,
             "os": os,
             "_STREAM_LOG": "Stream",
+            "download_cached_audio": fake_download_cached_audio,
+            "schedule_store_audio": fake_schedule_store_audio,
         }
         exec(compile(ast.Module(body=[helper], type_ignores=[]), str(STREAM_FILE), "exec"), namespace)
         result = asyncio.run(namespace["play_youtube_source"]("vid123", False, FakeMystic(), fake_play))

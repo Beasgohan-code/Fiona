@@ -39,3 +39,7 @@ services:
         value: https://host-repository.vercel.app
       - key: MEDIA_API_KEY
         sync: false
+      - key: STORE_ID
+        sync: false
+      - key: STORE_MAX_MB
+        value: "45"

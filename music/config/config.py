@@ -27,6 +27,19 @@ def _parse_int_list(raw: str) -> list[int]:
     return [int(x) for x in str(raw or "").replace(",", " ").split() if x.lstrip("-").isdigit()]
 
 
+def _optional_int(name: str, default: int = 0, minimum: int = 0, maximum: int = 2**63 - 1) -> int:
+    """Parse an optional integer environment variable without inventing a store."""
+    raw = (getenv(name, "") or "").strip()
+    if not raw:
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        print(f"[WARNING] - {name} is not a valid integer; leaving it disabled.")
+        return default
+    return min(maximum, max(minimum, value))
+
+
 # --- Telegram Credentials (Required) ---
 API_ID = _required_int("API_ID")
 API_HASH = getenv("API_HASH", "").strip()
@@ -92,6 +105,10 @@ SHIZUMUSIC_API_URL = _first_nonempty_env(
 SHIZUMUSIC_API_KEY = _first_nonempty_env(
     "SHIZUMUSIC_API_KEY", "API_KEY", "YT_API_KEY"
 )
+# Optional Telegram-only persistent audio cache. Set a private channel ID (usually -100...);
+# the bot must be able to search and post there. Audio is capped to stay within normal bot limits.
+STORE_ID = _optional_int("STORE_ID", 0)
+STORE_MAX_MB = _optional_int("STORE_MAX_MB", 45, minimum=1, maximum=500)
 
 # --- Voice Chat Timed Lyrics ---
 VC_LYRICS = getenv("VC_LYRICS", "True")
