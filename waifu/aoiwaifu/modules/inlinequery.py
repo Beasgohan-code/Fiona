@@ -28,6 +28,26 @@ all_characters_cache = TTLCache(maxsize=10000, ttl=36000)
 user_collection_cache = TTLCache(maxsize=10000, ttl=60)
 
 
+def _collectors_button(char_id: str) -> InlineKeyboardButton:
+    """Premium-icon 'Find collectors' button for inline results (PTB side)."""
+    text = "Find collectors"
+    try:
+        from telegram.constants import KeyboardButtonStyle
+
+        from AoiMusic.utils.premium_emoji import eid
+
+        return InlineKeyboardButton(
+            text,
+            callback_data=f"whohaveit_{char_id}",
+            style=KeyboardButtonStyle.PRIMARY,
+            icon_custom_emoji_id=eid("USERS_GROUP"),
+        )
+    except Exception:
+        return InlineKeyboardButton(
+            f"👥 {text}", callback_data=f"whohaveit_{char_id}"
+        )
+
+
 async def inlinequery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     inline_query = update.inline_query
     query = inline_query.query or ""
@@ -171,9 +191,7 @@ async def inlinequery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                     ),
                     caption=caption,
                     parse_mode="HTML",
-                    reply_markup=InlineKeyboardMarkup([[
-                        InlineKeyboardButton("👥 Find collectors", callback_data=f"whohaveit_{char_id}")
-                    ]]),
+                    reply_markup=InlineKeyboardMarkup([[_collectors_button(char_id)]]),
                 )
             )
         elif "img_url" in character:
@@ -189,9 +207,7 @@ async def inlinequery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                     ),
                     caption=caption,
                     parse_mode="HTML",
-                    reply_markup=InlineKeyboardMarkup([[
-                        InlineKeyboardButton("👥 Find collectors", callback_data=f"whohaveit_{char_id}")
-                    ]]),
+                    reply_markup=InlineKeyboardMarkup([[_collectors_button(char_id)]]),
                 )
             )
 
