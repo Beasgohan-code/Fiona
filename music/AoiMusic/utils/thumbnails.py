@@ -1,21 +1,14 @@
 #
-#  AoiMusic - Now Playing HTML + Pillow Thumbnail Generator.
+#  Fiona Music - Atmospheric, cover-derived now-playing poster generator.
 #
-#  Uses assets/now_playing_template.html + assets/now_playing_base.png as the visual base:
-#    - Right neon circle  -> Bot's own profile photo (auto-fetched & cached once)
-#    - Left rounded box   -> Song thumbnail
-#    - Left info card     -> Song Title, Artist/Source, Duration, Requested By
-#
-#  4-Tier Rendering Pipeline:
-#    1. Playwright persistent Chromium browser singleton (fastest HTML render)
-#    2. Headless Chromium CLI (--user-data-dir, HOME=/tmp, exact 1280x720)
-#    3. Selenium headless Chrome fallback (worker thread)
-#    4. Pixel-identical Pillow compositor fallback in asyncio.to_thread() for
-#       512MB Heroku dynos / slim Docker images without a browser installed.
+#  Pillow renders an original record-sleeve layout with blurred cover art,
+#  fitted track metadata, requester details, and a decorative waveform. Live
+#  playback progress and controls remain in the Richgram message itself.
 #
 
 import asyncio
 import base64
+import colorsys
 import hashlib
 import html as _html
 import logging
@@ -28,7 +21,7 @@ from pathlib import Path
 from typing import Optional
 
 import httpx
-from PIL import Image, ImageDraw, ImageFont, ImageOps
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont, ImageOps
 from py_yt import VideosSearch
 
 from AoiMusic.utils.rich_msg import url_ok
@@ -46,6 +39,7 @@ _BOT_AVATAR_CACHE = _CACHE_DIR / "bot_avatar.jpg"
 
 _CANVAS_W = 1280
 _CANVAS_H = 720
+_RESAMPLE = getattr(Image, "Resampling", Image).LANCZOS
 _MAX_CACHE_FILES = 30
 _bot_avatar_checked = False
 
@@ -385,7 +379,7 @@ async def close_thumbnail_browser() -> None:
 
 
 # ---------------------------------------------------------------------------
-#  Tier 4: Pixel-Identical Pillow Fallback (Zero Browser RAM on Slim Dynos)
+#  Pillow poster renderer (browser-independent for consistent deployment output)
 # ---------------------------------------------------------------------------
 
 def _load_font(path: Path, size: int) -> ImageFont.FreeTypeFont:
@@ -407,71 +401,156 @@ def _render_pillow_card(
     out_png: Path,
     elapsed: str = "00:00",
 ) -> Path:
-    """Fast, 512MB-RAM-safe Pillow compositor matching assets/now_playing_template.html pixel-for-pixel."""
-    base = Image.open(_BASE_IMG).convert("RGBA")
-    if base.size != (_CANVAS_W, _CANVAS_H):
-        base = base.resize((_CANVAS_W, _CANVAS_H), Image.LANCZOS)
-
-    draw = ImageDraw.Draw(base)
-
-    # 1. Left rounded square box: Song Thumbnail (44, 230, 182x182, r=18)
+    """Render Fiona's atmospheric sleeve-and-vinyl now-playing poster."""
+    seed = f"{title}|{artist}|{requester}"
+    source = None
     if song_thumb_path and song_thumb_path.exists():
         try:
-            st = Image.open(song_thumb_path).convert("RGBA")
-            st = ImageOps.fit(st, (182, 182), method=Image.LANCZOS)
-            mask = Image.new("L", (182, 182), 0)
-            ImageDraw.Draw(mask).rounded_rectangle([0, 0, 181, 181], radius=18, fill=255)
-            base.paste(st, (44, 230), mask)
-            draw.rounded_rectangle([44, 230, 226, 412], radius=18, outline=(236, 210, 255, 235), width=2)
+            with Image.open(song_thumb_path) as image:
+                if image.width >= 32 and image.height >= 32 and image.width * image.height <= 24_000_000:
+                    source = ImageOps.exif_transpose(image).convert("RGB")
         except Exception:
             pass
 
-    # 2. Right neon purple circle: Bot Profile Photo (824, 122, 350x350)
-    avatar_src = bot_avatar_path if (bot_avatar_path and bot_avatar_path.exists()) else song_thumb_path
-    if avatar_src and avatar_src.exists():
-        try:
-            av = Image.open(avatar_src).convert("RGBA")
-            av = ImageOps.fit(av, (350, 350), method=Image.LANCZOS)
-            cmask = Image.new("L", (350, 350), 0)
-            ImageDraw.Draw(cmask).ellipse([0, 0, 349, 349], fill=255)
-            base.paste(av, (824, 122), cmask)
-            draw.ellipse([824, 122, 1174, 472], outline=(244, 224, 255, 220), width=3)
-        except Exception:
-            pass
+    if source is None:
+        digest = hashlib.sha256(seed.encode("utf-8", "replace")).digest()
+        hue = int.from_bytes(digest[:2], "big") / 65535
+        accent = tuple(int(c * 255) for c in colorsys.hsv_to_rgb(hue, 0.7, 0.92))
+        source = Image.new("RGB", (520, 520), tuple(int(c * 0.24) for c in accent))
+        art_draw = ImageDraw.Draw(source, "RGBA")
+        for i in range(9):
+            x, y = digest[i] * 2, digest[9 + i] * 2
+            radius = 35 + digest[18 + i] % 115
+            art_draw.ellipse((x-radius, y-radius, x+radius, y+radius), fill=(*accent, 32))
+    else:
+        sample = source.convert("RGB").resize((1, 1))
+        r, g, b = sample.getpixel((0, 0))
+        hue, _, _ = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+        accent = tuple(int(c * 255) for c in colorsys.hsv_to_rgb(hue, 0.74, 0.94))
 
-    # 3. Clean dark glass plates covering placeholder text (preserving icons & divider line at y=335)
-    draw.rounded_rectangle([318, 236, 710, 328], radius=8, fill=(9, 3, 31, 255))
-    draw.rounded_rectangle([318, 342, 710, 414], radius=8, fill=(11, 4, 37, 255))
+    canvas = ImageOps.fit(source, (_CANVAS_W, _CANVAS_H), method=_RESAMPLE)
+    canvas = canvas.filter(ImageFilter.GaussianBlur(32))
+    canvas = ImageEnhance.Brightness(canvas).enhance(0.36).convert("RGBA")
+    shade = Image.new("RGBA", (_CANVAS_W, _CANVAS_H), (8, 8, 17, 158))
+    canvas = Image.alpha_composite(canvas, shade)
+    glow = Image.new("RGBA", (_CANVAS_W, _CANVAS_H), (0, 0, 0, 0))
+    ImageDraw.Draw(glow).ellipse((650, -300, 1450, 520), fill=(*accent, 45))
+    canvas = Image.alpha_composite(canvas, glow.filter(ImageFilter.GaussianBlur(85)))
+    draw = ImageDraw.Draw(canvas, "RGBA")
 
-    f_title = _load_font(_FONT_BOLD, 33)
-    f_meta = _load_font(_FONT_REG, 22)
-    f_meta_b = _load_font(_FONT_BOLD, 22)
-    f_time = _load_font(_FONT_BOLD, 23)
+    # Vinyl record peeking from behind framed album artwork.
+    cover_size, cover_x, cover_y = 390, 92, 177
+    disc_x, disc_y, disc_size = 248, cover_y - 8, 356
+    draw.ellipse((disc_x, disc_y, disc_x + disc_size, disc_y + disc_size), fill=(5, 6, 12, 245))
+    for inset, alpha in ((18, 32), (38, 25), (62, 20), (88, 15), (116, 12)):
+        draw.ellipse((disc_x + inset, disc_y + inset, disc_x + disc_size - inset, disc_y + disc_size - inset),
+                     outline=(*accent, alpha), width=2)
+    center = disc_size // 2
+    draw.ellipse((disc_x + center - 37, disc_y + center - 37, disc_x + center + 37, disc_y + center + 37), fill=(*accent, 225))
+    draw.ellipse((disc_x + center - 8, disc_y + center - 8, disc_x + center + 8, disc_y + center + 8), fill=(12, 14, 22, 255))
 
-    draw.text((326, 242), title, font=f_title, fill=(255, 255, 255, 255))
-    draw.text((326, 292), artist, font=f_meta, fill=(230, 217, 255, 255))
-    draw.text((326, 348), f"Duration : {duration}", font=f_meta, fill=(243, 236, 255, 255))
+    cover = ImageOps.fit(source, (cover_size, cover_size), method=_RESAMPLE)
+    cover_mask = Image.new("L", (cover_size, cover_size), 0)
+    ImageDraw.Draw(cover_mask).rounded_rectangle((0, 0, cover_size - 1, cover_size - 1), radius=24, fill=255)
+    shadow = Image.new("RGBA", (cover_size + 30, cover_size + 30), (0, 0, 0, 0))
+    ImageDraw.Draw(shadow).rounded_rectangle((14, 14, cover_size + 14, cover_size + 14), radius=28, fill=(0, 0, 0, 155))
+    canvas.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(14)), (cover_x - 15, cover_y - 10))
+    canvas.paste(cover.convert("RGBA"), (cover_x, cover_y), cover_mask)
+    draw = ImageDraw.Draw(canvas, "RGBA")
+    draw.rounded_rectangle((cover_x - 2, cover_y - 2, cover_x + cover_size + 2, cover_y + cover_size + 2),
+                           radius=25, outline=(255, 255, 255, 75), width=2)
 
-    req_prefix = "Requested by : "
-    draw.text((326, 383), req_prefix, font=f_meta, fill=(243, 236, 255, 255))
-    try:
-        pw = int(draw.textlength(req_prefix, font=f_meta))
-    except Exception:
-        pw = 158
-    draw.text((326 + pw, 383), requester, font=f_meta_b, fill=(217, 70, 239, 255))
+    def font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
+        return _load_font(_FONT_BOLD if bold else _FONT_REG, size)
 
-    # 4. Progress bar timestamps
-    draw.rectangle([34, 468, 126, 502], fill=(6, 2, 26, 255))
-    draw.rectangle([630, 468, 728, 502], fill=(6, 2, 26, 255))
-    draw.text((34, 470), elapsed, font=f_time, fill=(255, 255, 255, 255))
-    try:
-        dw = int(draw.textlength(duration, font=f_time))
-    except Exception:
-        dw = 64
-    draw.text((726 - dw, 470), duration, font=f_time, fill=(255, 255, 255, 255))
+    # Brand header and legible, cleanly fitted track metadata.
+    draw.rounded_rectangle((78, 66, 95, 83), radius=5, fill=(*accent, 255))
+    draw.rounded_rectangle((101, 66, 108, 83), radius=3, fill=(255, 255, 255, 200))
+    draw.text((124, 60), "FIONA  /  NOW PLAYING", font=font(20, True), fill=(246, 246, 251, 240))
+    draw.text((650, 163), "NOW IN THE ROOM", font=font(16, True), fill=(*accent, 255))
+
+    title_font = font(46, True)
+    raw_title = str(title or "Untitled track")
+    words = raw_title.split()
+    title_lines = []
+    current = ""
+    clipped = False
+    for word in words:
+        candidate = f"{current} {word}".strip()
+        if draw.textbbox((0, 0), candidate, font=title_font)[2] <= 560:
+            current = candidate
+        elif not current:
+            current = word
+            clipped = True
+            break
+        elif len(title_lines) < 1:
+            title_lines.append(current)
+            current = word
+        else:
+            clipped = True
+            break
+    if current:
+        title_lines.append(current)
+    if len(title_lines) > 2:
+        title_lines = title_lines[:2]
+        clipped = True
+    if title_lines:
+        last = title_lines[-1]
+        while last and draw.textbbox((0, 0), last + ("…" if clipped else ""), font=title_font)[2] > 560:
+            last = last[:-1]
+            clipped = True
+        title_lines[-1] = last.rstrip() + ("…" if clipped else "")
+    title_y = 205
+    for line in title_lines[:2]:
+        draw.text((650, title_y), line, font=title_font, fill=(250, 250, 252, 255))
+        title_y += 55
+    artist_font = font(25)
+    artist_text = str(artist or "Fiona Music")
+    while artist_text and draw.textbbox((0, 0), artist_text + "…", font=artist_font)[2] > 550:
+        artist_text = artist_text[:-1]
+    if artist_text != str(artist or "Fiona Music"):
+        artist_text = artist_text.rstrip() + "…"
+    draw.text((652, 278 if len(title_lines) < 2 else 315), artist_text, font=artist_font, fill=(208, 211, 222, 240))
+
+    def chip(x: int, top: int, label: str, width: int, color=None):
+        draw.rounded_rectangle((x, top, x + width, top + 48), radius=17, fill=(12, 15, 25, 225), outline=(255, 255, 255, 65), width=1)
+        if color:
+            draw.ellipse((x + 15, top + 18, x + 25, top + 28), fill=(*color, 255))
+            tx = x + 35
+        else:
+            tx = x + 17
+        label_font = font(16, True)
+        original_label = label
+        while label and draw.textbbox((0, 0), label + "…", font=label_font)[2] > width - (tx - x) - 12:
+            label = label[:-1]
+        if label != original_label:
+            label = label.rstrip() + "…"
+        draw.text((tx, top + 10), label, font=label_font, fill=(239, 241, 247, 245))
+
+    chip(650, 365, "AUDIO", 112, accent)
+    chip(776, 365, str(duration or "LIVE").upper()[:20], 176, (239, 187, 92))
+    draw.text((652, 440), "REQUESTED BY", font=font(13, True), fill=(160, 164, 180, 255))
+    req_font = font(20, True)
+    req = str(requester or "Music lover")
+    while req and draw.textbbox((0, 0), req + "…", font=req_font)[2] > 550:
+        req = req[:-1]
+    if req != str(requester or "Music lover"):
+        req = req.rstrip() + "…"
+    draw.text((652, 465), req, font=req_font, fill=(242, 243, 248, 255))
+
+    # Decorative, track-stable waveform; live elapsed time remains in Richgram controls.
+    digest = hashlib.sha256(seed.encode("utf-8", "replace")).digest()
+    wave_x, wave_y, bars = 652, 555, 46
+    for index in range(bars):
+        level = 12 + digest[index % len(digest)] % 45
+        x = wave_x + index * 12
+        draw.rounded_rectangle((x, wave_y - level // 2, x + 7, wave_y + level // 2), radius=3,
+                               fill=(*accent, 190 if index < bars * 0.42 else 74))
+    draw.text((652, 616), f"FIONA MUSIC  ·  {str(elapsed or '00:00')[:10]} / {str(duration or 'LIVE')[:10]}",
+              font=font(12, True), fill=(172, 178, 194, 235))
 
     out_png.parent.mkdir(parents=True, exist_ok=True)
-    base.convert("RGB").save(out_png, "PNG", optimize=True)
+    canvas.convert("RGB").save(out_png, "PNG", optimize=True)
     return out_png
 
 
@@ -501,21 +580,17 @@ async def build_now_playing_card(
     elapsed: str = "00:00",
     bot_avatar_override: Optional[Path] = None,
 ) -> Optional[str]:
-    """Generate the neon purple Now Playing thumbnail PNG from HTML template (4-tier pipeline)."""
-    if not _BASE_IMG.exists():
-        return song_thumb
-
+    """Generate Fiona's cover-art now-playing poster, with a thumbnail fallback."""
     _CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    clean_title = normalize_fancy_telegram_name(title, max_len=21)
-    clean_artist = normalize_fancy_telegram_name(artist or "AoiMusic", max_len=28)
-    clean_req = normalize_fancy_telegram_name(requester or "User", max_len=16)
+    clean_title = normalize_fancy_telegram_name(title, max_len=180)
+    clean_artist = normalize_fancy_telegram_name(artist or "Fiona Music", max_len=100)
+    clean_req = normalize_fancy_telegram_name(requester or "Music lover", max_len=64)
     clean_dur = str(duration or "00:00").strip()[:10]
     clean_el = str(elapsed or "00:00").strip()[:10]
 
-    song_path, bot_path = await asyncio.gather(
-        _download_song_thumb(song_thumb, str(videoid or "")),
-        asyncio.sleep(0, result=bot_avatar_override) if bot_avatar_override else _ensure_bot_avatar(),
-    )
+    # The sleeve uses the song art itself; avoid an unrelated bot-avatar API call.
+    song_path = await _download_song_thumb(song_thumb, str(videoid or ""))
+    bot_path = bot_avatar_override  # retained for callers of the legacy signature
 
     sig = hashlib.md5(
         f"{videoid}|{clean_title}|{clean_artist}|{clean_dur}|{clean_req}|{clean_el}".encode()
@@ -526,24 +601,7 @@ async def build_now_playing_card(
         return str(out_png)
 
     try:
-        # Tiers 1–3: Browser HTML/CSS render (opt-in via THUMB_USE_BROWSER=true to save ~150MB RAM)
-        use_browser = os.getenv("THUMB_USE_BROWSER", "false").strip().lower() in ("1", "true", "yes")
-        if use_browser and _HTML_TPL.exists():
-            html_str = await asyncio.to_thread(
-                render_now_playing_html,
-                clean_title,
-                clean_artist,
-                clean_dur,
-                clean_req,
-                song_path,
-                bot_path,
-                clean_el,
-            )
-            if await render_html_thumbnail(html_str, str(out_png)):
-                _prune_thumb_cache()
-                return str(out_png)
-
-        # Tier 4: Ultra-fast pixel-identical Pillow fallback (zero browser RAM on Heroku)
+        # Render one deterministic design across deployments; browsers are optional.
         await asyncio.to_thread(
             _render_pillow_card,
             clean_title,
