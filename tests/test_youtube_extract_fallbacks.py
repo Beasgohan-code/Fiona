@@ -412,7 +412,7 @@ class YouTubeExtractFallbackTests(unittest.TestCase):
         result = asyncio.run(namespace["play_youtube_source"]("vid123", False, FakeMystic(), fake_play))
 
         self.assertEqual(result, "https://cdn.example.test/audio.mp3")
-        self.assertTrue(any("media-API source" in status for status in statuses))
+        self.assertTrue(any("best source for your track" in status for status in statuses))
         self.assertTrue(any("direct stream" in status for status in statuses))
         self.assertIn(("api-stream", "vid123", False), attempted)
         self.assertIn(("play", "https://cdn.example.test/audio.mp3"), attempted)

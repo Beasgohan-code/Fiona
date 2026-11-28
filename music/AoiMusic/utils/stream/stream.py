@@ -243,11 +243,11 @@ async def play_youtube_source(vidid, video, mystic, play, instant=True):
     # Primary fast-path: download MP3/MP4 locally from Music API (0ms if cached/prefetched),
     # then play directly from local disk so FFmpeg never fails on remote MP4 probing or /skip!
     if has_api:
-        await _update_play_status(mystic, "💠 Resolving a fast media-API source…")
+        await _update_play_status(mystic, "⚡ Finding the best source for your track…")
         api_path = await _await_with_progress(
             Platform.youtube._api_download(vidid, media_type=mtype),
             mystic,
-            f"Fetching {mtype} from the media API",
+            "Getting your track ready",
         )
         if api_path:
             try:
@@ -271,11 +271,11 @@ async def play_youtube_source(vidid, video, mystic, play, instant=True):
     if instant:
         permalink = None
         if has_aoi_api:
-            await _update_play_status(mystic, "🎧 Trying the media API's direct stream…")
+            await _update_play_status(mystic, "🎧 Trying a direct stream for quicker playback…")
             permalink = await _await_with_progress(
                 _api_stream_url(vidid, video),
                 mystic,
-                "Resolving the direct media stream",
+                "Finding a direct stream",
             )
             if permalink:
                 try:
@@ -306,14 +306,14 @@ async def play_youtube_source(vidid, video, mystic, play, instant=True):
                         slog.warning("Direct playback failed for %s (%s)", vidid, type(exc).__name__)
     await _update_play_status(
         mystic,
-        "🎵 The media API did not provide a playable source; trying YouTube's downloader…"
-        if has_api else "🎵 Preparing the track with YouTube's downloader…",
+        "🎵 That source isn’t available yet. Switching to a reliable download…"
+        if has_api else "🎵 Preparing your track for playback…",
     )
     try:
         path, _ = await _await_with_progress(
             Platform.youtube.download(vidid, mystic, videoid=True, video=video),
             mystic,
-            "Preparing the track with YouTube's downloader",
+            "Preparing your track for playback",
         )
     except Exception as exc:
         slog.exception("[%s] YouTube download failed for vidid=%s", _STREAM_LOG, vidid)
