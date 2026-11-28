@@ -22,7 +22,9 @@ async def pause_admin(cli, message: Message, _, chat_id):
     check = db.get(chat_id)
     playing = check[0] if check else {}
 
-    if playing.get("markup") == "rich":
+    if playing:
+        # snapshot_card rebuilds a full rich card from db state, so the
+        # mirror works even when the live panel was started in plain mode.
         mid = await snapshot_card(chat_id)
         if mid:
             return
