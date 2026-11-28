@@ -150,8 +150,8 @@ class CatboxUploadTests(unittest.TestCase):
 
     def test_upload_command_offers_each_host_and_sends_to_character_channel(self):
         source = UPLOAD_FILE.read_text(encoding="utf-8")
-        self.assertIn('InlineKeyboardButton("ImgBB", callback_data=f"gupload:{token}:imgbb")', source)
-        self.assertIn('InlineKeyboardButton("Catbox", callback_data=f"gupload:{token}:catbox")', source)
+        self.assertIn('callback_data=f"gupload:{token}:imgbb"', source)
+        self.assertIn('callback_data=f"gupload:{token}:catbox"', source)
         self.assertIn("@ZYRO.on_callback_query", source)
         self.assertIn("chat_id=CHARA_CHANNEL_ID", source)
         self.assertIn('"img_url": file_url', source)

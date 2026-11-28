@@ -6,6 +6,7 @@ from aoiwaifu.unit.rich_ui import (
     premium_text,
     reply_notice,
     rich_showcase_panel,
+    premium_button,
 )
 import asyncio
 import html
@@ -15,7 +16,7 @@ import time
 import uuid
 from urllib.parse import urlparse
 from pyrogram import filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram.types import InlineKeyboardMarkup
 
 from aoiwaifu import (
     CHARA_CHANNEL_ID,
@@ -276,10 +277,10 @@ def _prune_pending_uploads() -> None:
 def _provider_keyboard(token: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("ImgBB", callback_data=f"gupload:{token}:imgbb"),
-            InlineKeyboardButton("Catbox", callback_data=f"gupload:{token}:catbox"),
+            premium_button("ImgBB", emoji="IMAGE_PHOTO", style="PRIMARY", callback_data=f"gupload:{token}:imgbb"),
+            premium_button("Catbox", emoji="UPLOAD", style="PRIMARY", callback_data=f"gupload:{token}:catbox"),
         ],
-        [InlineKeyboardButton("Cancel", callback_data=f"gupload:{token}:cancel")],
+        [premium_button("Cancel", emoji="CLOSE", style="DANGER", callback_data=f"gupload:{token}:cancel")],
     ])
 
 
