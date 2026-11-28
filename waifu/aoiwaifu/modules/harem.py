@@ -1,3 +1,4 @@
+import logging
 from aoiwaifu.unit.rich_ui import (
     reply_photo_panel,
     reply_panel,
@@ -20,6 +21,8 @@ import math
 from html import escape
 from pyrogram import enums
 
+
+logger = logging.getLogger(__name__)
 async def check_support_channel(client: Client, user_id: int) -> bool:
     if user_id == x:
         return True
@@ -29,10 +32,10 @@ async def check_support_channel(client: Client, user_id: int) -> bool:
     except UserNotParticipant:
         return False
     except ChatAdminRequired:
-        print(f'Bot needs admin privileges in {SUPPORT_CHANNEL} to check membership.')
+        logger.warning(f'Bot needs admin privileges in {SUPPORT_CHANNEL} to check membership.')
         return False
     except Exception as e:
-        print(f'Error checking support channel membership: {e}')
+        logger.warning(f'Error checking support channel membership: {e}')
         return False
 
 async def fetch_user_characters(user_id):
@@ -203,7 +206,7 @@ async def pinned_character_remove_callback(client: Client, callback_query: Callb
         await callback_query.answer(tr(f'Character #{character_id} unpinned.', lang))
         await edit_panel(callback_query.message, panel, keyboard)
     except Exception as exc:
-        print(f'Error removing pinned collection character: {exc}')
+        logger.warning(f'Error removing pinned collection character: {exc}')
         try:
             await callback_query.answer(tr('Could not update your pinned list. Please try again.', lang), show_alert=True)
         except Exception:
@@ -410,7 +413,7 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                 )
         await edit_panel(callback_query.message, localized_caption, reply_markup)
     except Exception as e:
-        print(f'Error in display_harem: {e}')
+        logger.warning(f'Error in display_harem: {e}')
         error_msg = premium_text(tr('⚠️ Could not load this collection page. Please try again.', lang))
         if is_initial:
             await reply_panel(message,error_msg, parse_mode=enums.ParseMode.HTML)
@@ -438,8 +441,7 @@ async def remove_filter_callback(client: Client, callback_query: CallbackQuery):
             callback_query=callback_query,
         )
     except Exception as e:
-        print(f'Error in remove_filter callback: {e}')
-
+        logger.warning(f'Error in remove_filter callback: {e}')
 @app.on_callback_query(filters.regex('^remove_anime_filter:'))
 async def remove_anime_filter_callback(client: Client, callback_query: CallbackQuery):
     lang = await get_effective_lang(callback_query)
@@ -465,9 +467,7 @@ async def remove_anime_filter_callback(client: Client, callback_query: CallbackQ
             callback_query=callback_query,
         )
     except Exception as exc:
-        print(f'Error removing anime collection filter: {exc}')
-
-
+        logger.warning(f'Error removing anime collection filter: {exc}')
 @app.on_callback_query(filters.regex('^harem:'))
 async def harem_callback(client: Client, callback_query: CallbackQuery):
     lang = await get_effective_lang(callback_query)
@@ -483,8 +483,7 @@ async def harem_callback(client: Client, callback_query: CallbackQuery):
         await callback_query.answer()
         await display_harem(client, callback_query.message, user_id, page, filter_rarity, is_initial=False, callback_query=callback_query, force_refresh_photo=False)
     except Exception as e:
-        print(f'Error in harem callback: {e}')
-
+        logger.warning(f'Error in harem callback: {e}')
 @app.on_callback_query(filters.regex('^harem_refresh:'))
 async def harem_refresh_callback(client: Client, callback_query: CallbackQuery):
     lang = await get_effective_lang(callback_query)
@@ -500,8 +499,7 @@ async def harem_refresh_callback(client: Client, callback_query: CallbackQuery):
         await callback_query.answer(tr('Refreshing your collection...', lang))
         await display_harem(client, callback_query.message, user_id, page, filter_rarity, is_initial=False, callback_query=callback_query, force_refresh_photo=True)
     except Exception as e:
-        print(f'Error in harem_refresh callback: {e}')
-
+        logger.warning(f'Error in harem_refresh callback: {e}')
 @app.on_message(filters.command('hmode'))
 async def hmode_handler(client: Client, message: Message):
     lang = await get_effective_lang(message)
@@ -564,4 +562,4 @@ async def set_rarity_callback(client: Client, callback_query: CallbackQuery):
             callback_query=callback_query,
         )
     except Exception as e:
-        print(f'Error in set_rarity callback: {e}')
+        logger.warning(f'Error in set_rarity callback: {e}')

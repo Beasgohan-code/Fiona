@@ -1,3 +1,4 @@
+import logging
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 import os
 import re
@@ -11,6 +12,8 @@ from pyrogram.types import InlineKeyboardMarkup, Message
 from pyrogram import enums
 from aoiwaifu import ZYRO as app
 from aoiwaifu.unit.rich_ui import premium_button
+
+logger = logging.getLogger(__name__)
 OWNER_ID = [7638720582]
 EVAL = [7638720582, 8734859628]
 
@@ -117,7 +120,7 @@ async def shellrunner(_, message: Message):
         try:
             process = subprocess.Popen(shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except Exception as err:
-            print(err)
+            logger.warning(err)
             exc_type, exc_obj, exc_tb = sys.exc_info()
             errors = traceback.format_exception(etype=exc_type, value=exc_obj, tb=exc_tb)
             return await edit_or_reply(message, text=f"<b>ERROR :</b>\n<pre>{''.join(errors)}</pre>")

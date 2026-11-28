@@ -1,7 +1,10 @@
+import logging
 import os
 import requests
 from aoiwaifu import TOKEN, OWNER_ID, OWNER_USERNAME, WAIFU_START_IMAGE
 
+
+logger = logging.getLogger(__name__)
 CHAT_ID = OWNER_ID
 BOT_NAME = "Fiona"
 IMAGE_URL = WAIFU_START_IMAGE
@@ -36,8 +39,8 @@ def send_start_message():
                 timeout=20,
             )
         response.raise_for_status()  # Raise exception for HTTP errors
-        print("Start message sent successfully.")
+        logger.info("Start message sent successfully.")
     except requests.exceptions.RequestException as e:
         if response is not None:
-            print(f"Error response: {response.text}")
-        print(f"Failed to send start message: {e}")
+            logger.warning(f"Error response: {response.text}")
+        logger.warning(f"Failed to send start message: {e}")

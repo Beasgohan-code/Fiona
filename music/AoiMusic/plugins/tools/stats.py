@@ -1,3 +1,4 @@
+import logging
 
 #
 # Stats module — rich-message cards (Bot API 10.3) + AoiMusic branding.
@@ -50,6 +51,8 @@ from AoiMusic.utils.rich_msg import (
     send_rich,
 )
 
+
+logger = logging.getLogger(__name__)
 loop = asyncio.get_running_loop()
 
 
@@ -137,7 +140,7 @@ async def gstats_global(client, message, _):
     try:
         videoid, co = await loop.run_in_executor(None, get_stats)
     except Exception as e:
-        print(e)
+        logger.warning(e)
         return
     if videoid is None:
         return await _finish(f"<p>{rich_esc(_['gstats_2'])}</p>", _["gstats_2"])
@@ -251,7 +254,7 @@ async def top_users_ten(client, CallbackQuery: CallbackQuery, _):
     try:
         got = await loop.run_in_executor(None, get_stats)
     except Exception as e:
-        print(e)
+        logger.warning(e)
         return
     if got is None:
         return await edit_rich(

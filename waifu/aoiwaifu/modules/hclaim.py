@@ -1,3 +1,4 @@
+import logging
 from aoiwaifu.unit.rich_ui import (
     reply_photo_panel,
     reply_panel,
@@ -31,6 +32,8 @@ from datetime import datetime, timedelta
 from aoiwaifu import ZYRO as bot
 from aoiwaifu import user_collection, collection, user_guess_progress, SUPPORT_CHAT_ID as chat, SUPPORT_CHAT, db, rarity_map
 
+
+logger = logging.getLogger(__name__)
 claim_lock = {}
 
 
@@ -89,7 +92,7 @@ async def load_claim_rarity_weights():
                 continue
             claim_rarity_weights[rarity_id] = weight
     except Exception as exc:
-        print(f"Could not load claim rarity weights; using defaults: {exc}")
+        logger.warning(f"Could not load claim rarity weights; using defaults: {exc}")
     _claim_weights_loaded = True
 
 
@@ -167,7 +170,7 @@ async def get_unique_characters(user_id, target_rarities=None):
             {"$sample": {"size": 1}},
         ]).to_list(length=1)
     except Exception as exc:
-        print(f"Error retrieving claim character: {exc}")
+        logger.warning(f"Error retrieving claim character: {exc}")
         return []
 
 
@@ -239,7 +242,7 @@ async def mclaim(_, message: t_types.Message):
                     pass
             await reply_notice(message, tr(caption, lang), parse_mode='html')
     except Exception as e:
-        print(f'Error in mclaim command: {e}')
+        logger.warning(f'Error in mclaim command: {e}')
         await reply_panel(message,
             premium_text(rich_card('Claim unavailable', 'Something went wrong while processing this claim. Please retry shortly.', '⚠️')),
             parse_mode='html',

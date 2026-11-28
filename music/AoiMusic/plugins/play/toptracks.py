@@ -1,3 +1,4 @@
+import logging
 
 #
 # Top-tracks module — rich-message panels (Bot API 10.3) + AoiMusic branding.
@@ -33,6 +34,8 @@ from AoiMusic.utils.rich_msg import (
 )
 from AoiMusic.utils.stream.stream import stream
 
+
+logger = logging.getLogger(__name__)
 loop = asyncio.get_running_loop()
 
 
@@ -130,7 +133,7 @@ async def server_to_play(client, CallbackQuery, _):
     try:
         details = await loop.run_in_executor(None, get_stats)
     except Exception as e:
-        print(e)
+        logger.warning(e)
         return
     if details is None:
         return await edit_rich(

@@ -1,3 +1,4 @@
+import logging
 
 #
 # Settings module — rich-message panels (Bot API 10.3) + AoiMusic branding.
@@ -60,6 +61,8 @@ from AoiMusic.utils.rich_msg import (
 )
 
 
+
+logger = logging.getLogger(__name__)
 def _settings_head(_, chat_title, chat_id):
     return (
         rich_heading(f'{pemoji("⚙")} Group Settings', level=4)
@@ -97,8 +100,7 @@ async def settings_back_markup(client, CallbackQuery: CallbackQuery, _):
     try:
         await CallbackQuery.answer()
     except Exception as e:
-        print(f"An error occurred: {e}")
-
+        logger.warning(f"An error occurred: {e}")
     if CallbackQuery.message.chat.type == ChatType.PRIVATE:
         try:
             await app.resolve_peer(OWNER_ID[0])

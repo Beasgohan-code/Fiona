@@ -1,3 +1,4 @@
+import logging
 from aoiwaifu.unit.rich_ui import (
     reply_notice,
 )
@@ -6,6 +7,8 @@ from pyrogram import Client, filters
 from pyrogram.enums import ChatMemberStatus
 from aoiwaifu import group_user_totals_collection, group_ctimes, OWNER_ID, app, x
 
+
+logger = logging.getLogger(__name__)
 async def is_admin(client: Client, chat_id: int, user_id: int) -> bool:
     """
     Check if the user is an admin or owner of the chat.
@@ -19,7 +22,7 @@ async def is_admin(client: Client, chat_id: int, user_id: int) -> bool:
         member = await client.get_chat_member(chat_id, user_id)
         return member.status in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]
     except Exception as e:
-        print(f"Error: {e}")
+        logger.warning(f"Error: {e}")
         return False
 
 @app.on_message(filters.command(["ctime", "changetime"]) & filters.group)

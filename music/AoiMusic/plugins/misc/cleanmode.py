@@ -1,3 +1,4 @@
+import logging
 
 #
 
@@ -36,6 +37,8 @@ from AoiMusic.utils.rich_msg import (
     status_card,
 )
 
+
+logger = logging.getLogger(__name__)
 AUTO_DELETE = config.CLEANMODE_DELETE_MINS
 AUTO_SLEEP = 30
 IS_BROADCASTING = False
@@ -210,7 +213,7 @@ async def braodcast_message(client, message, _):
                         continue
                     await asyncio.sleep(flood_time)
                 except Exception as e:
-                    print(e)
+                    logger.warning(e)
                     continue
             text += _["broad_4"].format(num, sent)
         try:

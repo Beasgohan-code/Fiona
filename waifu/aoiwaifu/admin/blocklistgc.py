@@ -1,3 +1,4 @@
+import logging
 from aoiwaifu.unit.rich_ui import (
     send_panel,
     reply_notice,
@@ -6,6 +7,8 @@ from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_l
 from aoiwaifu import app, db, require_power
 from pyrogram import filters
 from pyrogram.types import Message
+
+logger = logging.getLogger(__name__)
 blocked_groups_collection = db['blocked_character_drop_groups']
 
 def _parse_group_id(message: Message):
@@ -36,8 +39,7 @@ async def add_blocklist_group(client, message: Message):
         await reply_notice(message, tr(f'✅ Group `{group_id}` has been added to the character-drop blocklist. Notification sent.', lang))
     except Exception as exc:
         await reply_notice(message, tr(f"✅ Group `{group_id}` was added to the blocklist, but I couldn't send the notification. Please make sure the bot is still in that group and can send messages.", lang))
-        print(f'Could not notify blocklisted group {group_id}: {exc}')
-
+        logger.warning(f'Could not notify blocklisted group {group_id}: {exc}')
 @app.on_message(filters.command('removeblocklistgc'))
 @require_power('VIP')
 async def remove_blocklist_group(client, message: Message):

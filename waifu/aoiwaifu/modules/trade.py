@@ -1,3 +1,4 @@
+import logging
 from aoiwaifu.unit.rich_ui import (
     reply_panel,
     edit_panel,
@@ -17,6 +18,8 @@ from pyrogram.enums import ParseMode
 from aoiwaifu import user_collection, ZYRO
 from aoiwaifu.admin.blocklist import is_user_blocklisted
 
+
+logger = logging.getLogger(__name__)
 pending_trades = {}
 lock = []
 
@@ -28,8 +31,7 @@ async def auto_cancel_trade(trade_id, sender_id, receiver_id):
             lock.remove(sender_id)
         if receiver_id in lock:
             lock.remove(receiver_id)
-        print(f'Trade {trade_id} from {sender_id} to {receiver_id} auto-cancelled after 10 minutes.')
-
+        logger.info(f'Trade {trade_id} from {sender_id} to {receiver_id} auto-cancelled after 10 minutes.')
 @ZYRO.on_message(filters.command('trade'))
 async def trade(client, message):
     lang = await get_effective_lang(message)

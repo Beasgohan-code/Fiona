@@ -1,3 +1,4 @@
+import logging
 
 #
 # Start module — rich-message cards (Bot API 10.3) + AoiMusic branding.
@@ -50,6 +51,8 @@ from AoiMusic.utils.rich_msg import (
     send_rich,
 )
 
+
+logger = logging.getLogger(__name__)
 loop = asyncio.get_running_loop()
 
 
@@ -176,7 +179,7 @@ async def start_comm(client, message: Message, _):
             try:
                 got = await loop.run_in_executor(None, get_stats)
             except Exception as e:
-                print(e)
+                logger.warning(e)
                 return
             if got is None:
                 return await edit_rich(chat_id, mid, f"<p>{rich_esc(_['ustats_1'])}</p>")

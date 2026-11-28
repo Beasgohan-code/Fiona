@@ -1,3 +1,4 @@
+import logging
 from aoiwaifu.unit.rich_ui import (
     reply_photo_panel,
     reply_panel,
@@ -27,6 +28,8 @@ from pyrogram.enums import ParseMode
 from aoiwaifu import user_collection, ZYRO
 from aoiwaifu.admin.blocklist import is_user_blocklisted
 
+
+logger = logging.getLogger(__name__)
 pending_gifts = {}
 
 
@@ -34,9 +37,7 @@ async def auto_cancel_gift(sender_id, receiver_id):
     await asyncio.sleep(3600)
     if (sender_id, receiver_id) in pending_gifts and (not pending_gifts[sender_id, receiver_id]['processed']):
         pending_gifts.pop((sender_id, receiver_id), None)
-        print(f'Gift from {sender_id} to {receiver_id} auto-cancelled after 1 hour.')
-
-
+        logger.info(f'Gift from {sender_id} to {receiver_id} auto-cancelled after 1 hour.')
 @ZYRO.on_message(filters.command('gift'))
 async def gift(client, message):
     lang = await get_effective_lang(message)

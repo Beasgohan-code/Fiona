@@ -1,3 +1,6 @@
+import logging
+
+logger = logging.getLogger(__name__)
 """Owner and Sudo broadcast to registered users and groups."""
 
 from aoiwaifu.unit.rich_ui import (
@@ -58,7 +61,7 @@ async def broadcast(_, message):
             await asyncio.sleep(error.value)
             return await forward_message(target_id)
         except Exception as error:
-            print(f"Error forwarding to {target_id}: {error}")
+            logger.warning(f"Error forwarding to {target_id}: {error}")
             fail_count += 1
             return False
 
