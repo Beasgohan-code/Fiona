@@ -2,7 +2,6 @@
 
 import logging
 from functools import wraps
-from traceback import format_exc as err
 
 from pyrogram.errors.exceptions.forbidden_403 import ChatWriteForbidden
 from pyrogram.types import Message
@@ -47,11 +46,9 @@ async def authorised(func, subFunc2, client, message, *args, **kwargs):
     except Exception as e:
         logging.exception(e)
         try:
-            await reply_note(message, str(e.MESSAGE))
-        except AttributeError:
             await reply_note(message, str(e))
-        e = err()
-        print(str(e))
+        except Exception:
+            logging.warning("Failed to report error to the chat", exc_info=True)
     return subFunc2
 
 
