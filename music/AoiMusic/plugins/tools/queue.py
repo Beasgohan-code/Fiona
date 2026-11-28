@@ -15,7 +15,7 @@ from config import BANNED_USERS
 from strings import command
 from AoiMusic import app, Platform, LOGGER
 from AoiMusic.misc import db
-from AoiMusic.utils import AoiBin, get_channeplayCB, seconds_to_min
+from AoiMusic.utils import get_channeplayCB, seconds_to_min
 from AoiMusic.utils.database import get_cmode, is_active_chat, is_music_playing
 from AoiMusic.utils.decorators import ActualAdminCB
 from AoiMusic.utils.decorators.language import language, languageCB
@@ -26,7 +26,6 @@ from AoiMusic.utils.rich_msg import (
     pemoji,
     rich_button,
     rich_button_row,
-    rich_esc,
     rich_heading,
     rich_img,
     send_rich,
@@ -69,20 +68,6 @@ def player_html(_, image, title, stream_type, user, run_info, cplay, videoid):
         body += queue_markup(_, "Inline", cplay, videoid, played, dur)
     return body
 
-
-def plain_list_text(got):
-    j = 0
-    msg = ""
-    for x in got:
-        j += 1
-        if j == 1:
-            msg += (
-                f'🔴 {x["title"]}\n⏱ {x["dur"]}\n🎙 {_name(x["by"])}\n\n'
-                "➡️ ᴜᴘ ɴᴇxᴛ ʜᴇʀᴇ ᴅᴇᴀᴅʀᴇɴ:\n\n"
-            )
-        else:
-            msg += f'{j}. {x["title"]}\n⏱ {x["dur"]}\n🎙 {_name(x["by"])}\n\n'
-    return msg
 
 
 def _short(text, n=40):
@@ -295,25 +280,25 @@ async def queued_tracks(client, CallbackQuery: CallbackQuery, _):
     from AoiMusic.utils.rich_panels import mark_panel_closed
 
     mark_panel_closed(chat_id, mid)
-    # Rich messages cap near 4k chars: shrink the visible page before ever
-    # falling back to a pastebin, so the table stays visible for long queues.
+    # Rich messages cap near 4k chars: shrink the visible page so the
+    # table stays visible for long queues. Never ship queue contents to an
+    # external pastebin — the requester names and track titles stay in
+    # this chat only.
     shown = 19
-    while shown >= 8:
+    while shown >= 1:
         body = queue_list_html(_, got, buttons, what=what, shown=shown)
         if len(body) <= 6800:
             break
-        shown -= 5
-    if len(body) <= 6800:
-        await edit_rich(chat_id, mid, body)
-        return
-    link = await AoiBin(plain_list_text(got))
-    await edit_rich(
-        chat_id,
-        mid,
-        rich_heading(f'{pemoji("🗂")} ᴍᴜsɪᴄ ǫᴜᴇᴜᴇ', level=3)
-        + f'<p>{rich_esc(_["queue_3"].format(link))}</p>'
-        + buttons,
-    )
+        shown -= 5 if shown > 5 else 1
+    else:
+        body = None
+    if body is None:
+        body = (
+            rich_heading(f'{pemoji("🗂")} ᴍᴜsɪᴄ ǫᴜᴇᴜᴇ', level=3)
+            + f'<p><b>{len(got) - 1}</b> ᴛʀᴀᴄᴋs ᴀʀᴇ ᴡᴀɪᴛɪɴɢ. ᴛʀᴀᴄᴋ ᴛɪᴛʟᴇs ᴀʀᴇ ᴛᴏᴏ ʟᴏɴɢ ᴛᴏ ᴅɪsᴘʟᴀʏ ʜᴇʀᴇ.</p>'
+            + buttons
+        )
+    await edit_rich(chat_id, mid, body)
 
 
 @app.on_callback_query(filters.regex(r"^qdel ") & ~BANNED_USERS)

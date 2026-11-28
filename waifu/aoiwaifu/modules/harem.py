@@ -231,7 +231,7 @@ async def harem_handler(client: Client, message: Message):
             )
     await display_harem(client, message, user_id, page, filter_rarity, is_initial=True)
 
-async def display_harem(client, message, user_id, page, filter_rarity, is_initial=False, callback_query=None, force_refresh_photo=False):
+async def display_harem(client, message, user_id, page, filter_rarity, is_initial=False, callback_query=None):
     # Initialize language before any operation that can fail, so error handlers can use it too.
     lang = await get_effective_lang(callback_query or message, user_id=user_id)
     try:
@@ -337,6 +337,10 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                 premium_button(
                     '🎬',
                     switch_inline_query_current_chat=f'collection.{user_id}.AMV',
+                ),
+                premium_button(
+                    '🔄',
+                    callback_data=f'harem_refresh:{page}:{user_id}:{filter_rarity or "None"}',
                 ),
             ],
         ]
@@ -484,7 +488,7 @@ async def harem_callback(client: Client, callback_query: CallbackQuery):
             await callback_query.answer(tr("It's not your Harem!", lang), show_alert=True)
             return
         await callback_query.answer()
-        await display_harem(client, callback_query.message, user_id, page, filter_rarity, is_initial=False, callback_query=callback_query, force_refresh_photo=False)
+        await display_harem(client, callback_query.message, user_id, page, filter_rarity, is_initial=False, callback_query=callback_query)
     except Exception as e:
         logger.warning(f'Error in harem callback: {e}')
 @app.on_callback_query(filters.regex('^harem_page_indicator:'))
@@ -506,7 +510,7 @@ async def harem_refresh_callback(client: Client, callback_query: CallbackQuery):
             await callback_query.answer(tr("It's not your Harem!", lang), show_alert=True)
             return
         await callback_query.answer(tr('Refreshing your collection...', lang))
-        await display_harem(client, callback_query.message, user_id, page, filter_rarity, is_initial=False, callback_query=callback_query, force_refresh_photo=True)
+        await display_harem(client, callback_query.message, user_id, page, filter_rarity, is_initial=False, callback_query=callback_query)
     except Exception as e:
         logger.warning(f'Error in harem_refresh callback: {e}')
 @app.on_message(filters.command('hmode'))

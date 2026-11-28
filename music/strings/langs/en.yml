@@ -159,7 +159,7 @@ play_15: "🔴 <b>Live stream detected</b>\n\nSystems have detected your track l
 play_16: "❌ Failed to fetch track details; maybe that track is age restricted on YouTube. Try playing any other."
 play_17: "🚫 Unable to play this type of Spotify query!\n\nI can only play Spotify tracks, albums, artists, and playlists."
 play_18: "🔊 <b>No active voice chat</b>\n\nTo use force play, there must be an active voice chat."
-play_19: "I don't think that it is a streamable URL. If you believe that it is a streamable URL, please use /stream <url>."
+play_19: "I don't think that it is a streamable URL. If you believe that it is a streamable URL, please use /stream https://example.com/file."
 
 
 # Playlist
@@ -239,7 +239,6 @@ song_11: "📤 Uploading started\nPlease hold on..."
 # Tools - Queue
 queue_1: "⏳ » Please wait..."
 queue_2: "🚫 Queued List is empty. No tracks found."
-queue_3: "<u><b>Queued Tracks:</b></u>  <a href='{0}'>Checkout More Queued Tracks From Here</a>"
 queue_4: "<b>➕ Added to queue at #{0}</b>\n\n<b>🎵 Title:</b> {1}\n<b>⏱ Duration:</b> {2}\n<b>👤 Added by:</b> {3}"
 queue_5: "🚫 Only one track is in queue; add some more tracks in the queue to check the whole queue."
 

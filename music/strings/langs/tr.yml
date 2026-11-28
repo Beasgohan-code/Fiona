@@ -150,7 +150,7 @@ play_15: "<b>Canlı Yayın Tespit Edildi</b>\n\nSistemler, bağlantınızı canl
 play_16: "Parça detaylarını almak başarısız oldu, belki bu parça YouTube'da yaş kısıtlaması nedeniyle mevcut değildir. Başka bir parça çalmayı deneyin."
 play_17: "Bu tür Spotify sorgularını çalamıyorum!\n\nYalnızca Spotify parçalarını, albümleri, sanatçıları ve çalma listelerini çalabilirim."
 play_18: "<b>Aktif Sesli Sohbet Yok</b>\n\nZorunlu oynatma için, aktif bir sesli sohbet bulunmalıdır."
-play_19: "Bu akış yapılabilir bir URL olduğunu düşünmüyorum. Eğer bunun akış yapılabilir bir URL olduğunu düşünüyorsanız, lütfen /stream <url> kullanın."
+play_19: "Bu akış yapılabilir bir URL olduğunu düşünmüyorum. Eğer bunun akış yapılabilir bir URL olduğunu düşünüyorsanız, lütfen /stream https://example.com/file kullanın."
 
 
 #playlist
@@ -232,7 +232,6 @@ song_11 : "Yükleme başladı\n\nLütfen bekleyin..."
 # Tools - Queue
 queue_1 : "» Lütfen bekleyin..."
 queue_2 : "Sıra listesi boş. Hiçbir parça bulunamadı."
-queue_3 : "<u><b>Sıralı Parçalar:</b></u>  <a href='{0}'>Daha Fazla Sıralı Parçayı Buradan Kontrol Edin</a>"
 queue_4 : "<b>💫 Sıraya Eklendi #{0}</b>\n\n<b>🥀Başlık :</b> {1}\n<b>⏱ Süre :</b> {2}\n <b>🥀Ekleyen :</b> {3} ❄️"
 queue_5 : "Sıralamada yalnızca bir parça var, sıralamayı kontrol etmek için bazı parçalar ekleyin."
 

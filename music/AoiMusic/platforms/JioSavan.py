@@ -10,6 +10,7 @@ from PIL import Image
 
 from config import seconds_to_time
 from AoiMusic.utils.decorators import asyncify
+from AoiMusic.logging import LOGGER
 
 API = "https://www.jiosaavn.com/api.php"
 WEB_CALL = {
@@ -178,7 +179,7 @@ class Saavn:
                         with open(file_path, "wb") as f:
                             while chunk := await resp.content.read(1024):
                                 f.write(chunk)
-                        print(f"Downloaded: {file_path}")
+                        LOGGER.info("JioSaavn download complete: %s", file_path)
                     else:
                         raise ValueError(
                             f"Failed to download {details['_download_url']}. HTTP Status: {resp.status}"

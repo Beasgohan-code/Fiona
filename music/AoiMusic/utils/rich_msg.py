@@ -402,7 +402,8 @@ _TAG_KEEP_RE = re.compile(
     r"(<a\s+(?:href\s*=\s*(?:\"|')?[^ >]*(?:\"|')?)?[^>]*>"
     r"|</a>|<b>|</b>|<i>|</i>|<u>|</u>|<s>|</s>|<em>|</em>|<strong>|</strong>"
     r"|<code>|</code>|<pre(?:\s[^>]*)?>|</pre>|<br\s*/?>"
-    r"|<blockquote>|</blockquote>|<tg-emoji[^>]*>|</tg-emoji>)"
+    r"|<blockquote>|</blockquote>|<tg-emoji[^>]*>|</tg-emoji>"
+    r"|<h[1-6](?:\s[^>]*)?>|</h[1-6]>)"
 )
 
 def rich_md(text: str) -> str:
@@ -1101,9 +1102,9 @@ def _style_status(text: str) -> str:
     """
     if not isinstance(text, str):
         text = str(text)
-    if "<tg-emoji" in text or "<h4" in text:
-        # already richly built by the caller — leave it alone
-        return text
+    # rich_esc keeps the allowlisted tags (including <tg-emoji> and <h4>),
+    # so richly built caller markup survives — but any stray angle brackets
+    # in interpolated user input are escaped instead of trusted.
     esc = rich_esc(text)
     first, _, rest = esc.partition("\n")
     lead = ""
