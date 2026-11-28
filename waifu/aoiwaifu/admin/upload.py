@@ -5,7 +5,7 @@ from aoiwaifu.unit.rich_ui import (
     edit_notice,
     premium_text,
     reply_notice,
-    rich_card,
+    rich_showcase_panel,
 )
 import asyncio
 import html
@@ -56,6 +56,19 @@ def format_character_upload_error(error: Exception) -> str:
             "do not use a phone number. Ensure Fiona can post in that channel."
         )
     return detail
+
+def _uploaded_character_panel(character_id, name, anime, rarity, uploader_id, uploader_name):
+    """Format the shared channel announcement for every accepted photo upload."""
+    body = "<blockquote>\n" + "\n".join((
+        f"🆔 <b>ID:</b> <code>{html.escape(str(character_id))}</code>",
+        f"🎌 <b>Anime:</b> {html.escape(str(anime))}",
+        f"👤 <b>Name:</b> {html.escape(str(name))}",
+        f"✨ <b>Rarity:</b> {html.escape(str(rarity))}",
+        "📂 <b>Type:</b> PHOTO",
+        f"👑 <b>Uploaded By:</b> <a href=\"tg://user?id={int(uploader_id)}\">{html.escape(str(uploader_name or 'Admin'))}</a>",
+    )) + "\n</blockquote>"
+    return premium_text(rich_showcase_panel("NEW CHARACTER UPLOADED", body, "📝"))
+
 
 WRONG_FORMAT_TEXT = (
     "Wrong ❌ format... eg. /gupload reply to photo muzan-kibutsuji Demon-slayer 3\n\n"
@@ -229,16 +242,14 @@ async def add_character_command(client, message):
             await send_media_panel(client,
                 chat_id=CHARA_CHANNEL_ID,
                 photo=image_url,
-                caption=premium_text(tr(rich_card(
-                    "New character added",
-                    f"<b>Name:</b> {html.escape(name)}\n"
-                    f"<b>Anime:</b> {html.escape(anime)}\n"
-                    f"<b>Rarity:</b> {html.escape(str(rarity))}\n"
-                    f"<b>ID:</b> <code>{available_id}</code>\n"
-                    f"<b>Added by:</b> <a href=\"tg://user?id={message.from_user.id}\">"
-                    f"{html.escape(message.from_user.first_name or 'Admin')}</a>",
-                    "📥",
-                ), lang)),
+                caption=_uploaded_character_panel(
+                    available_id,
+                    name,
+                    anime,
+                    rarity,
+                    message.from_user.id,
+                    message.from_user.first_name,
+                ),
                 parse_mode="html",
             )
             await collection.insert_one(character)
@@ -300,17 +311,14 @@ async def _finish_upload(client, status_message, pending, provider: str, lang: s
         await send_media_panel(client,
             chat_id=CHARA_CHANNEL_ID,
             photo=file_url,
-            caption=premium_text(tr(rich_card(
-                "Character added",
-                f"<b>Name:</b> {html.escape(pending['name'])}\n"
-                f"<b>Anime:</b> {html.escape(pending['anime'])}\n"
-                f"<b>Rarity:</b> {html.escape(str(pending['rarity']))}\n"
-                f"<b>ID:</b> <code>{available_id}</code>\n"
-                f"<b>Image host:</b> {provider_name}\n"
-                f"<b>Added by:</b> <a href=\"tg://user?id={pending['user_id']}\">"
-                f"{html.escape(pending['user_name'])}</a>",
-                "📥",
-            ), lang)),
+            caption=_uploaded_character_panel(
+                available_id,
+                pending["name"],
+                pending["anime"],
+                pending["rarity"],
+                pending["user_id"],
+                pending["user_name"],
+            ),
             parse_mode="html",
         )
         await collection.insert_one(character)
