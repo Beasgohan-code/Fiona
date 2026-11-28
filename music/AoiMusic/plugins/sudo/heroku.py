@@ -119,7 +119,7 @@ async def varget_(client, message, _):
         heroku_config = HAPP.config()
         if check_var in heroku_config:
             return await reply_note(message,
-                f"**{check_var}:** `{heroku_config[check_var]}`"
+                f"<b>{html.escape(str(check_var))}:</b> <code>{html.escape(str(heroku_config[check_var]))}</code>"
             )
         else:
             return await reply_note(message, _["heroku_4"])
@@ -131,7 +131,7 @@ async def varget_(client, message, _):
         if not output:
             await reply_note(message, _["heroku_4"])
         else:
-            return await reply_note(message, f"**{html.escape(str(check_var))}:** `{html.escape(str(output))}`")
+            return await reply_note(message, f"<b>{html.escape(str(check_var))}:</b> <code>{html.escape(str(output))}</code>")
 
 
 @app.on_message(command("DELVAR_COMMAND") & SUDOERS)
@@ -146,7 +146,7 @@ async def vardel_(client, message, _):
             return await reply_note(message, _["heroku_1"])
         heroku_config = HAPP.config()
         if check_var in heroku_config:
-            await reply_note(message, _["heroku_7"].format(check_var))
+            await reply_note(message, _["heroku_7"].format(html.escape(str(check_var))))
             del heroku_config[check_var]
         else:
             return await reply_note(message, _["heroku_4"])
@@ -158,7 +158,7 @@ async def vardel_(client, message, _):
         if not output[0]:
             return await reply_note(message, _["heroku_4"])
         else:
-            await reply_note(message, _["heroku_7"].format(check_var))
+            await reply_note(message, _["heroku_7"].format(html.escape(str(check_var))))
             os.system(_restart_cmd())
 
 
@@ -175,9 +175,9 @@ async def set_var(client, message, _):
             return await reply_note(message, _["heroku_1"])
         heroku_config = HAPP.config()
         if to_set in heroku_config:
-            await reply_note(message, _["heroku_9"].format(to_set))
+            await reply_note(message, _["heroku_9"].format(html.escape(str(to_set))))
         else:
-            await reply_note(message, _["heroku_10"].format(to_set))
+            await reply_note(message, _["heroku_10"].format(html.escape(str(to_set))))
         heroku_config[to_set] = value
     else:
         path = dotenv.find_dotenv()
@@ -185,9 +185,9 @@ async def set_var(client, message, _):
             return await reply_note(message, _["heroku_5"])
         dotenv.set_key(path, to_set, value)
         if dotenv.get_key(path, to_set):
-            await reply_note(message, _["heroku_9"].format(to_set))
+            await reply_note(message, _["heroku_9"].format(html.escape(str(to_set))))
         else:
-            await reply_note(message, _["heroku_10"].format(to_set))
+            await reply_note(message, _["heroku_10"].format(html.escape(str(to_set))))
         os.system(_restart_cmd())
 
 
@@ -240,13 +240,13 @@ async def usage_dynos(client, message, _):
     AppMinutes = math.floor(AppQuotaUsed % 60)
     await asyncio.sleep(1.5)
     text = f"""
-**Dyno usage**
+<b>Dyno usage</b>
 
 <u>Usage:</u>
-Total used: `{AppHours}`**h**  `{AppMinutes}`**m**  [`{AppPercentage}`**%**]
+Total used: <code>{AppHours}</code><b>h</b>  <code>{AppMinutes}</code><b>m</b>  [<code>{AppPercentage}</code><b>%</b>]
 
 <u>Remaining Quota</u>
-Total Left: `{hours}`**h**  `{minutes}`**m**  [`{percentage}`**%**]"""
+Total Left: <code>{hours}</code><b>h</b>  <code>{minutes}</code><b>m</b>  [<code>{percentage}</code><b>%</b>]"""
     return await dyno.edit(text)
 
 
@@ -289,20 +289,20 @@ async def update_(client, message, _):
         "tsnrhtdd"[(format // 10 % 10 != 1) * (format % 10 < 4) * format % 10 :: 4],
     )
     updates = "".join(
-        f"<b>➣ #{info.count()}: <a href={REPO_}/commit/{info}>{info.summary}</a> By -> {info.author}</b>\n\t\t\t\t<b>➥ Commited On:</b> {ordinal(int(datetime.fromtimestamp(info.committed_date).strftime('%d')))} {datetime.fromtimestamp(info.committed_date).strftime('%b')}, {datetime.fromtimestamp(info.committed_date).strftime('%Y')}\n\n"
+        f"<b>➣ #{info.count()}: <a href='{REPO_}/commit/{info}'>{html.escape(info.summary)}</a> By -&gt; {html.escape(info.author)}</b>\n\t\t\t\t<b>➥ Commited On:</b> {ordinal(int(datetime.fromtimestamp(info.committed_date).strftime('%d')))} {datetime.fromtimestamp(info.committed_date).strftime('%b')}, {datetime.fromtimestamp(info.committed_date).strftime('%Y')}\n\n"
         for info in repo.iter_commits(f"HEAD..origin/{config.UPSTREAM_BRANCH}")
     )
-    _update_response_ = "**A new update is available for the Bot! **\n\n➣ Pushing updates Now\n\n__**Updates:**__\n"
+    _update_response_ = "<b>A new update is available for the Bot!</b>\n\n➣ Pushing updates Now\n\n<u><b>Updates:</b></u>\n"
     _final_updates_ = f"{_update_response_} {updates}"
 
     if len(_final_updates_) > 4096:
         url = await AoiBin(updates)
-        nrs = await response.edit(
-            f"**A new update is available for the Bot!**\n\n➣ Pushing updates Now\n\n__**Updates:**__\n\n[Check Updates]({url})",
+        await response.edit(
+            f"<b>A new update is available for the Bot!</b>\n\n➣ Pushing updates Now\n\n<u><b>Updates:</b></u>\n\n<a href='{url}'>Check Updates</a>",
             link_preview_options=LinkPreviewOptions(is_disabled=True),
         )
     else:
-        nrs = await response.edit(_final_updates_, link_preview_options=LinkPreviewOptions(is_disabled=True))
+        await response.edit(_final_updates_, link_preview_options=LinkPreviewOptions(is_disabled=True))
     os.system("git stash &> /dev/null && git pull")
 
     try:
@@ -333,7 +333,7 @@ async def update_(client, message, _):
             return
         except Exception as err:
             await response.edit(
-                f"{nrs.text}\n\nSomething went wrong, Please check logs"
+                "Something went wrong, please check the logs."
             )
             return await send_note(
                 config.LOGGER_ID,
