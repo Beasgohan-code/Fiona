@@ -32,7 +32,10 @@ class CheckSpawnTests(unittest.TestCase):
         commands = (ROOT / "unified_commands.py").read_text(encoding="utf-8")
         help_source = (ROOT / "waifu/aoiwaifu/unit/aoi_help.py").read_text(encoding="utf-8")
         self.assertIn('filters.command(["checkspawn"]) & filters.group', source)
-        self.assertIn('("checkspawn", "Check character spawn threshold and progress")', commands)
+        self.assertIn('filters.regex(r"^checkspawn:refresh:(-?\\d+)$")', source)
+        self.assertIn('callback_query.message.chat.id != target_chat_id', source)
+        self.assertIn('callback_data=f"checkspawn:refresh:{chat_id}"', source)
+        self.assertIn('("checkspawn", "View and refresh character spawn progress")', commands)
         self.assertIn("`/checkspawn`", help_source)
 
 

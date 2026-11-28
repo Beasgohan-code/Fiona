@@ -6,7 +6,7 @@ HELP_DATA = {
         "HELP": (
             "Catch anime characters that spawn in groups:\n\n"
             "• `/guess <name>` (or `/summon`, `/protecc`, `/collect`, `/grab`, `/hunt`) — Catch the spawned character and earn coins.\n"
-            "• `/checkspawn` — View this group's message threshold, counter progress, and catch-round state.\n"
+            "• `/checkspawn` — View this group's message threshold and catch-round state; tap the Richgram button to refresh live progress.\n"
             "• `/spawn` — Manually start a character round (bot owner only)."
         ),
     },

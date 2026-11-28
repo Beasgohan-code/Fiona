@@ -57,7 +57,7 @@ GROUP_COMMANDS = (
     ("waifu", "Open the character collection panel"),
     ("guess", "Catch the current character"),
     ("hunt", "Hunt for a character"),
-    ("checkspawn", "Check character spawn threshold and progress"),
+    ("checkspawn", "View and refresh character spawn progress"),
     ("changetime", "Change this group's character spawn threshold"),
     ("ctime", "Change this group's character spawn threshold"),
     ("spawn", "Manually spawn a character (bot owner only)"),
