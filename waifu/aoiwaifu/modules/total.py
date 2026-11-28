@@ -8,15 +8,29 @@ from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_l
 from pyrogram import Client, filters
 from pyrogram.enums import ParseMode
 from pyrogram.types import Message
-from aoiwaifu.unit.aoi_inline import get_all_characters
-from aoiwaifu import app
+from aoiwaifu import app, collection
+
+from cachetools import TTLCache
+
+# Character IDs are unique by construction; count via distinct('id') instead of
+# streaming every document. Cached briefly — the catalog barely changes.
+_unique_total_cache: TTLCache = TTLCache(maxsize=1, ttl=300)
+
+
+async def _unique_character_total() -> int:
+    cached = _unique_total_cache.get("total")
+    if cached is None:
+        ids = await collection.distinct("id")
+        cached = len(ids)
+        _unique_total_cache["total"] = cached
+    return cached
+
 
 @app.on_message(filters.command('total'))
 async def total_characters(client: Client, message: Message):
     lang = await get_effective_lang(message)
     try:
-        all_characters = await get_all_characters()
-        unique_characters = len({char['id']: char for char in all_characters if 'id' in char})
+        unique_characters = await _unique_character_total()
         card = rich_card(
             'Fiona character catalog',
             rich_table(('STATISTIC', 'COUNT'), [('Unique characters', f'<b>{unique_characters:,}</b>')]),
