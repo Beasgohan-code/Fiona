@@ -145,9 +145,10 @@ autoclean = []
 
 # --- Default Images ---
 _FIONA_START_IMAGE = str(Path(__file__).resolve().parents[1] / "assets" / "fiona_start_ping.jpg")
+_FIONA_PLAY_PROMPT_IMAGE = str(Path(__file__).resolve().parents[1] / "assets" / "fiona_play_prompt.jpg")
 START_IMG_URL = getenv("START_IMG_URL", "").strip() or _FIONA_START_IMAGE
 PING_IMG_URL = getenv("PING_IMG_URL", "").strip() or _FIONA_START_IMAGE
-PLAYLIST_IMG_URL = getenv("PLAYLIST_IMG_URL", "https://i.ibb.co/VrbBW39/file-00000000fc9c8208a9c65e000748c4d3.png")
+PLAYLIST_IMG_URL = getenv("PLAYLIST_IMG_URL", "").strip() or _FIONA_PLAY_PROMPT_IMAGE
 GLOBAL_IMG_URL = getenv("GLOBAL_IMG_URL", "https://i.ibb.co/VrbBW39/file-00000000fc9c8208a9c65e000748c4d3.png")
 STATS_IMG_URL = getenv("STATS_IMG_URL", "https://i.ibb.co/VrbBW39/file-00000000fc9c8208a9c65e000748c4d3.png")
 TELEGRAM_AUDIO_URL = getenv("TELEGRAM_AUDIO_URL", "https://te.legra.ph/file/3d130381bf5945c139023.jpg")
