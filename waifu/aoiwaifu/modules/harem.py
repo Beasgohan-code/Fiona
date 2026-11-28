@@ -6,6 +6,7 @@ from aoiwaifu.unit.rich_ui import (
     premium_text,
     rich_card,
     rich_heading,
+    rich_showcase_panel,
     reply_notice,
 )
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t
@@ -298,6 +299,7 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
         lang = await get_effective_lang(callback_query or message, user_id=user_id)
         duplicate_copies = max(0, total_characters - len(unique_characters))
         harem_message = (
+            "<blockquote>"
             f"📄 <b>Page:</b> {page + 1}/{total_pages}  •  "
             f"✨ <b>Unique:</b> {len(unique_characters):,}  •  🎴 <b>Cards:</b> {total_characters:,}"
             f"\n🔁 <b>Duplicate copies:</b> {duplicate_copies:,}"
@@ -306,6 +308,7 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
             harem_message += f"\n🔎 <b>Anime:</b> {escape(str(anime_filter))} · use /harem to clear"
         if filter_rarity:
             harem_message += f"\n{t('harem_filtered_by', lang, rarity=escape(str(filter_rarity)))}"
+        harem_message += "</blockquote>"
         current_characters = unique_characters[page * items_per_page:(page + 1) * items_per_page]
         current_grouped_characters = {k: list(v) for k, v in groupby(current_characters, key=lambda x: x.get('anime', 'Unknown Anime'))}
         catalog_anime_counts = await _fetch_catalog_anime_counts(current_grouped_characters)
@@ -330,7 +333,7 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                     f"<b>{escape(str(character.get('name', 'Unknown Character')))}</b> "
                     f"×{count}\n"
                 )
-        harem_message = rich_card(f'Collection · {escape(user_first_name)}', harem_message, '🎴')
+        harem_message = rich_showcase_panel(f'{escape(user_first_name)} · COLLECTION', harem_message, '🎴')
         keyboard = [
             [
                 premium_button(

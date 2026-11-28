@@ -5,7 +5,7 @@ from aoiwaifu.unit.rich_ui import (
     edit_panel,
     premium_button,
     premium_text,
-    rich_card,
+    rich_showcase_panel,
     reply_notice,
 )
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
@@ -30,13 +30,16 @@ async def check_character(client, message):
     keyboard = InlineKeyboardMarkup([[
         premium_button('Find collectors', emoji='USERS_GROUP', callback_data=f'whohaveit_{character_id}')
     ]])
-    text = rich_card(
-        'Character details',
-        f"🆔 <b>ID:</b> <code>{escape(str(character_id))}</code>\n"
-        f"📛 <b>Name:</b> {escape(str(character.get('name', 'Unknown')))}\n"
-        f"📺 <b>Anime:</b> {escape(str(character.get('anime', 'Unknown')))}\n"
-        f"💎 <b>Rarity:</b> {escape(str(character.get('rarity', 'Unknown')))}",
-        '🌟',
+    text = rich_showcase_panel(
+        'CHARACTER DOSSIER',
+        "<blockquote>"
+        f"🆔 <b>ID</b> · <code>{escape(str(character_id))}</code>\n"
+        f"👤 <b>Name</b> · {escape(str(character.get('name', 'Unknown')))}\n"
+        f"🎌 <b>Anime</b> · {escape(str(character.get('anime', 'Unknown')))}\n"
+        f"✨ <b>Rarity</b> · {escape(str(character.get('rarity', 'Unknown')))}"
+        "</blockquote>"
+        "<p><i>Tap the button below to find collectors who own this character.</i></p>",
+        '🪪',
     )
     caption = premium_text(tr(text, lang))
     if character.get('vid_url'):
@@ -63,6 +66,11 @@ async def who_have_it(client, callback_query):
             if isinstance(char, dict) and str(char.get('id')) == str(character_id)
         )
         owner_lines.append(f"{i}. <a href='tg://user?id={user['id']}'>{user_name}</a> · x{count}")
-    owner_text = rich_card('Character owners', "\n".join(owner_lines), '🏆')
+    owner_text = rich_showcase_panel(
+        'COLLECTOR OWNERS',
+        "<blockquote>" + "\n".join(owner_lines) + "</blockquote>"
+        "<p><i>Showing up to 10 collectors for this character.</i></p>",
+        '🏆',
+    )
     await edit_panel(callback_query.message, tr(owner_text, lang), reply_markup=None)
     await callback_query.answer()

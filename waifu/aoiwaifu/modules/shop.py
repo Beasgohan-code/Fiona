@@ -2,7 +2,7 @@ from aoiwaifu.unit.rich_ui import (
     reply_photo_panel,
     premium_button,
     premium_text,
-    rich_card,
+    rich_showcase_panel,
 )
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t
 import html
@@ -79,7 +79,12 @@ async def shop_menu(client, message):
     lang = await get_effective_lang(message)
     await reply_photo_panel(message,
         photo=SHOP_IMAGE_URL,
-        caption=premium_text(rich_card('Fiona character shop', t('shop_main_caption', lang), '🌸')),
+        caption=premium_text(rich_showcase_panel(
+            'FIONA CHARACTER BAZAAR',
+            f"<blockquote>{t('shop_main_caption', lang)}</blockquote>"
+            "<p><i>Choose a rarity below to explore the catalog.</i></p>",
+            '🛍️',
+        )),
         reply_markup=build_shop_keyboard(),
         parse_mode=ParseMode.HTML,
     )
@@ -112,18 +117,23 @@ async def show_character(client, msg, user_id):
         1 for item in (user.get('characters') or [])
         if isinstance(item, dict) and str(item.get('id')) == str(char.get('id'))
     )
-    caption = rich_card(
-        "Fiona character bazaar",
-        "\n".join((
-            f"💎 <b>{html.escape(str(char.get('name', 'Unknown')))}</b>",
+    purchase_hint = (
+        "You can afford this character now."
+        if balance >= price
+        else f"You need {price - balance:,} more coins to afford this character."
+    )
+    caption = rich_showcase_panel(
+        "BAZAAR CHARACTER",
+        "<blockquote>" + "\n".join((
+            f"💎 <b>Name:</b> {html.escape(str(char.get('name', 'Unknown')))}",
             f"🏯 <b>Anime:</b> {html.escape(str(char.get('anime', 'Unknown')))}",
-            f"⭐ <b>Rarity:</b> {html.escape(str(char.get('rarity', 'Unknown')))}",
+            f"✨ <b>Rarity:</b> {html.escape(str(char.get('rarity', 'Unknown')))}",
             f"🆔 <b>ID:</b> <code>{html.escape(str(char.get('id', '?')))}</code>",
-            f"💰 <b>Price:</b> {price:,} coins",
-            f"👛 <b>Your wallet:</b> {balance:,} coins",
-            f"📦 <b>Already owned:</b> {owned}",
-            "<i>Review the details, then buy or keep browsing.</i>",
-        )),
+            f"💰 <b>Price:</b> <code>{price:,}</code> coins",
+            f"👛 <b>Your wallet:</b> <code>{balance:,}</code> coins",
+            f"📦 <b>Already owned:</b> <code>{owned}</code>",
+        )) + "</blockquote>"
+        f"<p><i>{html.escape(purchase_hint)}</i></p>",
         "🛍️",
     )
     keyboard = [
@@ -148,7 +158,18 @@ async def show_character(client, msg, user_id):
 @app.on_callback_query(filters.regex('^shop_back$'))
 async def shop_back_callback(client, callback_query):
     lang = await get_effective_lang(callback_query)
-    await _edit_shop_message_media(msg=callback_query.message, media_url=SHOP_IMAGE_URL, caption=premium_text(rich_card('Fiona character shop', t('shop_main_caption', lang), '🌸')), reply_markup=build_shop_keyboard())
+    home_caption = premium_text(rich_showcase_panel(
+        'FIONA CHARACTER BAZAAR',
+        f"<blockquote>{t('shop_main_caption', lang)}</blockquote>"
+        "<p><i>Choose a rarity below to explore the catalog.</i></p>",
+        '🛍️',
+    ))
+    await _edit_shop_message_media(
+        msg=callback_query.message,
+        media_url=SHOP_IMAGE_URL,
+        caption=home_caption,
+        reply_markup=build_shop_keyboard(),
+    )
     await callback_query.answer()
 
 @app.on_callback_query(filters.regex('^refresh_chars$'))
