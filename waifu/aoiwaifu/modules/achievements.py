@@ -5,6 +5,7 @@ from aoiwaifu.unit.rich_ui import (
     premium_text,
     rich_card,
     rich_table,
+    rich_progress_bar,
 )
 import html
 
@@ -42,7 +43,7 @@ async def achievements(client: Client, message: Message):
     rows = [
         (
             f"{icon} {html.escape(name)}",
-            f"{'✅' if progress >= goal else '🔒'} <code>{progress:,}/{goal:,}</code>",
+            f"{'✅' if progress >= goal else '🔒'} <code>{progress:,}/{goal:,}</code><br><code>{rich_progress_bar(progress, goal, 10)}</code>",
         )
         for name, progress, goal, icon in milestones
     ]

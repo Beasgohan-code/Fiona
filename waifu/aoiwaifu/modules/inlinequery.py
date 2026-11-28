@@ -21,7 +21,7 @@ from telegram import (
 
 from telegram.ext import InlineQueryHandler, ContextTypes
 
-from aoiwaifu import app, application, user_collection
+from aoiwaifu import app, application, user_collection, PHOTO_URL
 from aoiwaifu.unit.aoi_inline import *
 
 all_characters_cache = TTLCache(maxsize=10000, ttl=36000)
@@ -162,8 +162,10 @@ async def inlinequery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                     id=result_id,
                     video_url=character["vid_url"],
                     mime_type="video/mp4",
-                    thumbnail_url=character.get(
-                        "thum_url", "https://envs.sh/6Y3.jpg"
+                    thumbnail_url=(
+                        character.get("thum_url")
+                        or character.get("img_url")
+                        or (PHOTO_URL[0] if PHOTO_URL else "")
                     ),
                     title=str(character.get("name", "Unknown")),
                     description=(

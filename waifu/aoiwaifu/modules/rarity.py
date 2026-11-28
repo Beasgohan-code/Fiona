@@ -5,6 +5,7 @@ from aoiwaifu.unit.rich_ui import (
     premium_text,
     rich_card,
     rich_table,
+    rich_progress_bar,
 )
 import html
 
@@ -28,7 +29,8 @@ async def rarity_count(client, message):
 
         for rarity in configured:
             count = counts.pop(rarity, 0)
-            rows.append((html.escape(rarity), f"<b>{count:,}</b>"))
+            progress = rich_progress_bar(count, total_count, 8)
+            rows.append((html.escape(rarity), f"<b>{count:,}</b><br><code>{progress}</code>"))
 
         # Keep older catalog data visible as a count, without exposing obsolete
         # rarity names as choices or deleting character records.

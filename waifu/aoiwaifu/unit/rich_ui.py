@@ -35,6 +35,21 @@ def rich_quote(text: str) -> str:
     return f"<blockquote>{rich_esc(text)}</blockquote>"
 
 
+def rich_progress_bar(current, maximum, width: int = 12) -> str:
+    """Render a compact Unicode progress bar for rich cards."""
+    width = max(4, int(width or 12))
+    try:
+        maximum = int(maximum)
+        current = max(0, int(current))
+    except (TypeError, ValueError):
+        current, maximum = 0, 0
+    if maximum <= 0:
+        filled = width
+    else:
+        filled = min(width, max(0, round(current / maximum * width)))
+    return "▰" * filled + "▱" * (width - filled)
+
+
 def rich_table(headers, rows) -> str:
     """Render a compact, Telegram-safe table with clear row and column breaks.
 

@@ -4,6 +4,7 @@ from aoiwaifu.unit.rich_ui import (
     premium_button,
     premium_text,
     rich_card,
+    rich_table,
 )
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 from pyrogram import Client, filters, enums
@@ -15,8 +16,11 @@ from aoiwaifu import app as Client
 from aoiwaifu import PHOTO_URL, user_collection, top_global_groups_collection
 from aoiwaifu.admin.blocklist import get_blocklisted_id_variants
 
+def _medal(rank):
+    return {1: '🥇', 2: '🥈', 3: '🥉'}.get(rank, f'<code>{rank:02}</code>')
+
 def leaderboard_header(title, subtitle):
-    return "\n\n".join((rich_card(title, f"<i>{subtitle}</i>", "🏆"), ""))
+    return rich_card(title, f"<i>{html.escape(str(subtitle))}</i>", "🏆") + "\n\n"
 
 def leaderboard_buttons(active_button=None):
     specs = [
@@ -43,12 +47,20 @@ async def resolve_user_display_name(client: Client, user_id: int, current_first_
         return str(current_first_name).strip()
     return f'Player {user_id}' if user_id else 'Collector'
 
+def _rank_table(rows):
+    return rich_table(('RANK', 'COLLECTOR', 'SCORE'), rows)
+
 def add_rank_line(rank, name, value, user_id=None, label=''):
-    safe_name = html.escape(str(name or 'Collector')[:18])
-    safe_name = f'<b>{safe_name}</b>'
-    medal = {1: '🥇', 2: '🥈', 3: '🥉'}.get(rank, f'<b>{rank:02}</b>')
-    suffix = f'  <i>{label}</i>' if label else ''
-    return f'{medal} {safe_name}  ➜  <b>{value}</b>{suffix}\n'
+    """Compatibility helper retained for callers/tests; prefer _rank_table."""
+    medal = _medal(rank)
+    safe_name = html.escape(str(name or 'Collector')[:24])
+    safe_label = f' <i>{html.escape(str(label))}</i>' if label else ''
+    return f'{medal} <b>{safe_name}</b> <b>{value}</b>{safe_label}\n'
+
+def rank_row(rank, name, value, label=''):
+    safe_name = html.escape(str(name or 'Collector')[:22])
+    safe_label = f' <i>{html.escape(str(label))}</i>' if label else ''
+    return _medal(rank), f'<b>{safe_name}</b>', f'<b>{value}</b>{safe_label}'
 
 @Client.on_message(filters.command(['rank', 'top']))
 async def rank(client, message):
@@ -81,8 +93,8 @@ async def rank(client, message):
                 resolve_user_display_name(client, u.get('id'), u.get('first_name'), u.get('username'))
                 for u in leaderboard_data
             ])
-            for i, (user, name) in enumerate(zip(leaderboard_data, resolved_names), start=1):
-                caption += add_rank_line(i, name, user.get('char_count', 0))
+            rows = [rank_row(i, name, f"{int(user.get('char_count', 0) or 0):,}") for i, (user, name) in enumerate(zip(leaderboard_data, resolved_names), start=1)]
+            caption += _rank_table(rows)
         caption += '\n<i>Every character counts. Keep collecting and climb the leaderboard! ✨</i>'
         await progress.edit_caption(
             caption=premium_text(tr(caption, lang)),
@@ -119,8 +131,8 @@ async def top_callback(client, callback_query):
         caption += '🌸 <i>No collectors to show yet. Be the first!</i>\n'
     else:
         resolved_names = await asyncio.gather(*[resolve_user_display_name(client, u.get('id'), u.get('first_name'), u.get('username')) for u in leaderboard_data])
-        for i, (user, name) in enumerate(zip(leaderboard_data, resolved_names), start=1):
-            caption += add_rank_line(i, name, user.get('char_count', 0), user.get('id'))
+        rows = [rank_row(i, name, f"{int(user.get('char_count', 0) or 0):,}") for i, (user, name) in enumerate(zip(leaderboard_data, resolved_names), start=1)]
+        caption += _rank_table(rows)
     caption += '\n<i>Collect more waifus to climb the leaderboard ✨</i>'
     await update_caption(callback_query, caption, 'top')
 
@@ -133,8 +145,8 @@ async def top_group_callback(client, callback_query):
     if not leaderboard_data:
         caption += '🌸 <i>No group rankings available yet.</i>\n'
     else:
-        for i, group in enumerate(leaderboard_data, start=1):
-            caption += add_rank_line(i, group.get('group_name'), group.get('count', 0), label='characters')
+        rows = [rank_row(i, group.get('group_name'), f"{int(group.get('count', 0) or 0):,}", 'chars') for i, group in enumerate(leaderboard_data, start=1)]
+        caption += _rank_table(rows)
     caption += '\n<i>Invite your friends and grow your collection together 💫</i>'
     await update_caption(callback_query, caption, 'top_group')
 
@@ -148,8 +160,8 @@ async def mtop_callback(client, callback_query):
         caption += '🌸 <i>No coin rankings available yet.</i>\n'
     else:
         resolved_names = await asyncio.gather(*[resolve_user_display_name(client, u.get('id'), u.get('first_name'), u.get('username')) for u in top_users])
-        for rank, (user, name) in enumerate(zip(top_users, resolved_names), start=1):
-            caption += add_rank_line(rank, name, f"💰 {user.get('balance', 0):,}", user.get('id'), 'coins')
+        rows = [rank_row(rank, name, f"💰 {int(user.get('balance', 0) or 0):,}") for rank, (user, name) in enumerate(zip(top_users, resolved_names), start=1)]
+        caption += _rank_table(rows)
     caption += '\n<i>Keep playing to stack up more coins 💸</i>'
     await update_caption(callback_query, caption, 'mtop')
 
@@ -163,8 +175,8 @@ async def tokens_callback(client, callback_query):
         caption += '🌸 <i>No dollar rankings available yet.</i>\n'
     else:
         resolved_names = await asyncio.gather(*[resolve_user_display_name(client, u.get('id'), u.get('first_name'), u.get('username')) for u in top_users])
-        for rank, (user, name) in enumerate(zip(top_users, resolved_names), start=1):
-            caption += add_rank_line(rank, name, f"💵 ${user.get('tokens', 0):,}", user.get('id'), 'dollars')
+        rows = [rank_row(rank, name, f"💵 ${int(user.get('tokens', 0) or 0):,}") for rank, (user, name) in enumerate(zip(top_users, resolved_names), start=1)]
+        caption += _rank_table(rows)
     caption += '\n<i>Your dollar balance is stored safely in your wallet 💎</i>'
     await update_caption(callback_query, caption, 'tokens')
 
@@ -179,7 +191,7 @@ async def amv_callback(client, callback_query):
         caption += '🌸 <i>No AMV Edition characters collected yet. Be the first!</i>\n'
     else:
         resolved_names = await asyncio.gather(*[resolve_user_display_name(client, u.get('id'), u.get('first_name'), u.get('username')) for u in leaderboard_data])
-        for rank, (user, name) in enumerate(zip(leaderboard_data, resolved_names), start=1):
-            caption += add_rank_line(rank, name, user.get('amv_count', 0), user.get('id'), 'AMV characters')
+        rows = [rank_row(rank, name, f"{int(user.get('amv_count', 0) or 0):,}", 'AMV') for rank, (user, name) in enumerate(zip(leaderboard_data, resolved_names), start=1)]
+        caption += _rank_table(rows)
     caption += '\n<i>Collect more AMV Edition characters to reach the top! ✨</i>'
     await update_caption(callback_query, caption, 'amv')
