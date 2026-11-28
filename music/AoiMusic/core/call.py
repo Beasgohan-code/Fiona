@@ -188,6 +188,7 @@ from pyrogram.errors import (
     FloodWait,
     InviteHashExpired,
     InviteRequestSent,
+    PeerIdInvalid,
     UserAlreadyParticipant,
     UserNotParticipant,
 )
@@ -771,6 +772,14 @@ class Call:
             member = await app.get_chat_member(chat_id, userbot.id)
         except UserNotParticipant:
             pass
+        except PeerIdInvalid:
+            # Bot API may not have cached/met this assistant user yet. This is
+            # not proof that the assistant cannot join; continue through the
+            # invite flow, which resolves the chat from the assistant session.
+            LOGGER(__name__).warning(
+                "[Call] bot could not resolve assistant peer %s in chat %s; continuing with invite flow",
+                userbot.id, chat_id,
+            )
         except ChatAdminRequired:
             raise AssistantErr(_["call_1"])
         except Exception as e:
@@ -871,6 +880,42 @@ class Call:
                     f"link or access): {e}"
                 )
             )
+        except PeerIdInvalid as e:
+            # A username lookup can fail for a userbot that has never met the
+            # peer, even while the bot can create an invite. Retry once through
+            # a fresh, non-primary invite link rather than surfacing the raw
+            # PEER_ID_INVALID error to every /play request.
+            links.pop(chat_id, None)
+            try:
+                invite = await app.create_chat_invite_link(
+                    chat_id,
+                    name="Music assistant join",
+                )
+                fresh_link = getattr(invite, "invite_link", None)
+                if not fresh_link:
+                    raise RuntimeError("Telegram did not return an invite link")
+                try:
+                    await userbot.join_chat(fresh_link)
+                except InviteRequestSent:
+                    await app.approve_chat_join_request(chat_id, userbot.id)
+                    await asyncio.sleep(1.5)
+                except UserAlreadyParticipant:
+                    pass
+                links[chat_id] = fresh_link
+            except ChatAdminRequired:
+                raise AssistantErr(_["call_1"]) from e
+            except Exception as retry_exc:
+                LOGGER(__name__).exception(
+                    "[Call] fresh invite retry after PeerIdInvalid failed for chat %s",
+                    chat_id,
+                )
+                raise AssistantErr(
+                    _["call_3"].format(
+                        "Telegram could not resolve the assistant peer. Ensure the bot can "
+                        "create group invite links and the assistant account is allowed to join. "
+                        f"Retry error: {type(retry_exc).__name__}: {retry_exc}"
+                    )
+                ) from retry_exc
         except Exception as e:
             # Surface the full traceback: the invite-path errors were only
             # ever reported as their class name, hiding real causes.
