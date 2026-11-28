@@ -1,3 +1,6 @@
+from aoiwaifu.unit.rich_ui import (
+    reply_notice,
+)
 # ==============================================================================
 # How to Use:
 #   - Purpose: Tracks group message counts and triggers character drops
@@ -16,7 +19,6 @@ from telegram import Update
 from telegram.ext import CallbackContext, MessageHandler, filters
 from pyrogram import filters as pyro_filters
 import time
-from aoiwaifu.unit.rich_ui import reply_notice
 
 # Ensure Motor always resolves the currently running event loop even if only massage.py is updated
 try:

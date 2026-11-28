@@ -1,5 +1,14 @@
+from aoiwaifu.unit.rich_ui import (
+    reply_photo_panel,
+    reply_panel,
+    edit_panel,
+    premium_button,
+    premium_text,
+    rich_card,
+    rich_heading,
+    reply_notice,
+)
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card, rich_heading, reply_notice
 from aoiwaifu import *
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
@@ -163,7 +172,7 @@ async def pinlist_handler(client: Client, message: Message):
         return
     user = await user_collection.find_one({'id': message.from_user.id}) or {}
     panel, keyboard = _build_pinned_characters_view(message.from_user.id, user, lang)
-    return await message.reply_text(
+    return await reply_panel(message,
         panel,
         reply_markup=keyboard,
         parse_mode=enums.ParseMode.HTML,
@@ -232,7 +241,7 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
         if error:
             error_text = premium_text(tr(error, lang))
             if is_initial:
-                return await message.reply_text(error_text, parse_mode=enums.ParseMode.HTML)
+                return await reply_panel(message,error_text, parse_mode=enums.ParseMode.HTML)
             await edit_panel(callback_query.message, error_text)
             return
         characters = sorted(characters, key=lambda x: (str(x.get('anime', '')), str(x.get('id', ''))))
@@ -252,7 +261,7 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                     '🔎',
                 )
                 if is_initial:
-                    return await message.reply_text(
+                    return await reply_panel(message,
                         premium_text(tr(empty_text, lang)),
                         reply_markup=InlineKeyboardMarkup(clear_button),
                         parse_mode=enums.ParseMode.HTML,
@@ -270,7 +279,7 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                     '🔎',
                 )
                 if is_initial:
-                    return await message.reply_text(
+                    return await reply_panel(message,
                         premium_text(tr(empty_filter_text, lang)),
                         reply_markup=reply_markup,
                         parse_mode=enums.ParseMode.HTML,
@@ -385,14 +394,14 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
         localized_caption = tr(harem_message, lang)
         if is_initial:
             try:
-                return await message.reply_photo(
+                return await reply_photo_panel(message,
                     photo=harem_photo,
                     caption=premium_text(localized_caption),
                     reply_markup=reply_markup,
                     parse_mode=enums.ParseMode.HTML,
                 )
             except Exception:
-                return await message.reply_text(
+                return await reply_panel(message,
                     premium_text(localized_caption),
                     reply_markup=reply_markup,
                     parse_mode=enums.ParseMode.HTML,
@@ -402,7 +411,7 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
         print(f'Error in display_harem: {e}')
         error_msg = premium_text(tr('⚠️ Could not load this collection page. Please try again.', lang))
         if is_initial:
-            await message.reply_text(error_msg, parse_mode=enums.ParseMode.HTML)
+            await reply_panel(message,error_msg, parse_mode=enums.ParseMode.HTML)
         elif callback_query:
             await edit_panel(callback_query.message, error_msg)
 
@@ -517,7 +526,7 @@ async def hmode_handler(client: Client, message: Message):
         "Choose a rarity to focus your collection.\nYour choice is saved for the next /harem view.",
         '💎',
     )
-    await message.reply_text(
+    await reply_panel(message,
         premium_text(tr(prompt, lang)),
         reply_markup=reply_markup,
         parse_mode=enums.ParseMode.HTML,

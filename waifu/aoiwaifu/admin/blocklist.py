@@ -1,12 +1,14 @@
 """Admin user blocklist commands (/blocklist, /removeblocklist)."""
 
+from aoiwaifu.unit.rich_ui import (
+    reply_notice,
+)
 from datetime import datetime, timezone
 from pyrogram import enums, filters
 from pyrogram.types import Message
 
 from aoiwaifu import OWNER_ID, app, db, require_power
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import reply_notice
 
 user_blocklist_collection = db["user_blocklist"]
 

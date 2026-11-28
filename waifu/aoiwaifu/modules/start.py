@@ -1,5 +1,14 @@
 """Start and interactive help menu commands (/start)."""
 
+from aoiwaifu.unit.rich_ui import (
+    reply_photo_panel,
+    reply_video_panel,
+    reply_panel,
+    edit_panel,
+    premium_button,
+    premium_text,
+    rich_card,
+)
 import asyncio
 import html
 import logging
@@ -34,7 +43,6 @@ from aoiwaifu.unit.aoi_lang import (
     t,
     tr,
 )
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card
 
 START_TIME = time.time()
 _start_media_cycle: list[str] = []
@@ -190,11 +198,11 @@ async def _reply_with_media(message, media, kind, caption, reply_markup):
         "parse_mode": enums.ParseMode.HTML,
     }
     if kind == "photo":
-        await message.reply_photo(photo=media, **common)
+        await reply_photo_panel(message,photo=media, **common)
     elif kind == "animation":
         await message.reply_animation(animation=media, **common)
     else:
-        await message.reply_video(video=media, **common)
+        await reply_video_panel(message,video=media, **common)
 
 
 async def _download_start_media(url: str) -> tuple[str, str]:
@@ -274,7 +282,7 @@ async def send_media_message(message, media, caption, buttons):
                 except OSError:
                     pass
 
-    await message.reply_text(
+    await reply_panel(message,
         text=caption,
         reply_markup=reply_markup,
         parse_mode=enums.ParseMode.HTML,

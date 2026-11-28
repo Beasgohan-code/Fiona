@@ -1,3 +1,9 @@
+from aoiwaifu.unit.rich_ui import (
+    reply_photo_panel,
+    premium_button,
+    premium_text,
+    rich_card,
+)
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t
 import html
 import random
@@ -7,7 +13,6 @@ from pyrogram import filters
 from pyrogram.enums import ParseMode
 from aoiwaifu import *
 from pymongo import ReturnDocument
-from aoiwaifu.unit.rich_ui import premium_button, premium_text, rich_card
 from aoiwaifu.unit.aoi_rarity import RARITY_NAMES
 user_shop_state = {}
 shop_claim_locks = set()
@@ -72,7 +77,7 @@ async def _edit_shop_message_media(msg, media_url: str, caption: str, reply_mark
 @app.on_message(filters.command(['shop', 'hshop', 'hshopmenu']))
 async def shop_menu(client, message):
     lang = await get_effective_lang(message)
-    await message.reply_photo(
+    await reply_photo_panel(message,
         photo=SHOP_IMAGE_URL,
         caption=premium_text(rich_card('Fiona character shop', t('shop_main_caption', lang), '🌸')),
         reply_markup=build_shop_keyboard(),

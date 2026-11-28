@@ -1,5 +1,12 @@
 """Character catching commands (/guess, /protecc, /collect, /grab, /hunt)."""
 
+from aoiwaifu.unit.rich_ui import (
+    reply_panel,
+    premium_button,
+    premium_text,
+    rich_card,
+    reply_notice,
+)
 import asyncio
 from datetime import datetime
 from html import escape
@@ -20,7 +27,6 @@ from aoiwaifu import (
     user_guess_progress,
 )
 from aoiwaifu.unit.aoi_lang import get_effective_lang, t, tr
-from aoiwaifu.unit.rich_ui import premium_button, premium_text, rich_card, reply_notice
 
 
 @app.on_message(filters.command(["guess", "protecc", "collect", "grab", "hunt", "summon"]))
@@ -127,7 +133,7 @@ async def guess(client: Client, message: Message):
         keyboard = InlineKeyboardMarkup([[
             premium_button(t("btn_view_in_harem", lang), emoji='USERS_GROUP', switch_inline_query_current_chat=f"collection.{user_id}")
         ]])
-        await message.reply_text(premium_text(tr(caption, lang)), parse_mode=enums.ParseMode.HTML, reply_markup=keyboard)
+        await reply_panel(message,premium_text(tr(caption, lang)), parse_mode=enums.ParseMode.HTML, reply_markup=keyboard)
     else:
         message_id = last_characters[chat_id].get("message_id")
         incorrect_text = t("guess_incorrect", lang)
@@ -135,6 +141,6 @@ async def guess(client: Client, message: Message):
             keyboard = InlineKeyboardMarkup([[
                 premium_button(t("btn_view_media_again", lang), emoji='IMAGE_PHOTO', url=f"https://t.me/c/{str(chat_id)[4:]}/{message_id}")
             ]])
-            await message.reply_text(premium_text(tr(incorrect_text, lang)), reply_markup=keyboard, parse_mode=enums.ParseMode.HTML)
+            await reply_panel(message,premium_text(tr(incorrect_text, lang)), reply_markup=keyboard, parse_mode=enums.ParseMode.HTML)
         else:
             await reply_notice(message, tr(incorrect_text, lang), parse_mode=enums.ParseMode.HTML)

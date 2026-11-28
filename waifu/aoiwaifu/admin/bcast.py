@@ -1,5 +1,10 @@
 """Owner and Sudo broadcast to registered users and groups."""
 
+from aoiwaifu.unit.rich_ui import (
+    reply_panel,
+    premium_text,
+    rich_card,
+)
 import asyncio
 
 from pyrogram import enums, filters
@@ -7,7 +12,6 @@ from pyrogram.errors import FloodWait, PeerIdInvalid
 
 from aoiwaifu import OWNER_ID, SUDO, app, top_global_groups_collection, user_collection
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import premium_text, rich_card
 
 
 @app.on_message(filters.command(["waifubcast", "waifubroadcast"]) & filters.user(SUDO + [OWNER_ID]))
@@ -15,13 +19,13 @@ async def broadcast(_, message):
     lang = await get_effective_lang(message)
     replied_message = message.reply_to_message
     if not replied_message:
-        await message.reply_text(
+        await reply_panel(message,
             premium_text(tr(rich_card("Broadcast", "❌ Reply to a message to broadcast it.", "📢"), lang)),
             parse_mode=enums.ParseMode.HTML,
         )
         return
 
-    progress_message = await message.reply_text(
+    progress_message = await reply_panel(message,
         premium_text(
             tr(
                 rich_card(

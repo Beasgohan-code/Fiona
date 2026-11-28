@@ -1,3 +1,8 @@
+from aoiwaifu.unit.rich_ui import (
+    send_panel,
+    reply_notice,
+    edit_notice,
+)
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 from aoiwaifu import *
 from pyrogram import Client, filters
@@ -6,7 +11,6 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime, timedelta
 import asyncio
 import logging
-from aoiwaifu.unit.rich_ui import reply_notice, edit_notice
 backup_logger = logging.getLogger('BACKUP')
 
 class AutoBackup:
@@ -103,7 +107,7 @@ class AutoBackup:
         """Send backup success notification to owner"""
         try:
             message = f"✅ **Database Backup Completed**\n\n📅 **Backup Name:** `{backup_name}`\n📊 **Collections:** {total_collections}\n📄 **Documents:** {total_docs}\n⏰ **Time:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n\n🔒 **Status:** Your data is safely backed up!"
-            await app.send_message(chat_id=self.owner_id, text=message)
+            await send_panel(app,chat_id=self.owner_id, text=message)
             backup_logger.info('Backup notification sent to owner')
         except Exception as e:
             backup_logger.error(f'Error sending backup notification: {e}')
@@ -112,7 +116,7 @@ class AutoBackup:
         """Send backup error notification to owner"""
         try:
             message = f"❌ **Database Backup Failed**\n\n🚨 **Error:** {error_msg}\n⏰ **Time:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n\n⚠️ Please check the backup system!"
-            await app.send_message(chat_id=self.owner_id, text=message)
+            await send_panel(app,chat_id=self.owner_id, text=message)
             backup_logger.error('Backup error notification sent to owner')
         except Exception as e:
             backup_logger.error(f'Error sending error notification: {e}')

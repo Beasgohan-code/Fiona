@@ -1,10 +1,18 @@
+from aoiwaifu.unit.rich_ui import (
+    reply_photo_panel,
+    reply_video_panel,
+    edit_panel,
+    premium_button,
+    premium_text,
+    rich_card,
+    reply_notice,
+)
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, CallbackQuery
 from pymongo import MongoClient
 from aoiwaifu import app, user_collection
 import html
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card, reply_notice
 
 @app.on_message(filters.command('fav'))
 async def fav_command(client, message):
@@ -28,14 +36,14 @@ async def fav_command(client, message):
             premium_button('Cancel', emoji='CLOSE', style='DANGER', callback_data='fav_no'),
         ]])
         caption = premium_text(rich_card('Set favorite', f"Make <b>{html.escape(str(character.get('name', 'Unknown')))}</b> your featured character?", '💖'))
-        await message.reply_video(video=character['vid_url'], caption=tr(caption, lang), parse_mode='html', reply_markup=keyboard)
+        await reply_video_panel(message,video=character['vid_url'], caption=tr(caption, lang), parse_mode='html', reply_markup=keyboard)
     elif 'img_url' in character:
         keyboard = InlineKeyboardMarkup([[
             premium_button('Add favorite', emoji='HEART', style='SUCCESS', callback_data=f'fav_yes_{character_id}_{user_id}'),
             premium_button('Cancel', emoji='CLOSE', style='DANGER', callback_data='fav_no'),
         ]])
         caption = premium_text(rich_card('Set favorite', f"Make <b>{html.escape(str(character.get('name', 'Unknown')))}</b> your featured character?", '💖'))
-        await message.reply_photo(photo=character['img_url'], caption=tr(caption, lang), parse_mode='html', reply_markup=keyboard)
+        await reply_photo_panel(message,photo=character['img_url'], caption=tr(caption, lang), parse_mode='html', reply_markup=keyboard)
     else:
         await reply_notice(message, tr('This character has no media (image or video) associated with it. ❌', lang))
 

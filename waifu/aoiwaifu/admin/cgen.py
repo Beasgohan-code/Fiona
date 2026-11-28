@@ -1,12 +1,14 @@
 """Admin redeem code generator (/cgen)."""
 
+from aoiwaifu.unit.rich_ui import (
+    reply_notice,
+)
 import random
 import string
 from pyrogram import enums, filters
 
 from aoiwaifu import ZYRO as app, collection, db, require_power
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import reply_notice
 
 redeem_collection = db["redeem_codes"]
 

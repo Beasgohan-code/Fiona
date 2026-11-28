@@ -14,6 +14,14 @@ def _parse_int(value: str, default: int = 0) -> int:
         return default
 
 
+def _parse_chat_target(value: str) -> int | str:
+    """Convert numeric Telegram chat IDs from env strings to integer peer IDs."""
+    value = str(value or "").strip()
+    if value and value.lstrip("-").isdigit():
+        return int(value)
+    return value
+
+
 def _parse_int_list(raw: str) -> list[int]:
     result: list[int] = []
     for item in str(raw or "").split(","):
@@ -44,8 +52,8 @@ OWNER_USERNAME: str = os.getenv("OWNER_USERNAME", "").strip().lstrip("@")
 SUDO: list[int] = _parse_int_list(os.getenv("SUDO", ""))
 
 # --- Channels & Chats ---
-GLOG: str = os.getenv("GLOG", "").strip()
-CHARA_CHANNEL_ID: str = os.getenv("CHARA_CHANNEL_ID", "").strip() or GLOG
+GLOG: int | str = _parse_chat_target(os.getenv("GLOG", ""))
+CHARA_CHANNEL_ID: int | str = _parse_chat_target(os.getenv("CHARA_CHANNEL_ID", "")) or GLOG
 SUPPORT_CHAT_ID: str = os.getenv("SUPPORT_CHAT_ID", "").strip()
 SUPPORT_CHAT: str = os.getenv("SUPPORT_CHAT", "").strip()
 UPDATE_CHAT: str = os.getenv("UPDATE_CHAT", "").strip()

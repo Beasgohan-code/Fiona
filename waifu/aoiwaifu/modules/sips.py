@@ -1,11 +1,18 @@
 """Search the character catalog with a compact, paginated rich card."""
 
+from aoiwaifu.unit.rich_ui import (
+    reply_panel,
+    edit_panel,
+    premium_button,
+    premium_text,
+    rich_card,
+    reply_notice,
+)
 import html
 import re
 
 from aoiwaifu import app, collection, rarity_map2 as rarity_map
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card, reply_notice
 from pyrogram import filters
 from pyrogram.enums import ParseMode
 from pyrogram.types import InlineKeyboardMarkup
@@ -31,7 +38,7 @@ async def handle_search(client, message, query=None, page=1, is_callback=False):
             if is_callback:
                 await edit_panel(message, text, reply_markup=None)
             else:
-                await message.reply_text(text, parse_mode=ParseMode.HTML)
+                await reply_panel(message,text, parse_mode=ParseMode.HTML)
             return
 
         characters = await collection.find(search).skip(skip).limit(per_page).to_list(length=per_page)
@@ -58,13 +65,13 @@ async def handle_search(client, message, query=None, page=1, is_callback=False):
         if is_callback:
             await edit_panel(message, response, reply_markup)
         else:
-            await message.reply_text(response, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+            await reply_panel(message,response, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
     except Exception as exc:
         error_message = premium_text(rich_card("Search unavailable", "Could not load these results. Please try again.", "⚠️"))
         if is_callback:
             await edit_panel(message, error_message)
         else:
-            await message.reply_text(error_message, parse_mode=ParseMode.HTML)
+            await reply_panel(message,error_message, parse_mode=ParseMode.HTML)
 
 
 @app.on_message(filters.command(["sips", "search"]))

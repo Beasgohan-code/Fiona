@@ -1,3 +1,6 @@
+from aoiwaifu.unit.rich_ui import (
+    reply_notice,
+)
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 import time
 import secrets
@@ -8,7 +11,6 @@ from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from aoiwaifu import app, user_collection, require_power, db, application
 from aoiwaifu.admin.blocklist import is_user_blocklisted
-from aoiwaifu.unit.rich_ui import reply_notice
 transfer_in_progress = False
 active_transfer = None
 processing_locks = set()

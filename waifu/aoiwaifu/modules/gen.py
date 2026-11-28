@@ -1,12 +1,18 @@
 """User character redeem command (/redeem)."""
 
+from aoiwaifu.unit.rich_ui import (
+    reply_panel,
+    premium_text,
+    rich_card,
+    rich_table,
+    reply_notice,
+)
 import html
 from pymongo import ReturnDocument
 from pyrogram import enums, filters
 
 from aoiwaifu import ZYRO as app, collection, db, user_collection
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table, reply_notice
 
 
 redeem_collection = db["redeem_codes"]
@@ -92,6 +98,6 @@ async def redeem_character(client, message):
             ) + "\nThis character has been added to your collection.",
             '🎟️',
         )
-        await message.reply_text(premium_text(tr(char_info, lang)), parse_mode=enums.ParseMode.HTML)
+        await reply_panel(message,premium_text(tr(char_info, lang)), parse_mode=enums.ParseMode.HTML)
     finally:
         redeem_locks.discard(user_id)

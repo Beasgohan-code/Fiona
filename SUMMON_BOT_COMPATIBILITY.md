@@ -23,11 +23,17 @@ are not copied wholesale.
 | `/profile`, `/hstats`, `/me` | `/profile`, `/hstats`, `/me` |
 | `/achievements`, `/ach`, `/badges` | `/achievements` and aliases; milestones are derived from Fiona's Mongo user data |
 | Rarity catalog | Fiona's canonical upload/shop/spawn/filter options follow Summon-bot's rarity order and names, with rarity 15 customized to `🔞 Ecchi` at the user's request; `/rarity` and `/rarities` show the configured options plus a grouped legacy count, without deleting catalog characters or user collection entries |
-| `/claim`, `/hclaim`, `/redeem` | Fiona's `/claim`, `/hclaim`, `/redeem` |
-| `/transfer`, `/addchar`, `/update`, `/reupload` | Fiona's `/transfer`, `/addchar`, `/gupdate`, `/reupload` |
+| `/claim`, `/hclaim`, `/redeem`, `/setclaim` | Fiona's `/claim`, `/hclaim`, `/redeem`; owner-only `/setclaim <rarity_id> <weight>` persists daily-claim weights, shown with `/claimweights` (Fiona keeps `/claimlist` for a user's collected characters) |
+| `/transfer`, `/addchar` | Fiona's `/transfer`, `/addchar` |
+| `/add`, `/update`, `/deletechar` | Fiona's `/add`, `/update`, `/deletechar`, with existing aliases `/gupload`, `/gupdate`, and `/gdelete` retained |
+| Admin character uploads | `/add` accepts direct Catbox, ImgBB, or Endtrz HTTPS image URLs; `/gupload` asks per upload whether to use ImgBB or Catbox, then posts image and metadata to `CHARA_CHANNEL_ID` (falls back to `GLOG`) |
+| `/checkspawn`, `/changetime` | `/checkspawn` reports the per-group threshold, in-memory progress, and catch-round state; `/changetime <count>` aliases Fiona's admin-authorized `/ctime <count>` |
+| `/spawn`, `/chance`, `/chancelist` | Owner-only manual group spawn; persistent relative rarity weights for automatic drops, configurable with `/chance <rarity_id> <weight>` and listed with `/chancelist` |
 | `/ban`, `/unban`, `/warn` | Existing Fiona group moderation commands |
 | `/broadcast` | Owner/Sudo-only `/waifubcast` and `/waifubroadcast` |
 | `/owner`, `/panel` | Private, `OWNER_ID`-gated `/owner` overview and `/panel` alias; existing restricted admin commands remain separately protected |
+
+Fiona reserves `/claimlist` for a user's character collection, so Summon's claim-weight listing is available as `/claimweights`. `/addchar` also asks the submitter to choose ImgBB or Catbox before posting a pending approval request to `CHARA_CHANNEL_ID`. Fiona's old `/reupload` command is removed as requested. Endtrz direct HTTPS image URLs are accepted by `/add` and `/update image`; Endtrz is not offered as an upload destination in `/gupload` or `/addchar` because this link alone does not establish its upload API.
 
 The command menu and `/help` describe the supported commands. Fiona's music
 `/stats` already exists, so the collector profile intentionally uses
@@ -44,9 +50,7 @@ thin aliases to unrelated Fiona commands:
 - Streak-dependent reward bonuses/achievements are not copied. Fiona now tracks
   a daily-reward streak and longest streak with `/streak`, while retaining its
   existing fixed daily payout and achievement model.
-- `/setclaim`, `/chance`, `/chancelist`, `/checkspawn`, `/changetime`, and
-  `/spawn` admin controls (Fiona uses its existing spawn and cooldown settings).
-- `/give`, `/givemoney`, `/rmmoney`, `/removeall`, `/claimlist`, and claim-code
+- `/give`, `/givemoney`, `/rmmoney`, `/removeall`, and claim-code
   administration beyond Fiona's existing `/add`, `/kill`, `/transfer`, `/cgen`,
   and `/redeem` flows.
 - `/font`/`/style`, `/premium`/`/unpremium`, `/nguess`, `/restart`, and

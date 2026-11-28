@@ -1,5 +1,15 @@
 """User collector profile and statistics (/profile, /stats)."""
 
+from aoiwaifu.unit.rich_ui import (
+    reply_photo_panel,
+    reply_panel,
+    edit_panel,
+    premium_button,
+    premium_text,
+    rich_card,
+    rich_heading,
+    rich_table,
+)
 import html
 from datetime import date, datetime, timedelta
 from urllib.parse import urlsplit
@@ -12,7 +22,6 @@ from aoiwaifu import STATS_IMG, app, collection, rarity_map, rarity_map2, user_c
 from aoiwaifu.admin.blocklist import get_blocklisted_id_variants, is_user_blocklisted
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
 from aoiwaifu.unit.profile_card import build_profile_card
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card, rich_heading, rich_table
 
 
 MAX_FEATURED_IMAGE_BYTES = 5 * 1024 * 1024
@@ -288,7 +297,7 @@ async def profile_and_stats_handler(client: Client, message: Message):
         target_user_id, username=target_username, first_name=target_first_name
     )
     if error or not stats:
-        await message.reply_text(
+        await reply_panel(message,
             premium_text(tr(error or "Unable to load profile.", lang)),
             parse_mode=enums.ParseMode.HTML,
         )
@@ -301,7 +310,7 @@ async def profile_and_stats_handler(client: Client, message: Message):
         )
         stats["portrait_kind"] = portrait_kind
         card = build_profile_card(stats, featured_image=featured_image)
-        await message.reply_photo(
+        await reply_photo_panel(message,
             photo=card,
             caption=caption,
             reply_markup=keyboard,
@@ -309,14 +318,14 @@ async def profile_and_stats_handler(client: Client, message: Message):
         )
     except Exception:
         try:
-            await message.reply_photo(
+            await reply_photo_panel(message,
                 photo=stats["photo_url"] or STATS_IMG[0],
                 caption=caption,
                 reply_markup=keyboard,
                 parse_mode=enums.ParseMode.HTML,
             )
         except Exception:
-            await message.reply_text(
+            await reply_panel(message,
                 caption,
                 reply_markup=keyboard,
                 parse_mode=enums.ParseMode.HTML,

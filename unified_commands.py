@@ -57,6 +57,10 @@ GROUP_COMMANDS = (
     ("waifu", "Open the character collection panel"),
     ("guess", "Catch the current character"),
     ("hunt", "Hunt for a character"),
+    ("checkspawn", "Check character spawn threshold and progress"),
+    ("changetime", "Change this group's character spawn threshold"),
+    ("ctime", "Change this group's character spawn threshold"),
+    ("spawn", "Manually spawn a character (bot owner only)"),
     ("harem", "View your collected characters"),
     ("lang", "Set music language"),
     ("wlang", "Set collection language"),
@@ -70,6 +74,10 @@ GROUP_COMMANDS = (
 )
 
 ADMIN_COMMANDS = (
+    ('claimweights', 'List daily claim rarity weights (owner only)'),
+    ('setclaim', 'Set a daily claim rarity weight (owner only)'),
+    ('chance', 'Set an automatic rarity spawn weight (owner only)'),
+    ('chancelist', 'List automatic rarity spawn weights (owner only)'),
     ('promote', 'Promote a group member'),
     ('fullpromote', 'Promote with all available admin rights'),
     ('lowpromote', 'Promote with limited admin rights'),

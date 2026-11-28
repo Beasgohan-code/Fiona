@@ -39,7 +39,7 @@ class StartMediaTests(unittest.TestCase):
             if isinstance(node, ast.Call)
         }
         self.assertIn("_download_start_media", calls)
-        self.assertIn("reply_text", calls)
+        self.assertIn("reply_panel", calls)
 
 
 if __name__ == "__main__":

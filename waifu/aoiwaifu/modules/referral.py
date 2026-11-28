@@ -1,3 +1,12 @@
+from aoiwaifu.unit.rich_ui import (
+    send_panel,
+    reply_panel,
+    edit_panel,
+    premium_button,
+    premium_text,
+    rich_card,
+    reply_notice,
+)
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 import html
 import re
@@ -7,7 +16,6 @@ from datetime import datetime
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, CallbackQuery
 from pyrogram.errors import MessageNotModified
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card, reply_notice
 from aoiwaifu import app, user_collection, db, GLOG, get_effective_lang, t
 referrals_collection = db['referrals']
 REFERRAL_DOLLARS = 25
@@ -69,7 +77,7 @@ async def refer_command(client: Client, message):
     lang = await get_effective_lang(message, user_id=user_id)
     caption = await build_referral_text(bot_username, user_id, referrals_count, lang=lang)
     keyboard = build_referral_keyboard(bot_username, user_id)
-    await message.reply_text(text=premium_text(tr(caption, lang)), reply_markup=keyboard, parse_mode=enums.ParseMode.HTML)
+    await reply_panel(message,text=premium_text(tr(caption, lang)), reply_markup=keyboard, parse_mode=enums.ParseMode.HTML)
 
 @app.on_callback_query(filters.regex('^refer_refresh:(\\d+)$'))
 async def refer_refresh_callback(client: Client, callback_query: CallbackQuery):
@@ -187,7 +195,7 @@ async def process_referral(client: Client, new_user, ref_arg: str, is_new_start:
         "🎉",
     ))
     try:
-        await client.send_message(chat_id=referrer_id, text=notify_referrer_text, parse_mode=enums.ParseMode.HTML)
+        await send_panel(client,chat_id=referrer_id, text=notify_referrer_text, parse_mode=enums.ParseMode.HTML)
     except Exception:
         pass
     notify_new_user_text = premium_text(rich_card(
@@ -196,11 +204,11 @@ async def process_referral(client: Client, new_user, ref_arg: str, is_new_start:
         "🎁",
     ))
     try:
-        await client.send_message(chat_id=new_user_id, text=notify_new_user_text, parse_mode=enums.ParseMode.HTML)
+        await send_panel(client,chat_id=new_user_id, text=notify_new_user_text, parse_mode=enums.ParseMode.HTML)
     except Exception:
         pass
     log_text = f'🔗 <b>#NEW_REFERRAL_LOG</b>\n\n• 👤 <b>Referrer:</b> <a href="tg://user?id={referrer_id}"><b>{safe_ref_name}</b></a> (<code>{referrer_id}</code>)\n• 🆕 <b>Referred User:</b> <a href="tg://user?id={new_user_id}"><b>{safe_new_name}</b></a> (<code>{new_user_id}</code>)\n• 🎁 <b>Reward Given:</b> <code>+${REFERRAL_DOLLARS} &amp; +{REFERRAL_COINS:,} coins</code>\n• 📊 <b>Referrer Total Invites:</b> <code>{new_count}</code>'
     try:
-        await client.send_message(chat_id=GLOG, text=log_text, parse_mode=enums.ParseMode.HTML)
+        await send_panel(client,chat_id=GLOG, text=log_text, parse_mode=enums.ParseMode.HTML)
     except Exception:
         pass

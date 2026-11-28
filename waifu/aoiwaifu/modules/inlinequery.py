@@ -1,3 +1,8 @@
+from aoiwaifu.unit.rich_ui import (
+    premium_text,
+    rich_card,
+    rich_table,
+)
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 import re
 import time
@@ -18,7 +23,6 @@ from telegram.ext import InlineQueryHandler, ContextTypes
 
 from aoiwaifu import app, application, user_collection
 from aoiwaifu.unit.aoi_inline import *
-from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table
 
 all_characters_cache = TTLCache(maxsize=10000, ttl=36000)
 user_collection_cache = TTLCache(maxsize=10000, ttl=60)

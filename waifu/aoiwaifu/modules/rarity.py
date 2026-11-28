@@ -1,11 +1,16 @@
 """Show catalog counts for Fiona's active canonical rarity options."""
 
+from aoiwaifu.unit.rich_ui import (
+    reply_panel,
+    premium_text,
+    rich_card,
+    rich_table,
+)
 import html
 
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
 from aoiwaifu import app, collection, rarity_map
 from pyrogram import filters, enums
-from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table
 
 
 @app.on_message(filters.command(["rarity", "rarities"]))
@@ -37,7 +42,7 @@ async def rarity_count(client, message):
             rich_table(("RARITY", "COUNT"), rows),
             "💎",
         )
-        await message.reply_text(premium_text(tr(card, lang)), parse_mode=enums.ParseMode.HTML)
+        await reply_panel(message,premium_text(tr(card, lang)), parse_mode=enums.ParseMode.HTML)
     except Exception:
         card = rich_card("Catalog unavailable", "Could not load rarity totals. Please try again.", "⚠️")
-        await message.reply_text(premium_text(tr(card, lang)), parse_mode=enums.ParseMode.HTML)
+        await reply_panel(message,premium_text(tr(card, lang)), parse_mode=enums.ParseMode.HTML)

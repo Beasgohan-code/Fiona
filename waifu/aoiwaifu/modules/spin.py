@@ -1,7 +1,14 @@
 """Daily coin spin adapted to Fiona's Mongo-backed economy."""
-
 from __future__ import annotations
 
+
+from aoiwaifu.unit.rich_ui import (
+    reply_panel,
+    premium_text,
+    rich_card,
+    rich_quote,
+    reply_notice,
+)
 import html
 import random
 from datetime import datetime, timedelta, timezone
@@ -13,7 +20,6 @@ from pymongo import ReturnDocument
 from aoiwaifu import app, user_collection
 from aoiwaifu.admin.blocklist import is_user_blocklisted
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_quote, reply_notice
 
 SPIN_COOLDOWN = timedelta(hours=24)
 SPIN_REWARDS = (50, 100, 250, 500, 1_000, 2_500)
@@ -57,7 +63,7 @@ async def daily_spin(client: Client, message: Message):
             rich_quote(f"🕓 Your next spin is ready in <b>{hours}h {minutes}m</b>."),
             "⏳",
         )
-        return await message.reply_text(premium_text(tr(card, lang)), parse_mode=enums.ParseMode.HTML)
+        return await reply_panel(message,premium_text(tr(card, lang)), parse_mode=enums.ParseMode.HTML)
 
     reward = random.choices(SPIN_REWARDS, weights=SPIN_WEIGHTS, k=1)[0]
     claim_filter = {"id": user_id}
@@ -73,7 +79,7 @@ async def daily_spin(client: Client, message: Message):
             rich_quote("A spin was recorded for your account. Check again tomorrow."),
             "⏳",
         )
-        return await message.reply_text(premium_text(tr(card, lang)), parse_mode=enums.ParseMode.HTML)
+        return await reply_panel(message,premium_text(tr(card, lang)), parse_mode=enums.ParseMode.HTML)
 
     first_name = html.escape(message.from_user.first_name or "Collector")
     new_balance = int(updated.get("balance", 0) or 0)
@@ -87,7 +93,7 @@ async def daily_spin(client: Client, message: Message):
             "<i>Your next spin unlocks in 24 hours. Good luck next time!</i>",
         )
     )
-    await message.reply_text(
+    await reply_panel(message,
         premium_text(tr(rich_card("Daily spin", body, "🎰"), lang)),
         parse_mode=enums.ParseMode.HTML,
     )

@@ -5,10 +5,16 @@ Provides:
 - Inline callback handlers for DM first-start language selection, DM language menu, and Group Settings language selector
 - Web Server endpoints (/api/i18n, /api/i18n/set, /js/aoi_i18n.js) for Dress-Up Mini App & all 10 HTML5 Games
 """
+from aoiwaifu.unit.rich_ui import (
+    reply_panel,
+    edit_panel,
+    premium_text,
+    rich_card,
+    reply_notice,
+)
 import html
 import json
 from pyrogram import Client, filters, enums
-from aoiwaifu.unit.rich_ui import edit_panel, premium_text, rich_card, reply_notice
 try:
     from pyrogram.enums import ChatMemberStatus
 except ImportError:
@@ -116,7 +122,7 @@ async def dm_lang_command(client: Client, message: Message):
         back_callback="back_to_home",
         extra_suffix=":menu",
     )
-    await message.reply_text(premium_text(text), reply_markup=markup, parse_mode=enums.ParseMode.HTML)
+    await reply_panel(message,premium_text(text), reply_markup=markup, parse_mode=enums.ParseMode.HTML)
 
 
 @app.on_message(filters.command(["wlang", "wlanguage", "wsetlang"]) & filters.group)
@@ -141,7 +147,7 @@ async def group_settings_lang_command(client: Client, message: Message):
 
     group_title = getattr(message.chat, "title", None) or f"Group {chat_id}"
     text, markup = await build_group_settings_text_and_markup(chat_id, group_title, lang=cur_lang)
-    await message.reply_text(premium_text(text), reply_markup=markup, parse_mode=enums.ParseMode.HTML)
+    await reply_panel(message,premium_text(text), reply_markup=markup, parse_mode=enums.ParseMode.HTML)
 
 
 # 🔹 Callback: Open DM Language Menu from Start Screen

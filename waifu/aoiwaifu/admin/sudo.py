@@ -1,3 +1,6 @@
+from aoiwaifu.unit.rich_ui import (
+    reply_notice,
+)
 # ==============================================================================
 # How to Use:
 #   - Purpose: Manages sudo users and granular power flags, including automatic
@@ -18,7 +21,6 @@ from aoiwaifu import OWNER_ID, SUDO
 from aoiwaifu import app, db, require_power
 from functools import wraps
 from aoiwaifu.unit.aoi_parse_fix import SudoUsersHybrid
-from aoiwaifu.unit.rich_ui import reply_notice
 
 sudo_users = SudoUsersHybrid(db['sudo_users'], SUDO, OWNER_ID)
 ALL_POWERS = ['add_character', 'delete_character', 'update_character', 'approve_request', 'approve_inventory_request', 'VIP']

@@ -1,8 +1,10 @@
+from aoiwaifu.unit.rich_ui import (
+    reply_notice,
+)
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t
 from pyrogram import Client, filters
 from pyrogram.enums import ChatMemberStatus
 from aoiwaifu import group_user_totals_collection, group_ctimes, OWNER_ID, app, x, get_chat_lang, t
-from aoiwaifu.unit.rich_ui import reply_notice
 
 async def is_admin(client: Client, chat_id: int, user_id: int) -> bool:
     """
@@ -20,7 +22,7 @@ async def is_admin(client: Client, chat_id: int, user_id: int) -> bool:
         print(f"Error: {e}")
         return False
 
-@app.on_message(filters.command("ctime") & filters.group)
+@app.on_message(filters.command(["ctime", "changetime"]) & filters.group)
 async def set_ctime(client, message):
     chat_id = message.chat.id
     user_id = message.from_user.id

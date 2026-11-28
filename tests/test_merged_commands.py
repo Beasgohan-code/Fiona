@@ -87,8 +87,15 @@ class MergedCommandTests(unittest.TestCase):
         music = commands_in_tree(MUSIC, is_music=True)
         waifu = commands_in_tree(WAIFU, is_music=False)
         duplicates = sorted(set(music) & set(waifu))
-        details = [f"/{name}: music={music[name]}, waifu={waifu[name]}" for name in duplicates]
-        self.assertEqual(duplicates, [], "\n".join(details))
+        intentional_scoped = {"update"}
+        unexpected = sorted(set(duplicates) - intentional_scoped)
+        details = [f"/{name}: music={music[name]}, waifu={waifu[name]}" for name in unexpected]
+        self.assertEqual(unexpected, [], "\n".join(details))
+        if "update" in duplicates:
+            music_update = (MUSIC / "plugins/sudo/heroku.py").read_text(encoding="utf-8")
+            waifu_update = (WAIFU / "admin/update.py").read_text(encoding="utf-8")
+            self.assertIn("_music_update_without_arguments", music_update)
+            self.assertIn("_is_character_update_request", waifu_update)
 
     def test_telegram_menus_have_unique_names_and_fit_api_limit(self):
         for commands in (PRIVATE_COMMANDS, GROUP_COMMANDS, ADMIN_COMMANDS):

@@ -1,3 +1,10 @@
+from aoiwaifu.unit.rich_ui import (
+    reply_photo_panel,
+    edit_panel,
+    premium_button,
+    premium_text,
+    rich_card,
+)
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup
@@ -7,7 +14,6 @@ import html
 from aoiwaifu import app as Client
 from aoiwaifu import PHOTO_URL, user_collection, top_global_groups_collection
 from aoiwaifu.admin.blocklist import get_blocklisted_id_variants
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card
 
 def leaderboard_header(title, subtitle):
     return "\n\n".join((rich_card(title, f"<i>{subtitle}</i>", "🏆"), ""))
@@ -50,7 +56,7 @@ async def rank(client, message):
 
     # Send the visual response immediately; update this same message after DB work.
     loading_caption = premium_text(leaderboard_header('GLOBAL COLLECTOR RANK', 'Syncing the leaderboard…') + '⏳ <b>Loading rankings...</b>\n\n<i>Fetching the top collectors. Please wait.</i>')
-    progress = await message.reply_photo(
+    progress = await reply_photo_panel(message,
         photo=PHOTO_URL[0],
         caption=loading_caption,
         parse_mode=enums.ParseMode.HTML,

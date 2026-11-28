@@ -1,8 +1,11 @@
+from aoiwaifu.unit.rich_ui import (
+    send_panel,
+    reply_notice,
+)
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 from aoiwaifu import app, db, require_power
 from pyrogram import filters
 from pyrogram.types import Message
-from aoiwaifu.unit.rich_ui import reply_notice
 blocked_groups_collection = db['blocked_character_drop_groups']
 
 def _parse_group_id(message: Message):
@@ -29,7 +32,7 @@ async def add_blocklist_group(client, message: Message):
     await blocked_groups_collection.update_one({'_id': group_id}, {'$set': {'chat_id': group_id, 'blocked_by': message.from_user.id}}, upsert=True)
     notice = '🚫 <b>This group has been blocklisted by the bot administrator.</b>\n\nCharacter drops are disabled in this group, so no characters can appear for grabbing.'
     try:
-        await client.send_message(group_id, notice, parse_mode='html')
+        await send_panel(client,group_id, notice, parse_mode='html')
         await reply_notice(message, tr(f'✅ Group `{group_id}` has been added to the character-drop blocklist. Notification sent.', lang))
     except Exception as exc:
         await reply_notice(message, tr(f"✅ Group `{group_id}` was added to the blocklist, but I couldn't send the notification. Please make sure the bot is still in that group and can send messages.", lang))

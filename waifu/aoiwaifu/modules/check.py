@@ -1,10 +1,19 @@
+from aoiwaifu.unit.rich_ui import (
+    reply_photo_panel,
+    reply_video_panel,
+    reply_panel,
+    edit_panel,
+    premium_button,
+    premium_text,
+    rich_card,
+    reply_notice,
+)
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 from aoiwaifu import app, collection as character_collection, user_collection
 from aoiwaifu.admin.blocklist import get_blocklisted_id_variants
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, CallbackQuery
 from html import escape
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card, reply_notice
 
 @app.on_message(filters.command('check'))
 async def check_character(client, message):
@@ -31,11 +40,11 @@ async def check_character(client, message):
     )
     caption = premium_text(tr(text, lang))
     if character.get('vid_url'):
-        await message.reply_video(character['vid_url'], caption=caption, parse_mode=enums.ParseMode.HTML, reply_markup=keyboard)
+        await reply_video_panel(message,character['vid_url'], caption=caption, parse_mode=enums.ParseMode.HTML, reply_markup=keyboard)
     elif character.get('img_url'):
-        await message.reply_photo(character['img_url'], caption=caption, parse_mode=enums.ParseMode.HTML, reply_markup=keyboard)
+        await reply_photo_panel(message,character['img_url'], caption=caption, parse_mode=enums.ParseMode.HTML, reply_markup=keyboard)
     else:
-        await message.reply_text(caption, parse_mode=enums.ParseMode.HTML, reply_markup=keyboard)
+        await reply_panel(message,caption, parse_mode=enums.ParseMode.HTML, reply_markup=keyboard)
 
 @app.on_callback_query(filters.regex('^whohaveit_'))
 async def who_have_it(client, callback_query):

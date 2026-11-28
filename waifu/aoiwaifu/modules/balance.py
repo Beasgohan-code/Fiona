@@ -1,5 +1,13 @@
 """User economy commands (/balance, /bal, /dailygift, /weekly, /pay)."""
 
+from aoiwaifu.unit.rich_ui import (
+    send_panel,
+    reply_panel,
+    premium_text,
+    rich_card,
+    rich_quote,
+    reply_notice,
+)
 from datetime import date, datetime, timedelta
 import html
 import time
@@ -11,7 +19,6 @@ from pyrogram.types import Message
 from aoiwaifu import app, user_collection
 from aoiwaifu.admin.blocklist import is_user_blocklisted
 from aoiwaifu.unit.aoi_lang import get_effective_lang, t, tr
-from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_quote, reply_notice
 
 pay_in_flight = set()
 lock = {}
@@ -103,7 +110,7 @@ async def daily_gift(client: Client, message: Message):
     today = now.date()
     last_daily = _as_date(user_data.get("last_daily"))
     if last_daily == today:
-        await message.reply_text(
+        await reply_panel(message,
             premium_text(rich_card(
                 t("daily_claimed_title", lang),
                 rich_quote(t("daily_claimed_tomorrow", lang)),
@@ -140,7 +147,7 @@ async def daily_gift(client: Client, message: Message):
         ),
         "🎁",
     )
-    await message.reply_text(premium_text(card), parse_mode=enums.ParseMode.HTML)
+    await reply_panel(message,premium_text(card), parse_mode=enums.ParseMode.HTML)
 
 
 @app.on_message(filters.command("streak"))
@@ -162,7 +169,7 @@ async def daily_streak(client: Client, message: Message):
         t("streak_best", lang, streak=best_streak),
         t("streak_hint", lang),
     ))
-    await message.reply_text(
+    await reply_panel(message,
         premium_text(rich_card(t("streak_title", lang), rich_quote(body), "🔥")),
         parse_mode=enums.ParseMode.HTML,
     )
@@ -187,7 +194,7 @@ async def weekly_gift(client: Client, message: Message):
         if last_weekly >= week_start:
             next_week = week_start + timedelta(days=7)
             days_left = max(1, (next_week - now).days)
-            await message.reply_text(
+            await reply_panel(message,
                 premium_text(rich_card("Weekly reward claimed", rich_quote(f"Your next reward is available in <b>{days_left} days</b>."), "🎁")),
                 parse_mode=enums.ParseMode.HTML,
             )
@@ -208,7 +215,7 @@ async def weekly_gift(client: Client, message: Message):
         ),
         "🎁",
     )
-    await message.reply_text(premium_text(tr(card, lang)), parse_mode=enums.ParseMode.HTML)
+    await reply_panel(message,premium_text(tr(card, lang)), parse_mode=enums.ParseMode.HTML)
 
 
 @app.on_message(filters.command(["balance", "bal"]))
@@ -229,7 +236,7 @@ async def balance(client: Client, message: Message):
         ),
         "👛",
     )
-    await message.reply_text(premium_text(tr(response, lang)), parse_mode=enums.ParseMode.HTML)
+    await reply_panel(message,premium_text(tr(response, lang)), parse_mode=enums.ParseMode.HTML)
 
 
 @app.on_message(filters.command("pay"))
@@ -318,12 +325,12 @@ async def pay(client: Client, message: Message):
             ),
             "💸",
         )
-        await message.reply_text(
+        await reply_panel(message,
             premium_text(tr(payment_card, lang)),
             parse_mode=enums.ParseMode.HTML,
         )
         try:
-            await client.send_message(
+            await send_panel(client,
                 recipient_id,
                 premium_text(
                     tr(

@@ -1,3 +1,11 @@
+from aoiwaifu.unit.rich_ui import (
+    reply_panel,
+    edit_panel,
+    premium_button,
+    premium_text,
+    rich_card,
+    reply_notice,
+)
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 import asyncio
 import html
@@ -7,7 +15,6 @@ from pyrogram.types import InlineKeyboardMarkup
 from pyrogram.enums import ParseMode
 from aoiwaifu import user_collection, ZYRO
 from aoiwaifu.admin.blocklist import is_user_blocklisted
-from aoiwaifu.unit.rich_ui import edit_panel, premium_button, premium_text, rich_card, reply_notice
 
 pending_trades = {}
 lock = []
@@ -82,7 +89,7 @@ async def trade(client, message):
         f"{message.from_user.mention} offers <code>{sender_char_id}</code>.\n"
         "Only the recipient can accept. This offer expires in 10 minutes."
     )
-    trade_message = await message.reply_text(
+    trade_message = await reply_panel(message,
         premium_text(rich_card('Character trade offer', tr(trade_body, lang), '🔁')),
         parse_mode=ParseMode.HTML,
         reply_markup=keyboard,

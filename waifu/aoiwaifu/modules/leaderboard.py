@@ -1,5 +1,11 @@
 """Public leaderboard and bot count commands (/TopGroups, /ctop, /st)."""
 
+from aoiwaifu.unit.rich_ui import (
+    reply_photo_panel,
+    reply_panel,
+    premium_text,
+    rich_card,
+)
 import html
 import random
 from pyrogram import Client, enums, filters
@@ -14,7 +20,6 @@ from aoiwaifu import (
 )
 from aoiwaifu.admin.blocklist import get_blocklisted_id_variants
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import premium_text, rich_card
 
 
 @app.on_message(filters.command("TopGroups"))
@@ -37,7 +42,7 @@ async def global_leaderboard(client: Client, message: Message):
         count = group["count"]
         leaderboard_message += f"{i}. <b>{group_name}</b> ➾ <b>{count}</b>\n"
     photo_url = random.choice(PHOTO_URL)
-    await message.reply_photo(
+    await reply_photo_panel(message,
         photo=photo_url,
         caption=premium_text(tr(leaderboard_message, lang)),
         parse_mode=enums.ParseMode.HTML,
@@ -71,7 +76,7 @@ async def ctop(client: Client, message: Message):
         character_count = user["character_count"]
         leaderboard_message += f'{i}. <a href="https://t.me/{username}"><b>{first_name}</b></a> ➾ <b>{character_count}</b>\n'
     photo_url = random.choice(PHOTO_URL)
-    await message.reply_photo(
+    await reply_photo_panel(message,
         photo=photo_url,
         caption=premium_text(tr(leaderboard_message, lang)),
         parse_mode=enums.ParseMode.HTML,
@@ -83,4 +88,4 @@ async def stats(client: Client, message: Message):
     lang = await get_effective_lang(message)
     user_count = await user_collection.count_documents({})
     group_count = await group_user_totals_collection.distinct("group_id")
-    await message.reply_text(premium_text(rich_card("Fiona community", f"👥 <b>Collectors:</b> {user_count:,}\n🌐 <b>Active groups:</b> {len(group_count):,}", "📊")), parse_mode=enums.ParseMode.HTML)
+    await reply_panel(message,premium_text(rich_card("Fiona community", f"👥 <b>Collectors:</b> {user_count:,}\n🌐 <b>Active groups:</b> {len(group_count):,}", "📊")), parse_mode=enums.ParseMode.HTML)

@@ -1,12 +1,15 @@
 """Admin economy & user data management commands (/add, /kill)."""
 
+from aoiwaifu.unit.rich_ui import (
+    rich_card,
+    reply_notice,
+)
 import html
 from pyrogram import Client, enums, filters
 from pyrogram.types import Message
 
 from aoiwaifu import app, require_power, user_collection
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import rich_card, reply_notice
 
 
 async def _get_balance(user_id: int) -> tuple[int, int]:

@@ -1,3 +1,12 @@
+from aoiwaifu.unit.rich_ui import (
+    reply_photo_panel,
+    reply_panel,
+    premium_button,
+    premium_text,
+    rich_card,
+    edit_panel,
+    reply_notice,
+)
 # ==============================================================================
 # How to Use:
 #   - Purpose: Manages character gifting (/gift) between users and records
@@ -17,7 +26,6 @@ from pyrogram.types import InlineKeyboardMarkup
 from pyrogram.enums import ParseMode
 from aoiwaifu import user_collection, ZYRO
 from aoiwaifu.admin.blocklist import is_user_blocklisted
-from aoiwaifu.unit.rich_ui import premium_button, premium_text, rich_card, edit_panel, reply_notice
 
 pending_gifts = {}
 
@@ -87,14 +95,14 @@ async def gift(client, message):
         '🎁',
     )
     if character.get('img_url'):
-        await message.reply_photo(
+        await reply_photo_panel(message,
             photo=character['img_url'],
             caption=premium_text(tr(caption, lang)),
             parse_mode=ParseMode.HTML,
             reply_markup=keyboard,
         )
     else:
-        await message.reply_text(
+        await reply_panel(message,
             premium_text(tr(caption, lang)),
             parse_mode=ParseMode.HTML,
             reply_markup=keyboard,

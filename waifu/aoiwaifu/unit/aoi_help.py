@@ -5,7 +5,9 @@ HELP_DATA = {
         "HELP_NAME": "Catch",
         "HELP": (
             "Catch anime characters that spawn in groups:\n\n"
-            "• `/guess <name>` (or `/summon`, `/protecc`, `/collect`, `/grab`, `/hunt`) — Catch the spawned character and earn coins."
+            "• `/guess <name>` (or `/summon`, `/protecc`, `/collect`, `/grab`, `/hunt`) — Catch the spawned character and earn coins.\n"
+            "• `/checkspawn` — View this group's message threshold, counter progress, and catch-round state.\n"
+            "• `/spawn` — Manually start a character round (bot owner only)."
         ),
     },
     "harem": {
@@ -63,7 +65,7 @@ HELP_DATA = {
             "• `/sips` or `/search <name>` — Search characters by name with inline preview\n"
             "• `/rarity` or `/rarities` — View every rarity currently in the catalog\n"
             "• `/total` — Total characters in the database\n"
-            "• `/addchar <name> <anime>` — Reply to an image to request adding a character\n"
+            "• `/addchar <name> <anime>` — Reply to an image, choose ImgBB/Catbox, then request review\n"
             "• Inline mode: type `@BotUsername <query>` in any chat"
         ),
     },
@@ -78,10 +80,16 @@ HELP_DATA = {
         "HELP_NAME": "Admin",
         "HELP": (
             "Available owner and admin controls:\n\n"
-            "• `/gupload <name> <anime> <rarity>` — Upload character (ImgBB)\n"
-            "• `/gupdate`, `/maxupdate`, `/gdelete`, `/rdelete`, `/reupload` — Manage characters\n"
+            "• `/add <name> <anime> <rarity-id> <image-url>` — Add from a Catbox/ImgBB/Endtrz HTTPS image URL\n"
+            "• `/gupload <name> <anime> <rarity>` — Choose ImgBB/Catbox; uploads and posts to the character channel\n"
+            "• `/update` or `/gupdate <id> <field> <value>` — Update character data/image\n"
+            "• `/deletechar <id>` or `/gdelete <id>` — Delete a character and remove it from collections\n"
+            "• `/maxupdate`, `/rdelete` — Bulk update or rarity administration\n"
             "• `/find`, `/findani` — Find next available ID or search anime\n"
-            "• `/ctime <count>` — Set group character spawn message threshold\n"
+            "• `/ctime <count>` or `/changetime <count>` — Set group character spawn message threshold\n"
+            "• `/spawn` — Manually start a character round (bot owner only)\n"
+            "• `/chance <rarity_id> <weight>` / `/chancelist` — Set or inspect relative automatic spawn weights (owner only; weight 0 disables that rarity)\n"
+            "• `/setclaim <rarity_id> <weight>` / `/claimweights` — Configure daily claim rarity weights (owner only; weight 0 disables that rarity)\n"
             "• `/cgen <char_id> <limit>` — Generate a character redeem code\n"
             "• `/add`, `/kill`, `/transfer`, `/backtransfer` — Manage user data & currency\n"
             "• `/blocklist`, `/removeblocklist`, `/addblocklistgc`, `/removeblocklistgc` — Blocklists\n"

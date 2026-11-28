@@ -251,7 +251,15 @@ Total Left: `{hours}`**h**  `{minutes}`**m**  [`{percentage}`**%**]"""
     return await dyno.edit(text)
 
 
-@app.on_message(command("UPDATE_COMMAND") & SUDOERS)
+def _music_update_without_arguments(_, __, message):
+    """Reserve bare /update for the music bot's self-updater.
+
+    /update with arguments is the Waifu/Summon character-edit command.
+    """
+    return len(getattr(message, "command", []) or []) <= 1
+
+
+@app.on_message(command("UPDATE_COMMAND") & SUDOERS & filters.create(_music_update_without_arguments))
 @language
 async def update_(client, message, _):
     if await is_heroku():

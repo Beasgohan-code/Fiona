@@ -1,5 +1,11 @@
 """Collector milestones derived from Fiona's existing Mongo user documents."""
 
+from aoiwaifu.unit.rich_ui import (
+    reply_panel,
+    premium_text,
+    rich_card,
+    rich_table,
+)
 import html
 
 from pyrogram import Client, enums, filters
@@ -7,7 +13,6 @@ from pyrogram.types import Message
 
 from aoiwaifu import app, user_collection
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-from aoiwaifu.unit.rich_ui import premium_text, rich_card, rich_table
 
 
 @app.on_message(filters.command(["achievements", "ach", "badges"]))
@@ -48,4 +53,4 @@ async def achievements(client: Client, message: Message):
         + rich_table(("MILESTONE", "PROGRESS"), rows),
         "🏅",
     )
-    await message.reply_text(premium_text(tr(card, lang)), parse_mode=enums.ParseMode.HTML)
+    await reply_panel(message,premium_text(tr(card, lang)), parse_mode=enums.ParseMode.HTML)

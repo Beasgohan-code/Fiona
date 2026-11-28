@@ -1,82 +1,156 @@
+from aoiwaifu.unit.rich_ui import (
+    reply_notice,
+    edit_notice,
+)
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from pymongo import ReturnDocument
 from aoiwaifu import collection, SUDO, app, user_collection, require_power
+from aoiwaifu.admin.upload import require_character_image_url
 from aoiwaifu.unit.aoi_rarity import rarity_map
-from aoiwaifu.unit.rich_ui import reply_notice, edit_notice
 SUDO_USERS = SUDO
 
-@app.on_message(filters.command('gdelete'))
-@require_power('delete_character')
+async def _find_character_by_id(character_id):
+    candidates = [str(character_id), str(character_id).zfill(2)]
+    if str(character_id).isdigit():
+        candidates.append(int(character_id))
+    for candidate in dict.fromkeys(candidates):
+        character = await collection.find_one({"id": candidate})
+        if character:
+            return character
+    return None
+
+
+@app.on_message(filters.command(["gdelete", "deletechar"]))
+@require_power("delete_character")
 async def delete_handler(client, message):
     lang = await get_effective_lang(message)
+    args = (message.text or "").split()
+    if len(args) != 2:
+        await reply_notice(message, tr("Incorrect format... Please use: /deletechar ID", lang))
+        return
     try:
-        args = message.text.split()
-        if len(args) != 2:
-            await reply_notice(message, tr('Incorrect format... Please use: /gdelete ID', lang))
+        character = await _find_character_by_id(args[1])
+        if not character:
+            await reply_notice(message, tr(f"Character with ID {args[1]} not found in the database.", lang))
             return
-        character_id = args[1]
-        character = await collection.find_one_and_delete({'id': character_id})
-        if character:
-            update_result = await user_collection.update_many({'characters.id': character_id}, {'$pull': {'characters': {'id': character_id}}})
-            await reply_notice(message, tr(f'Character with ID {character_id} deleted successfully from the database.\nRemoved from {update_result.modified_count} user collections.', lang))
-        else:
-            await reply_notice(message, tr(f'Character with ID {character_id} not found in the database.', lang))
-    except Exception as e:
-        await reply_notice(message, tr(f'Error: {str(e)}', lang))
+
+        stored_id = character.get("id")
+        await collection.delete_one({"_id": character["_id"]})
+        id_values = [stored_id, str(stored_id)]
+        if str(stored_id).isdigit():
+            id_values.append(int(stored_id))
+        update_result = await user_collection.update_many(
+            {"characters.id": {"$in": id_values}},
+            {"$pull": {"characters": {"id": {"$in": id_values}}}},
+        )
+        await reply_notice(
+            message,
+            tr(
+                f"Character with ID {stored_id} deleted successfully from the database.\n"
+                f"Removed from {update_result.modified_count} user collections.",
+                lang,
+            ),
+        )
+    except Exception as exc:
+        await reply_notice(message, tr(f"Error: {str(exc)}", lang))
+
+
 import time
 
-@app.on_message(filters.command('gupdate'))
-@require_power('update_character')
+
+def _is_character_update_request(_, __, message):
+    command = getattr(message, "command", []) or []
+    if not command:
+        return False
+    name = str(command[0]).split("@", 1)[0].lower()
+    # Bare /update belongs to the music updater; character /update requires args.
+    return name == "gupdate" or (name == "update" and len(command) > 1)
+
+
+@app.on_message(filters.command(["gupdate", "update"]) & filters.create(_is_character_update_request))
+@require_power("update_character")
 async def update(client: Client, message: Message):
+    """Support Fiona /gupdate and Summon-style /update <id> <field> <value>."""
     lang = await get_effective_lang(message)
+    parts = (message.text or "").split(maxsplit=3)
+    if len(parts) != 4:
+        await reply_notice(
+            message,
+            tr("Usage: /update <id> <name|anime|rarity|image> <new-value>", lang),
+        )
+        return
+    character_id, field_to_update, new_value = parts[1], parts[2].lower(), parts[3].strip()
+    if field_to_update == "image":
+        field_to_update = "img_url"
+    valid_fields = {"img_url", "name", "anime", "rarity"}
+    if field_to_update not in valid_fields:
+        await reply_notice(message, tr("Invalid field. Use name, anime, rarity, or image.", lang))
+        return
+
     try:
-        args = message.text.split()
-        if len(args) != 4:
-            await reply_notice(message, tr('Incorrect format. Please use: /gupdate id field new_value', lang))
+        character = await _find_character_by_id(character_id)
+        if not character:
+            await reply_notice(message, tr(f"Character with ID {character_id} was not found.", lang))
             return
-        character_id = args[1]
-        field_to_update = args[2]
-        new_value = args[3]
-        valid_fields = ['img_url', 'name', 'anime', 'rarity']
-        if field_to_update not in valid_fields:
-            await reply_notice(message, tr(f"Invalid field. Please use one of the following: {', '.join(valid_fields)}", lang))
-            return
-        if field_to_update in ['name', 'anime']:
-            new_value = new_value.replace('-', ' ').title()
-        elif field_to_update == 'rarity':
+        if field_to_update in {"name", "anime"}:
+            new_value = new_value.replace("-", " ").title()
+        elif field_to_update == "rarity":
             try:
                 new_value = rarity_map[int(new_value)]
             except (KeyError, ValueError):
-                await reply_notice(message, tr(f'Invalid rarity number. Choose a number from 1 to {len(rarity_map)}.', lang))
+                await reply_notice(message, tr(f"Invalid rarity number. Choose 1 to {len(rarity_map)}.", lang))
                 return
-        result = await collection.update_one({'id': character_id}, {'$set': {field_to_update: new_value}})
+        else:
+            try:
+                new_value = require_character_image_url(new_value)
+            except ValueError as exc:
+                await reply_notice(message, tr(str(exc), lang))
+                return
+
+        stored_id = character.get("id")
+        result = await collection.update_one(
+            {"_id": character["_id"]},
+            {"$set": {field_to_update: new_value}},
+        )
         if result.modified_count == 0:
-            await reply_notice(message, tr('Character not found or no changes made.', lang))
+            await reply_notice(message, tr("Character not found or no changes made.", lang))
             return
-        users_cursor = user_collection.find({'characters.id': character_id})
-        total_users = await user_collection.count_documents({'characters.id': character_id})
+
+        id_values = [stored_id, str(stored_id)]
+        if str(stored_id).isdigit():
+            id_values.append(int(stored_id))
+        users_cursor = user_collection.find({"characters.id": {"$in": id_values}})
+        total_users = await user_collection.count_documents({"characters.id": {"$in": id_values}})
         if total_users == 0:
-            await reply_notice(message, tr('sᴜᴄᴄᴇssғᴜʟʟʏ ᴜᴘᴅᴀᴛᴇ ✅', lang))
+            await reply_notice(message, tr("Character updated successfully.", lang))
             return
-        progress_message = await reply_notice(message, tr('Updating: 0% completed...', lang))
+
+        progress_message = await reply_notice(message, tr("Updating user collections: 0%…", lang))
         updated_count = 0
-        progress_threshold = 10
-        next_progress_update = progress_threshold
+        next_progress_update = 10
         async for user in users_cursor:
-            await user_collection.update_one({'_id': user['_id'], 'characters.id': character_id}, {'$set': {f'characters.$.{field_to_update}': new_value}})
+            await user_collection.update_one(
+                {"_id": user["_id"], "characters.id": {"$in": id_values}},
+                {"$set": {f"characters.$.{field_to_update}": new_value}},
+            )
             updated_count += 1
             progress = updated_count / total_users * 100
             if progress >= next_progress_update:
-                await edit_notice(progress_message, tr(f'Updating: {int(progress)}% completed...', lang))
-                next_progress_update += progress_threshold
+                await edit_notice(progress_message, tr(f"Updating: {int(progress)}% completed…", lang))
+                next_progress_update += 10
                 await asyncio.sleep(0.2)
-        await edit_notice(progress_message, tr('Updating: 100% completed.', lang))
-        await reply_notice(message, tr(f'sᴜᴄᴄᴇssғᴜʟʟʏ ᴜᴘᴅᴀᴛᴇ ✅ \nTotal users updated: {updated_count}/{total_users}', lang))
-    except Exception as e:
-        await reply_notice(message, tr(f'Error: {str(e)}', lang))
+        await edit_notice(progress_message, tr("Updating: 100% completed.", lang))
+        await reply_notice(
+            message,
+            tr(f"Character {stored_id} updated. User collections synced: {updated_count}/{total_users}.", lang),
+        )
+    except Exception as exc:
+        await reply_notice(message, tr(f"Error: {str(exc)}", lang))
+
+
 import time
 
 @app.on_message(filters.command('maxupdate'))
