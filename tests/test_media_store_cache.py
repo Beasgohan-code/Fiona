@@ -148,6 +148,29 @@ class MediaStoreCacheTests(unittest.TestCase):
             self.assertEqual(Path(result).read_bytes(), b"assistant-audio")
             self.assertEqual(assistant.downloaded[0][0], "assistant-file")
 
+    def test_assistant_is_searched_when_bot_search_is_empty(self):
+        app = FakeApp(lambda *args, **kwargs: [])
+
+        class FakeAssistant:
+            def __init__(self):
+                self.downloaded = []
+
+            def search_messages(self, *args, **kwargs):
+                return [FakeMessage("#FionaMediaCache\nvideo_id=abc123", "assistant-file", "a.mp3")]
+
+            async def download_media(self, file_id, file_name=None):
+                self.downloaded.append((file_id, file_name))
+                path = Path(file_name)
+                path.write_bytes(b"assistant-audio")
+                return str(path)
+
+        module = _load_media_store(app)
+        module._assistant_client = lambda: FakeAssistant()
+        with TemporaryDirectory() as tmp:
+            result = asyncio.run(module.download_cached_audio("abc123", tmp))
+            self.assertTrue(Path(result).is_file())
+            self.assertEqual(Path(result).read_bytes(), b"assistant-audio")
+
     def test_assistant_cache_prevents_duplicate_upload(self):
         class FailingSearchApp(FakeApp):
             def __init__(self):
@@ -187,6 +210,7 @@ class MediaStoreCacheTests(unittest.TestCase):
         self.assertIn("schedule_store_audio(vidid, api_path", source)
         self.assertIn("schedule_store_audio(vidid, path", source)
         self.assertIn("if not video:", source)
+        self.assertIn("prefetched Store cache", source)
 
 
 if __name__ == "__main__":

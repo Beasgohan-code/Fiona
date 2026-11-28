@@ -139,10 +139,11 @@ async def _search_cached_message(video_id: Any):
     safe_video_id = _video_id(video_id)
     if not safe_video_id:
         return None
-    clients = [app, _assistant_client()]
+    assistant = _assistant_client()
+    clients = [app]
+    if assistant is not None and assistant is not app:
+        clients.append(assistant)
     for client in clients:
-        if client is None:
-            continue
         try:
             search_result = client.search_messages(_store_id(), safe_video_id, limit=20)
             async for message in _iter_search_results(search_result):
@@ -150,8 +151,9 @@ async def _search_cached_message(video_id: Any):
                     cached = message_file_id(message)
                     if cached:
                         return client, cached[0], cached[1]
-            # A completed search means the answer is authoritative for this client.
-            return None
+            # A matching message was selected, or this client completed an empty
+            # search; try the configured assistant as well if it is available.
+            continue
         except Exception:
             continue
     return None

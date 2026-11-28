@@ -121,6 +121,11 @@ def _prefetch_next(chat_id):
 
     async def _warm():
         try:
+            if not video:
+                cached = await download_cached_audio(vidid)
+                if cached:
+                    slog.info("[%s] prefetched Store cache for next track %s", _STREAM_LOG, vidid)
+                    return
             if (
                 (getattr(config, "MEDIA_API_URL", "") or "").strip()
                 and (getattr(config, "MEDIA_API_KEY", "") or "").strip()
