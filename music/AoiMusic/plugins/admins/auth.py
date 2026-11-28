@@ -5,7 +5,7 @@ from pyrogram import filters
 from pyrogram.types import Message
 
 from config import BANNED_USERS, adminlist
-from strings import command, command
+from strings import command
 from AoiMusic import app
 from AoiMusic.utils.database import (
     delete_authuser,

@@ -72,7 +72,7 @@ async def userdel(client, message: Message, _):
             SUDOERS.remove(user.id)
             await reply_note(message, _["sudo_4"])
             return
-        await reply_note(message, f"Something wrong happened")
+        await reply_note(message, "Something wrong happened")
         return
     user_id = message.reply_to_message.from_user.id
     if user_id not in SUDOERS:
@@ -82,7 +82,7 @@ async def userdel(client, message: Message, _):
         SUDOERS.remove(user_id)
         await reply_note(message, _["sudo_4"])
         return
-    await reply_note(message, f"Something wrong happened")
+    await reply_note(message, "Something wrong happened")
 
 
 @app.on_message(command("SUDOUSERS_COMMAND") & ~BANNED_USERS)

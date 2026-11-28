@@ -4,7 +4,7 @@ from aoiwaifu.unit.rich_ui import (
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t
 from pyrogram import Client, filters
 from pyrogram.enums import ChatMemberStatus
-from aoiwaifu import group_user_totals_collection, group_ctimes, OWNER_ID, app, x, get_chat_lang, t
+from aoiwaifu import group_user_totals_collection, group_ctimes, OWNER_ID, app, x
 
 async def is_admin(client: Client, chat_id: int, user_id: int) -> bool:
     """

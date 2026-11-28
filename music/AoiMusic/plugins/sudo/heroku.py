@@ -28,7 +28,6 @@ from pyrogram.enums import ChatType
 
 import config
 from config import BANNED_USERS
-import shutil
 from strings import command
 from AoiMusic import app
 from AoiMusic.core.call import AoiCall
@@ -40,7 +39,6 @@ from AoiMusic.utils.database import (
     remove_active_video_chat,
 )
 from AoiMusic.utils.decorators import AdminActual, language
-from AoiMusic.utils.decorators.language import language
 from AoiMusic.utils.pastebin import AoiBin
 from AoiMusic.utils.rich_msg import send_note, send_rich
 from AoiMusic.utils.rich_msg import reply_note, status_card
@@ -320,7 +318,7 @@ async def update_(client, message, _):
                 pass
         await response.edit(
             _final_updates_
-            + f"» Bot Updated Sucessfully Now wait until the bot starts",
+            + "» Bot Updated Sucessfully Now wait until the bot starts",
             link_preview_options=LinkPreviewOptions(is_disabled=True),
         )
     except Exception:

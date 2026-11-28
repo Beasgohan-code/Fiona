@@ -637,7 +637,7 @@ async def play_commnd(
                 await mystic.delete()
                 return await play_logs(
                     message,
-                    streamtype=f"Searched on Youtube",
+                    streamtype="Searched on Youtube",
                     thumbnail=details.get("thumb"),
                 )
             else:
@@ -656,6 +656,6 @@ async def play_commnd(
                 await mystic.delete()
                 return await play_logs(
                     message,
-                    streamtype=f"URL Searched Inline",
+                    streamtype="URL Searched Inline",
                     thumbnail=img,
                 )

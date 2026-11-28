@@ -151,8 +151,6 @@ async def update(client: Client, message: Message):
         await reply_notice(message, tr(f"Error: {str(exc)}", lang))
 
 
-import time
-
 @app.on_message(filters.command('maxupdate'))
 @require_power('update_character')
 async def update_multiple(client: Client, message: Message):

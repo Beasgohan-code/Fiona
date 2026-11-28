@@ -5,6 +5,7 @@
 
 from datetime import datetime
 
+from pyrogram.types import LinkPreviewOptions
 from config import BANNED_USERS, PING_IMG_URL
 from strings import command
 from AoiMusic import app

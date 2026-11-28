@@ -1,6 +1,7 @@
 
 #
 import asyncio
+import os
 import re
 import shutil
 import subprocess
@@ -196,7 +197,6 @@ from pyrogram.errors import (
 from AoiMusic.core.userbot import assistants
 from AoiMusic.utils.database import (
     get_assistant,
-    get_lang,
     set_assistant,
 )
 
@@ -1442,7 +1442,7 @@ class Call:
 
     async def start(self):
         """Starts all PyTgCalls instances for the existing userbot clients."""
-        LOGGER(__name__).info(f"Starting PyTgCall Clients")
+        LOGGER(__name__).info("Starting PyTgCall Clients")
         await asyncio.gather(*[c.start() for c in self.calls])
         await self.decorators()
         if self._reconcile_task is None or self._reconcile_task.done():

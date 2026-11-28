@@ -18,10 +18,10 @@ from config import (
     adminlist,
     lyrical,
 )
-from AoiMusic import Platform, app
+from AoiMusic import LOGGER, Platform, app
 from AoiMusic.core.call import AoiCall
 from AoiMusic.misc import SUDOERS, db
-from AoiMusic.utils import seconds_to_min, time_to_seconds
+from AoiMusic.utils import time_to_seconds
 from AoiMusic.utils.channelplay import get_channeplayCB
 from AoiMusic.utils.database import (
     get_instant_play,
@@ -49,7 +49,6 @@ from AoiMusic.utils.inline.play import (
     telegram_markup,
 )
 from AoiMusic.utils.rich_msg import edit_any, edit_rich, forget_anchor, send_note, status_card
-from AoiMusic.utils.rich_panels import show_main, show_menu
 from AoiMusic.utils.stream.autoclear import auto_clean
 from AoiMusic.utils.stream.stream import stream
 from AoiMusic.utils.thumbnails import gen_thumb

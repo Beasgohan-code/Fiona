@@ -16,7 +16,7 @@ from datetime import datetime
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, CallbackQuery
 from pyrogram.errors import MessageNotModified
-from aoiwaifu import app, user_collection, db, GLOG, get_effective_lang, t
+from aoiwaifu import app, user_collection, db, GLOG
 referrals_collection = db['referrals']
 REFERRAL_DOLLARS = 25
 REFERRAL_COINS = 1000
