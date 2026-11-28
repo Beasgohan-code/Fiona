@@ -10,7 +10,7 @@ are not copied wholesale.
 | Summon-bot command/feature | Fiona command or equivalent |
 | --- | --- |
 | `/start`, `/ping`, `/help`, `/menu`, `/commands` | `/start`, `/ping`, `/help`, `/menu`, `/commands` |
-| `/balance`, `/bal`, `/daily` | `/balance`, `/bal`, `/daily` and `/dailygift` |
+| `/balance`, `/bal`, `/daily`, `/givemoney`, `/rmmoney` | `/balance`, `/bal`, `/daily` and `/dailygift`; owner-only `/givemoney <user_id> <amount>` and `/rmmoney <user_id> <amount>` adjust collector coins |
 | `/spin` | `/spin` — Fiona-sized daily coin rewards; one atomic 24-hour claim per user |
 | `/collection`, `/harem`, `/claimlist` | `/harem`, `/collection`, `/claimlist`; accepts an optional case-insensitive anime-title fragment, keeps it while paging, and shows per-anime progress percentages plus duplicate-copy totals |
 | Fiona collection pins | `/pincharacter`, `/unpincharacter`, `/pinnedcharacters` (legacy aliases `/hpin`, `/hunpin`, `/pinlist`); the pinned list provides owner-scoped one-tap unpin controls |
@@ -50,7 +50,7 @@ thin aliases to unrelated Fiona commands:
 - Streak-dependent reward bonuses/achievements are not copied. Fiona now tracks
   a daily-reward streak and longest streak with `/streak`, while retaining its
   existing fixed daily payout and achievement model.
-- `/give`, `/givemoney`, `/rmmoney`, `/removeall`, and claim-code
+- `/give`, `/removeall`, and claim-code
   administration beyond Fiona's existing `/add`, `/kill`, `/transfer`, `/cgen`,
   and `/redeem` flows.
 - `/font`/`/style`, `/premium`/`/unpremium`, `/nguess`, `/restart`, and

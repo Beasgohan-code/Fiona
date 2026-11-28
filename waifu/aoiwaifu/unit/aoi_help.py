@@ -90,6 +90,7 @@ HELP_DATA = {
             "• `/spawn` — Manually start a character round (bot owner only)\n"
             "• `/chance <rarity_id> <weight>` / `/chancelist` — Set or inspect relative automatic spawn weights (owner only; weight 0 disables that rarity)\n"
             "• `/setclaim <rarity_id> <weight>` / `/claimweights` — Configure daily claim rarity weights (owner only; weight 0 disables that rarity)\n"
+            "• `/givemoney <user_id> <amount>` / `/rmmoney <user_id> <amount>` — Adjust collector coins (owner only).\n"
             "• `/cgen <char_id> <limit>` — Generate a character redeem code\n"
             "• `/add`, `/kill`, `/transfer`, `/backtransfer` — Manage user data & currency\n"
             "• `/blocklist`, `/removeblocklist`, `/addblocklistgc`, `/removeblocklistgc` — Blocklists\n"

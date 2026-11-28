@@ -74,6 +74,8 @@ GROUP_COMMANDS = (
 )
 
 ADMIN_COMMANDS = (
+    ('givemoney', 'Add coins to a collector (owner only)'),
+    ('rmmoney', 'Remove coins from a collector (owner only)'),
     ('claimweights', 'List daily claim rarity weights (owner only)'),
     ('setclaim', 'Set a daily claim rarity weight (owner only)'),
     ('chance', 'Set an automatic rarity spawn weight (owner only)'),

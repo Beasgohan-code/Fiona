@@ -1,14 +1,14 @@
 """Admin economy & user data management commands (/add, /kill)."""
-
 from aoiwaifu.unit.rich_ui import (
     rich_card,
     reply_notice,
+    reply_panel,
 )
 import html
 from pyrogram import Client, enums, filters
 from pyrogram.types import Message
 
-from aoiwaifu import app, require_power, user_collection
+from aoiwaifu import OWNER_ID, app, require_power, user_collection
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
 
 
@@ -186,3 +186,73 @@ async def admin_add_currency_handler(client: Client, message: Message):
         tr(rich_card("Admin credit", body, "⚡"), lang),
         parse_mode=enums.ParseMode.HTML,
     )
+
+
+async def _owner_money_adjustment(message, *, add: bool):
+    lang = await get_effective_lang(message)
+    command = "/givemoney" if add else "/rmmoney"
+    if not message.from_user or message.from_user.id != OWNER_ID:
+        await reply_notice(message, tr("This money adjustment is restricted to the bot owner.", lang))
+        return
+    if len(message.command or []) != 3:
+        await reply_notice(message, tr(f"Usage: <code>{command} &lt;user_id&gt; &lt;amount&gt;</code>", lang))
+        return
+    try:
+        target_id = int(message.command[1])
+        requested_amount = int(message.command[2])
+    except (TypeError, ValueError):
+        await reply_notice(message, tr("User ID and amount must be whole numbers.", lang))
+        return
+    if target_id <= 0 or requested_amount <= 0:
+        await reply_notice(message, tr("User ID and amount must be positive.", lang))
+        return
+
+    user = await user_collection.find_one({"id": target_id}, {"balance": 1, "first_name": 1})
+    if not user:
+        await reply_notice(message, tr("User not found in Fiona's collection database.", lang))
+        return
+
+    if add:
+        result = await user_collection.update_one(
+            {"id": target_id}, {"$inc": {"balance": requested_amount}}
+        )
+        adjusted = requested_amount
+        title = "Coins added"
+        emoji = "💰"
+    else:
+        current_balance = max(0, int(user.get("balance", 0) or 0))
+        adjusted = min(requested_amount, current_balance)
+        if adjusted:
+            result = await user_collection.update_one(
+                {"id": target_id, "balance": {"$gte": adjusted}},
+                {"$inc": {"balance": -adjusted}},
+            )
+            if not result.modified_count:
+                await reply_notice(message, tr("Balance changed while processing; please retry.", lang))
+                return
+        title = "Coins removed"
+        emoji = "➖"
+
+    coins, _tokens = await _get_balance(target_id)
+    target_name = html.escape(str(user.get("first_name") or target_id))
+    verb = "Added" if add else "Removed"
+    await reply_panel(
+        message,
+        rich_card(
+            title,
+            f"<b>User:</b> {target_name} (<code>{target_id}</code>)\n"
+            f"<b>{verb}:</b> <code>{adjusted:,}</code> coins\n"
+            f"<b>New balance:</b> <code>{coins:,}</code>",
+            emoji,
+        ),
+    )
+
+
+@app.on_message(filters.command(["givemoney"]))
+async def give_money_command(client: Client, message: Message):
+    await _owner_money_adjustment(message, add=True)
+
+
+@app.on_message(filters.command(["rmmoney"]))
+async def remove_money_command(client: Client, message: Message):
+    await _owner_money_adjustment(message, add=False)
