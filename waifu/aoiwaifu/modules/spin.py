@@ -19,7 +19,7 @@ from pymongo import ReturnDocument
 
 from aoiwaifu import app, user_collection
 from aoiwaifu.admin.blocklist import is_user_blocklisted
-from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
+from aoiwaifu.unit.aoi_lang import get_effective_lang, tr, tr_panel
 
 SPIN_COOLDOWN = timedelta(hours=24)
 SPIN_REWARDS = (50, 100, 250, 500, 1_000, 2_500)
@@ -94,6 +94,6 @@ async def daily_spin(client: Client, message: Message):
         )
     )
     await reply_panel(message,
-        premium_text(tr(rich_card("Daily spin", body, "🎰"), lang)),
+        premium_text(tr_panel(rich_card("Daily spin", body, "🎰"), lang)),
         parse_mode=enums.ParseMode.HTML,
     )

@@ -94,7 +94,6 @@ class MediaStoreCacheTests(unittest.TestCase):
             self.assertEqual(app.download_paths[0][0], "file-123")
 
     def test_store_audio_sends_searchable_caption_and_respects_size_cap(self):
-        message = FakeMessage("#FionaMediaCache\nvideo_id=abc123", "file-123", "a.mp3")
         app = FakeApp(lambda *args, **kwargs: [])
         module = _load_media_store(app)
         with TemporaryDirectory() as tmp:

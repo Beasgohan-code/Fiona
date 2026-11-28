@@ -11,7 +11,7 @@ from pyrogram import Client, enums, filters
 from pyrogram.types import Message
 
 from aoiwaifu import OWNER_ID, app, collection, require_power, user_collection
-from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
+from aoiwaifu.unit.aoi_lang import get_effective_lang, tr, tr_panel
 
 
 async def _get_balance(user_id: int) -> tuple[int, int]:
@@ -185,7 +185,7 @@ async def admin_add_currency_handler(client: Client, message: Message):
         f"🪙 <b>Tokens:</b> <code>{new_tokens:,}</code>",
     ))
     await reply_notice(message,
-        tr(rich_card("Admin credit", body, "⚡"), lang),
+        tr_panel(rich_card("Admin credit", body, "⚡"), lang),
         parse_mode=enums.ParseMode.HTML,
     )
 

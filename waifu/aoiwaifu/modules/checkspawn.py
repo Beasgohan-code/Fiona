@@ -14,7 +14,7 @@ from aoiwaifu import (
     last_characters,
     normal_message_counts,
 )
-from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
+from aoiwaifu.unit.aoi_lang import get_effective_lang, tr, tr_panel
 from aoiwaifu.unit.rich_ui import (
     edit_panel,
     premium_button,
@@ -91,7 +91,7 @@ async def _build_spawn_status(chat_id, chat_title, lang):
         "</blockquote>"
         "<p><i>Tap refresh to read the latest in-memory counter. It resets after a spawn trigger or bot restart.</i></p>"
     )
-    return premium_text(tr(rich_showcase_panel("GROUP SPAWN STATUS", body, "📊"), lang))
+    return premium_text(tr_panel(rich_showcase_panel("GROUP SPAWN STATUS", body, "📊"), lang))
 
 
 @app.on_message(filters.command(["checkspawn"]) & filters.group)

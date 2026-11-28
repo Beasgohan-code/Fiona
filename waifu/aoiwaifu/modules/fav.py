@@ -7,7 +7,7 @@ from aoiwaifu.unit.rich_ui import (
     rich_card,
     reply_notice,
 )
-from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
+from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr, tr_panel
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, CallbackQuery
 from pymongo import MongoClient
@@ -69,7 +69,7 @@ async def fav_yes(client, callback_query: CallbackQuery):
     await user_collection.update_one({'id': user_id}, {'$set': {'favorites': user['favorites']}})
     await edit_panel(
         callback_query.message,
-        tr(rich_card('Favorite updated', f"<b>{html.escape(str(character.get('name', 'Unknown')))}</b> is now featured on your profile.", '💖'), lang),
+        tr_panel(rich_card('Favorite updated', f"<b>{html.escape(str(character.get('name', 'Unknown')))}</b> is now featured on your profile.", '💖'), lang),
         reply_markup=None,
     )
     await callback_query.answer(tr('Character added to favorites.', lang))

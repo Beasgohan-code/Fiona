@@ -19,7 +19,7 @@ from aoiwaifu import (
     user_collection,
 )
 from aoiwaifu.admin.blocklist import get_blocklisted_id_variants
-from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
+from aoiwaifu.unit.aoi_lang import get_effective_lang, tr, tr_panel
 
 
 def _photo_url():
@@ -148,6 +148,6 @@ async def stats(client: Client, message: Message):
     )
     await reply_panel(
         message,
-        premium_text(tr(rich_card("Fiona community", body, "📊"), lang)),
+        premium_text(tr_panel(rich_card("Fiona community", body, "📊"), lang)),
         parse_mode=enums.ParseMode.HTML,
     )

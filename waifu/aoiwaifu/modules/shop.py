@@ -4,7 +4,7 @@ from aoiwaifu.unit.rich_ui import (
     premium_text,
     rich_showcase_panel,
 )
-from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
+from aoiwaifu.unit.aoi_lang import get_effective_lang, tr, tr_panel
 import html
 import random
 from pyrogram.types import InlineKeyboardMarkup, InputMediaPhoto, InputMediaVideo
@@ -170,7 +170,7 @@ async def show_character(client, msg, user_id):
     image_url = char.get('img_url') or char.get('image') or char.get('url')
     if not image_url:
         try:
-            return await msg.edit_caption(caption=tr(f'{caption}\n\n❌ <i>No valid media URL for this character.</i>', lang), reply_markup=InlineKeyboardMarkup(keyboard), parse_mode=ParseMode.HTML)
+            return await msg.edit_caption(caption=tr_panel(f'{caption}\n\n❌ <i>No valid media URL for this character.</i>', lang), reply_markup=InlineKeyboardMarkup(keyboard), parse_mode=ParseMode.HTML)
         except Exception:
             return
     await _edit_shop_message_media(msg=msg, media_url=image_url, caption=caption, reply_markup=InlineKeyboardMarkup(keyboard))

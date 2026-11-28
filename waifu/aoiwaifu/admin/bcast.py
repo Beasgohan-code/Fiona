@@ -14,7 +14,7 @@ from pyrogram import enums, filters
 from pyrogram.errors import FloodWait, PeerIdInvalid
 
 from aoiwaifu import OWNER_ID, SUDO, app, top_global_groups_collection, user_collection
-from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
+from aoiwaifu.unit.aoi_lang import get_effective_lang, tr, tr_panel
 
 
 @app.on_message(filters.command(["waifubcast", "waifubroadcast"]) & filters.user(SUDO + [OWNER_ID]))
@@ -23,7 +23,7 @@ async def broadcast(_, message):
     replied_message = message.reply_to_message
     if not replied_message:
         await reply_panel(message,
-            premium_text(tr(rich_card("Broadcast", "❌ Reply to a message to broadcast it.", "📢"), lang)),
+            premium_text(tr_panel(rich_card("Broadcast", "❌ Reply to a message to broadcast it.", "📢"), lang)),
             parse_mode=enums.ParseMode.HTML,
         )
         return
@@ -75,7 +75,7 @@ async def broadcast(_, message):
         )
         try:
             await progress_message.edit_text(
-                premium_text(tr(rich_card("Broadcast in progress", body, "📢"), lang)),
+                premium_text(tr_panel(rich_card("Broadcast in progress", body, "📢"), lang)),
                 parse_mode=enums.ParseMode.HTML,
             )
         except Exception:
@@ -106,6 +106,6 @@ async def broadcast(_, message):
         )
     )
     await progress_message.edit_text(
-        premium_text(tr(rich_card("Broadcast complete", body, "✅"), lang)),
+        premium_text(tr_panel(rich_card("Broadcast complete", body, "✅"), lang)),
         parse_mode=enums.ParseMode.HTML,
     )

@@ -199,6 +199,42 @@ def tr(text_or_key: str, lang: str = DEFAULT_LANG, **kwargs) -> str:
     return out
 
 
+def tr_panel(panel: str, lang: str = DEFAULT_LANG) -> str:
+    """Translate the literal text of a trusted HTML panel, never its markup.
+
+    tr() localizes via longest-match-first substring replacement, which is not
+    safe on pre-built trusted HTML (rich_card() / rich_showcase_panel() /
+    notice_card() output): the localized phrase could itself carry tags or
+    collide with tag internals. Panel bodies are fixed English with user data
+    escaped at the value level, so translating only the text between '<' and
+    '>' keeps the layout intact and every call as safe as it was before.
+    """
+    if not panel or not isinstance(panel, str):
+        return str(panel)
+    if not isinstance(lang, str) or normalize_lang_code(lang) == DEFAULT_LANG:
+        return panel
+    out = []
+    buf = ''
+    in_tag = False
+    for ch in panel:
+        if ch == '<':
+            if buf:
+                out.append(tr(buf, lang))
+                buf = ''
+            out.append(ch)
+            in_tag = True
+        elif ch == '>':
+            out.append(ch)
+            in_tag = False
+        elif in_tag:
+            out.append(ch)
+        else:
+            buf += ch
+    if buf:
+        out.append(tr(buf, lang))
+    return ''.join(out)
+
+
 def translate_reply_markup(reply_markup, lang: str = DEFAULT_LANG):
     """Translate inline keyboard button labels and enforce fixed compact button lengths."""
     if reply_markup is None:
