@@ -21,7 +21,7 @@ are not copied wholesale.
 | Fiona collection pins | `/pincharacter`, `/unpincharacter`, `/pinnedcharacters` (legacy aliases `/hpin`, `/hunpin`, `/pinlist`); the pinned list provides owner-scoped one-tap unpin controls |
 | `/check`, `/info` | `/check` |
 | `/search`, `/find` | `/search`, `/sips` or the bot's inline search |
-| `/summon`, `/guess` | `/summon`, `/guess` and related Fiona catch aliases |
+| `/summon`, `/guess` | `/summon`, `/guess` and related Fiona catch aliases (`/hunt`, `/protecc`, `/collect`, `/grab`). Auto- and manual-spawn cards carry a premium Hint button that answers ephemerally with safe clues (letter/word count, first initial, vowel count); stale or already-caught spawns reject the hint |
 | `/fav`, `/pay`, `/shop`, `/gift`, `/hmode` | Same Fiona commands |
 | `/top`, `/rank` | `/top`, `/rank` |
 | `/stats`, `/server` | `/server` or `/st` for community totals; `/stats` remains the music statistics command |
