@@ -1,5 +1,6 @@
 from aoiwaifu.unit.rich_ui import (
     reply_notice,
+    premium_button,
 )
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 import time
@@ -8,7 +9,7 @@ import string
 import asyncio
 from datetime import datetime
 from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from pyrogram.types import Message, InlineKeyboardMarkup, CallbackQuery
 from aoiwaifu import app, user_collection, require_power, db, application
 from aoiwaifu.admin.blocklist import is_user_blocklisted
 transfer_in_progress = False
@@ -75,7 +76,7 @@ async def transfer_collection(client: Client, message: Message):
     transfer_in_progress = True
     active_transfer = {'transfer_id': transfer_id, 'user_id': user_id, 'owner_id': owner_id, 'requester_id': from_id, 'timestamp': time.time()}
     text = f'⚠️ **Confirm Character Transfer?**\n\n👤 From: `{user_id}` (has {len(user_chars)} characters)\n➡️ To: `{owner_id}`\n🆔 Transfer ID: `{transfer_id}`\n\nClick the appropriate button below to proceed or cancel. This prompt will expire in 60 seconds.'
-    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton('✅ Confirm Transfer', callback_data=f'confirm_tr:{transfer_id}'), InlineKeyboardButton('❌ Cancel', callback_data=f'cancel_tr:{transfer_id}')]])
+    keyboard = InlineKeyboardMarkup([[premium_button('Confirm Transfer', emoji='CHECK_CIRCLE', style='SUCCESS', callback_data=f'confirm_tr:{transfer_id}'), premium_button('Cancel', emoji='CLOSE', style='DANGER', callback_data=f'cancel_tr:{transfer_id}')]])
     await reply_notice(message, tr(text, lang), reply_markup=keyboard)
 
 @app.on_callback_query(filters.regex('^confirm_tr:(\\w+)$'))
