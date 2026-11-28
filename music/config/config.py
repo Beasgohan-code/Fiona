@@ -153,14 +153,18 @@ _FIONA_GLOBAL_STATS_IMAGE = str(Path(__file__).resolve().parents[1] / "assets" /
 _FIONA_BOT_STATS_IMAGE = str(Path(__file__).resolve().parents[1] / "assets" / "fiona_bot_stats.jpg")
 GLOBAL_IMG_URL = getenv("GLOBAL_IMG_URL", "").strip() or _FIONA_GLOBAL_STATS_IMAGE
 STATS_IMG_URL = getenv("STATS_IMG_URL", "").strip() or _FIONA_BOT_STATS_IMAGE
-TELEGRAM_AUDIO_URL = getenv("TELEGRAM_AUDIO_URL", "https://te.legra.ph/file/3d130381bf5945c139023.jpg")
-TELEGRAM_VIDEO_URL = getenv("TELEGRAM_VIDEO_URL", "https://te.legra.ph/file/d3663021fb51e14a84aa9.jpg")
-STREAM_IMG_URL = getenv("STREAM_IMG_URL", "https://te.legra.ph/file/248e6858de3f2e37393c1.jpg")
-SOUNDCLOUD_IMG_URL = getenv("SOUNDCLOUD_IMG_URL", "https://te.legra.ph/file/1b78431fe8de0e497c188.jpg")
-YOUTUBE_IMG_URL = getenv("YOUTUBE_IMG_URL", "https://te.legra.ph/file/98622051acad1988886be.jpg")
-SPOTIFY_ARTIST_IMG_URL = getenv("SPOTIFY_ARTIST_IMG_URL", "https://te.legra.ph/file/c03f25028fa248401d519.jpg")
-SPOTIFY_ALBUM_IMG_URL = getenv("SPOTIFY_ALBUM_IMG_URL", "https://te.legra.ph/file/9fe24bde84b1d31f685a9.jpg")
-SPOTIFY_PLAYLIST_IMG_URL = getenv("SPOTIFY_PLAYLIST_IMG_URL", "https://te.legra.ph/file/7345db59ab5d2c5cb142a.jpg")
+_FIONA_SOURCE_AUDIO_IMAGE = str(Path(__file__).resolve().parents[1] / "assets" / "fiona_source_audio.jpg")
+_FIONA_SOURCE_VIDEO_IMAGE = str(Path(__file__).resolve().parents[1] / "assets" / "fiona_source_video.jpg")
+_FIONA_SOURCE_STREAM_IMAGE = str(Path(__file__).resolve().parents[1] / "assets" / "fiona_source_stream.jpg")
+_FIONA_SOURCE_SPOTIFY_IMAGE = str(Path(__file__).resolve().parents[1] / "assets" / "fiona_source_spotify.jpg")
+TELEGRAM_AUDIO_URL = getenv("TELEGRAM_AUDIO_URL", "").strip() or _FIONA_SOURCE_AUDIO_IMAGE
+TELEGRAM_VIDEO_URL = getenv("TELEGRAM_VIDEO_URL", "").strip() or _FIONA_SOURCE_VIDEO_IMAGE
+STREAM_IMG_URL = getenv("STREAM_IMG_URL", "").strip() or _FIONA_SOURCE_STREAM_IMAGE
+SOUNDCLOUD_IMG_URL = getenv("SOUNDCLOUD_IMG_URL", "").strip() or _FIONA_SOURCE_AUDIO_IMAGE
+YOUTUBE_IMG_URL = getenv("YOUTUBE_IMG_URL", "").strip() or _FIONA_SOURCE_VIDEO_IMAGE
+SPOTIFY_ARTIST_IMG_URL = getenv("SPOTIFY_ARTIST_IMG_URL", "").strip() or _FIONA_SOURCE_SPOTIFY_IMAGE
+SPOTIFY_ALBUM_IMG_URL = getenv("SPOTIFY_ALBUM_IMG_URL", "").strip() or _FIONA_SOURCE_SPOTIFY_IMAGE
+SPOTIFY_PLAYLIST_IMG_URL = getenv("SPOTIFY_PLAYLIST_IMG_URL", "").strip() or _FIONA_SOURCE_SPOTIFY_IMAGE
 
 
 def time_to_seconds(time_str):

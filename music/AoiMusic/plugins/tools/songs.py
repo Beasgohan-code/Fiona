@@ -6,6 +6,7 @@
 import logging
 import os
 import re
+from pathlib import Path
 
 from pyrogram import enums, filters
 from pyrogram.types import Message
@@ -33,6 +34,7 @@ from AoiMusic.utils.rich_msg import (
 )
 
 LOGGER = logging.getLogger(__name__)
+_FALLBACK_THUMB = str(Path(__file__).resolve().parents[3] / "assets" / "fiona_source_audio.jpg")
 
 
 def song_panel_html(_, thumbnail, title, vidid):
@@ -256,7 +258,7 @@ async def songs_back_helper(client, CallbackQuery, _):
     chat_id = CallbackQuery.message.chat.id
     mid = CallbackQuery.message.id
     title = ""
-    thumbnail = "https://i.ibb.co/7zYzRJw/a8800c683dee8d9919d24dbdde5eed6a-1.jpg"
+    thumbnail = _FALLBACK_THUMB
     try:
         t, _, _, th, _ = await Platform.youtube.details(f"https://www.youtube.com/watch?v={vidid}")
         title = t or ""
