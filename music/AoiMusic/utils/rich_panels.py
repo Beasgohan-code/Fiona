@@ -17,7 +17,7 @@ import config
 from AoiMusic import LOGGER
 from AoiMusic.misc import db
 from AoiMusic.utils.database import autoplay_cache, is_autoplay, is_music_playing
-from AoiMusic.utils.premium_emoji import pe
+from AoiMusic.utils.premium_emoji import BLANK_BTN_TEXT, pe
 from AoiMusic.utils.rich_msg import (
     RichMystic,
     edit_rich,
@@ -74,7 +74,7 @@ def _xeno_bar(percentage: float) -> str:
 def _autoplay_button(chat_id: int) -> str:
     enabled = bool(autoplay_cache.get(chat_id, False))
     return rich_button(
-        f"Autoplay {'On' if enabled else 'Off'}",
+        f"ᴀᴜᴛᴏ : {'ᴏɴ' if enabled else 'ᴏғғ'}",
         callback_data=f"AutoplayToggle|{chat_id}",
         style="success" if enabled else "",
         emoji="SPARKLES_AI" if enabled else "BAN_BLOCK",
@@ -82,10 +82,29 @@ def _autoplay_button(chat_id: int) -> str:
 
 
 def _toggle_button(chat_id: int, playing: bool = True) -> str:
-    """Labeled pause/resume action; `playing` reflects the real voice state."""
+    """Labeled menu toggle; `playing` reflects the current voice state."""
     if playing:
-        return rich_button("Pause", callback_data=f"ADMIN Pp|{chat_id}", style="primary", emoji="PAUSE")
-    return rich_button("Resume", callback_data=f"ADMIN Pp|{chat_id}", style="success", emoji="PLAY")
+        return rich_button("ᴘᴀᴜsᴇ", callback_data=f"ADMIN Pp|{chat_id}", style="primary", emoji="PAUSE")
+    return rich_button("ʀᴇsᴜᴍᴇ", callback_data=f"ADMIN Pp|{chat_id}", style="success", emoji="PLAY")
+
+
+def _toggle_icon_button(chat_id: int, playing: bool = True) -> str:
+    """Compact icon-only Pause/Resume action on the main player card."""
+    if playing:
+        return rich_button(
+            BLANK_BTN_TEXT,
+            callback_data=f"ADMIN Pp|{chat_id}",
+            style="primary",
+            emoji="PAUSE",
+            icon_only=True,
+        )
+    return rich_button(
+        BLANK_BTN_TEXT,
+        callback_data=f"ADMIN Pp|{chat_id}",
+        style="success",
+        emoji="PLAY",
+        icon_only=True,
+    )
 
 
 def _rows(chat_id: int, videoid, elapsed: float, total_sec: float, playing: bool = True) -> str:
@@ -113,31 +132,26 @@ def _rows(chat_id: int, videoid, elapsed: float, total_sec: float, playing: bool
             emoji="TIMER",
         )
     )
-    # Row 2: Clear, labeled transport controls (same callbacks as the legacy buttons).
+    # Row 2: Keep the familiar icon-only transport buttons, ordered by common use.
     rows += rich_button_row(
-        _toggle_button(chat_id, playing=playing),
-        rich_button("Replay", callback_data=f"ADMIN Replay|{chat_id}", style="primary", emoji="REPEAT"),
-        rich_button("Skip", callback_data=f"ADMIN Skip|{chat_id}", style="primary", emoji="NEXT_TRACK"),
-        rich_button("Stop", callback_data=f"ADMIN Stop|{chat_id}", style="danger", emoji="STOP"),
+        _toggle_icon_button(chat_id, playing=playing),
+        rich_button(BLANK_BTN_TEXT, callback_data=f"ADMIN Skip|{chat_id}", style="primary", emoji="NEXT_TRACK", icon_only=True),
+        rich_button(BLANK_BTN_TEXT, callback_data=f"ADMIN Replay|{chat_id}", style="primary", emoji="REPEAT", icon_only=True),
+        rich_button(BLANK_BTN_TEXT, callback_data=f"ADMIN Stop|{chat_id}", style="danger", emoji="STOP", icon_only=True),
     )
-
-    # Row 3: Common library and queue actions, plus an at-a-glance autoplay toggle.
-    shortcuts = [
-        rich_button("Queue", callback_data=f"GetQueued {chat_id}|{videoid}", style="primary", emoji="QUEUE_LIST"),
-    ]
-    track_id = str(videoid or "")
-    if track_id and track_id not in ("telegram", "soundcloud") and "index_" not in track_id and "live_" not in track_id:
-        shortcuts.append(
-            rich_button("Save track", callback_data=f"add_playlist {videoid}", style="success", emoji="PLUS")
-        )
-    shortcuts.append(_autoplay_button(chat_id))
-    rows += rich_button_row(*shortcuts)
-
-    # Row 4: Discovery, advanced controls, and close.
+    # Row 3: Save the track or toggle autoplay.
     rows += rich_button_row(
-        rich_button("Suggestions", callback_data=f"GetSuggestions|{chat_id}", style="", emoji="SPARKLES_AI"),
-        rich_button("More controls", callback_data=f"PanelMarkup {videoid}|{chat_id}", style="primary", emoji="SLIDERS_EQ"),
-        rich_button("Close", callback_data="close", style="danger", emoji="CLOSE"),
+        rich_button("ᴘʟᴀʏʟɪsᴛ", callback_data=f"add_playlist {videoid}", style="success", emoji="PLUS"),
+        _autoplay_button(chat_id),
+    )
+    # Row 4: Put the player menu first, followed by discovery.
+    rows += rich_button_row(
+        rich_button("ᴍᴇɴᴜ", callback_data=f"PanelMarkup {videoid}|{chat_id}", style="primary", emoji="SLIDERS_EQ"),
+        rich_button("sᴜɢɢᴇsᴛ", callback_data=f"GetSuggestions|{chat_id}", style="", emoji="SPARKLES_AI"),
+    )
+    # Keep the potentially destructive close action isolated on its own row.
+    rows += rich_button_row(
+        rich_button("ᴄʟᴏsᴇ", callback_data="close", style="danger", emoji="CLOSE"),
     )
     return rows
 

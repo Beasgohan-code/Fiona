@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def _load_player_row_builders():
     path = ROOT / "music/AoiMusic/utils/rich_panels.py"
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    wanted = {"_xeno_bar", "_autoplay_button", "_toggle_button", "_rows"}
+    wanted = {"_xeno_bar", "_autoplay_button", "_toggle_icon_button", "_rows"}
     nodes = [node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name in wanted]
 
     def rich_button(text, callback_data="", style="primary", emoji="", icon_only=False):
@@ -27,7 +27,7 @@ def _load_player_row_builders():
         "rich_button": rich_button,
         "rich_button_row": rich_button_row,
         "autoplay_cache": {},
-        "db": {},
+        "BLANK_BTN_TEXT": "",
     }
     package = types.ModuleType("AoiMusic")
     package.__path__ = []
@@ -52,34 +52,42 @@ class RichPlayerControlTests(unittest.TestCase):
     def setUpClass(cls):
         cls.builders = _load_player_row_builders()
 
-    def test_main_controls_are_labeled_and_keep_existing_callbacks(self):
+    def test_legacy_player_buttons_are_kept_and_only_reordered(self):
         rows = self.builders["_rows"](123, "trackABC", 72, 240)
-        for label in ("Pause", "Replay", "Skip", "Stop", "Queue", "Save track", "Autoplay Off", "Suggestions", "More controls", "Close"):
-            with self.subTest(label=label):
-                self.assertIn(f">{label}</button>", rows)
+        self.assertEqual(rows.count("<row>"), 5)
+
+        # Main transport icons: Pause, Skip, Replay, Stop.
+        expected_controls = (
+            'data="ADMIN Pp|123"',
+            'data="ADMIN Skip|123"',
+            'data="ADMIN Replay|123"',
+            'data="ADMIN Stop|123"',
+        )
+        positions = [rows.index(callback) for callback in expected_controls]
+        self.assertEqual(positions, sorted(positions))
+        self.assertEqual(rows.count('icon-only="1"'), 4)
+
+        # Keep the original secondary actions and labels; no new buttons added.
         for callback in (
-            "ADMIN Pp|123",
-            "ADMIN Replay|123",
-            "ADMIN Skip|123",
-            "ADMIN Stop|123",
-            "GetQueued 123|trackABC",
-            "add_playlist trackABC",
-            "AutoplayToggle|123",
-            "GetSuggestions|123",
-            "PanelMarkup trackABC|123",
-            "data=\"close\"",
+            'data="add_playlist trackABC"',
+            'data="AutoplayToggle|123"',
+            'data="PanelMarkup trackABC|123"',
+            'data="GetSuggestions|123"',
+            'data="close"',
         ):
             with self.subTest(callback=callback):
                 self.assertIn(callback, rows)
-        self.assertEqual(rows.count("<row>"), 4)
-        self.assertNotIn('icon-only="1"', rows)
+        self.assertLess(rows.index('data="PanelMarkup'), rows.index('data="GetSuggestions'))
+        self.assertIn(">ᴘʟᴀʏʟɪsᴛ</button>", rows)
+        self.assertIn(">ᴍᴇɴᴜ</button>", rows)
+        self.assertNotIn("Save track", rows)
+        self.assertNotIn("Queue", rows)
 
-    def test_paused_player_offers_resume_and_hides_non_youtube_save_action(self):
-        rows = self.builders["_rows"](123, "telegram", 72, 240, playing=False)
-        self.assertIn(">Resume</button>", rows)
-        self.assertNotIn(">Pause</button>", rows)
-        self.assertNotIn("add_playlist", rows)
-        self.assertIn("GetQueued 123|telegram", rows)
+    def test_paused_player_keeps_the_same_layout_and_switches_to_play_icon(self):
+        rows = self.builders["_rows"](123, "trackABC", 72, 240, playing=False)
+        self.assertIn('data="ADMIN Pp|123" style="success" emoji="PLAY" icon-only="1"', rows)
+        self.assertIn('data="ADMIN Skip|123"', rows)
+        self.assertEqual(rows.count("<row>"), 5)
 
 
 if __name__ == "__main__":
