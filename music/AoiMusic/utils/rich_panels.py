@@ -339,10 +339,7 @@ async def _board_bump(chat_id: int, title: str) -> None:
 
 
 async def _ticker(chat_id: int, mid: int, videoid, body: str, snapshot: tuple) -> None:
-    _body_s, videoid, total_sec, start_t = snapshot
-    entry = _panel_content.get((chat_id, mid))
-    if entry:
-        start_t = entry[3]
+    _body_s, videoid, total_sec, _ = snapshot
     try:
         dur_float = float(total_sec or 0)
     except Exception:

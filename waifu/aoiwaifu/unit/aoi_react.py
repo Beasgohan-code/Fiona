@@ -15,7 +15,7 @@ async def react_to_message(chat_id, message_id):
     try:
         timeout = aiohttp.ClientTimeout(total=8)
         async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.post(url, json=params) as resp:
+            async with session.post(url, json=params):
                 pass
     except Exception:
         pass

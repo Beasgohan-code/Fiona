@@ -551,7 +551,6 @@ async def authusers_mar(client, CallbackQuery, _):
             j = 0
             body = rich_heading(f'{pemoji("🔗")} ᴀᴜᴛʜᴇᴅ ᴠɪᴘ ᴘᴇᴏᴘʟᴇ', level=4)
             body += f"<p>{rich_esc(_['auth_6'])}</p>"
-            msg = _["auth_7"]
             for note in _authusers:
                 _note = await get_authuser(chat_id, note)
                 user_id = _note["auth_user_id"]

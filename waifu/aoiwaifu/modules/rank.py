@@ -123,7 +123,6 @@ async def update_caption(callback_query, caption, active_button):
 
 @Client.on_callback_query(filters.regex('^top$'))
 async def top_callback(client, callback_query):
-    lang = await get_effective_lang(callback_query)
     cursor = user_collection.aggregate([{'$project': {'_id': 0, 'id': 1, 'first_name': 1, 'username': 1, 'char_count': {'$size': {'$ifNull': ['$characters', []]}}}}, {'$sort': {'char_count': -1}}, {'$limit': 10}])
     leaderboard_data = await cursor.to_list(length=10)
     caption = leaderboard_header('CHARACTER COLLECTION', 'The most dedicated collectors')
@@ -138,7 +137,6 @@ async def top_callback(client, callback_query):
 
 @Client.on_callback_query(filters.regex('^top_group$'))
 async def top_group_callback(client, callback_query):
-    lang = await get_effective_lang(callback_query)
     cursor = top_global_groups_collection.aggregate([{'$project': {'group_name': 1, 'count': 1}}, {'$sort': {'count': -1}}, {'$limit': 10}])
     leaderboard_data = await cursor.to_list(length=10)
     caption = leaderboard_header('GROUP LEADERBOARD', 'Communities collecting together')
@@ -152,7 +150,6 @@ async def top_group_callback(client, callback_query):
 
 @Client.on_callback_query(filters.regex('^mtop$'))
 async def mtop_callback(client, callback_query):
-    lang = await get_effective_lang(callback_query)
     blocked_ids = await get_blocklisted_id_variants()
     top_users = await user_collection.find({'id': {'$nin': blocked_ids}}).sort('balance', -1).limit(10).to_list(length=10)
     caption = leaderboard_header('COIN CHAMPIONS', 'The richest collectors')
@@ -167,7 +164,6 @@ async def mtop_callback(client, callback_query):
 
 @Client.on_callback_query(filters.regex('^tokens$'))
 async def tokens_callback(client, callback_query):
-    lang = await get_effective_lang(callback_query)
     blocked_ids = await get_blocklisted_id_variants()
     top_users = await user_collection.find({'id': {'$nin': blocked_ids}}).sort('tokens', -1).limit(10).to_list(length=10)
     caption = leaderboard_header('DOLLAR LEADERBOARD', 'Top holders of waifu dollars')
@@ -182,7 +178,6 @@ async def tokens_callback(client, callback_query):
 
 @Client.on_callback_query(filters.regex('^amv$'))
 async def amv_callback(client, callback_query):
-    lang = await get_effective_lang(callback_query)
     blocked_ids = await get_blocklisted_id_variants()
     cursor = user_collection.aggregate([{'$project': {'_id': 0, 'id': 1, 'first_name': 1, 'username': 1, 'amv_count': {'$size': {'$filter': {'input': {'$ifNull': ['$characters', []]}, 'as': 'character', 'cond': {'$eq': ['$$character.rarity', '🎥 AMV Edition']}}}}}}, {'$match': {'amv_count': {'$gt': 0}, 'id': {'$nin': blocked_ids}}}, {'$sort': {'amv_count': -1, 'id': 1}}, {'$limit': 10}])
     leaderboard_data = await cursor.to_list(length=10)

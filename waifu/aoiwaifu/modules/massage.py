@@ -183,7 +183,6 @@ def _pyrogram_message_to_update(message):
 @app.on_message(pyro_filters.all, group=1)
 async def _forward_pyrogram_message_to_ptb(client, message):
     """Forward non-command Pyrogram messages to the PTB message counter."""
-    lang = await get_effective_lang(message)
     if not getattr(message, "from_user", None):
         return
 

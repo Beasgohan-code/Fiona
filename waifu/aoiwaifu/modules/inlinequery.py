@@ -29,7 +29,6 @@ user_collection_cache = TTLCache(maxsize=10000, ttl=60)
 
 
 async def inlinequery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    lang = await get_effective_lang(update)
     inline_query = update.inline_query
     query = inline_query.query or ""
     stripped_query = query.strip()
@@ -230,7 +229,6 @@ async def bridge_pyrogram_inline_to_ptb(client, inline_query):
         routed_query = raw_query
     else:
         return
-    lang = await get_effective_lang(inline_query)
     from_user = inline_query.from_user
     ptb_user = User(
         id=from_user.id,

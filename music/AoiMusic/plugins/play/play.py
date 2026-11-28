@@ -53,7 +53,6 @@ async def play_commnd(
     url,
     fplay,
 ):
-    t0 = _time.monotonic()
     query_text = message.text or ""
     LOGGER(_PLAY_LOG).info(
         "[PLAY] command received from user=%s chat=%s text=%s",

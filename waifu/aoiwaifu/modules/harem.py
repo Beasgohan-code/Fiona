@@ -212,7 +212,6 @@ async def pinned_character_remove_callback(client: Client, callback_query: Callb
 
 @app.on_message(filters.command(['harem', 'collection', 'claimlist']))
 async def harem_handler(client: Client, message: Message):
-    lang = await get_effective_lang(message)
     user_id = message.from_user.id
     page = 0
     user = await user_collection.find_one({'id': user_id})

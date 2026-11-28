@@ -538,7 +538,7 @@ async def _stream(
                     pass
                 started_track = True
                 img = await gen_thumb(vidid)
-                mid_np = await spawn_now_playing(
+                await spawn_now_playing(
                     _, chat_id, vidid, title, duration_min, user_name,
                     thumb=img,
                 )
@@ -551,12 +551,7 @@ async def _stream(
             raise AssistantErr(_["playlist_26"])
         else:
             link = await AoiBin(msg)
-            lines = msg.count("\n")
-            if lines >= 17:
-                car = os.linesep.join(msg.split(os.linesep)[:17])
-            else:
-                car = msg
-            mid_np = await notice_card(
+            await notice_card(
                 _, original_chat_id, "ᴘʟᴀʏʟɪꜱᴛ ꜱᴜᴍᴍᴀʀʏ",
                 _["playlist_18"].format(link, position),
             )
@@ -587,7 +582,7 @@ async def _stream(
                 "video" if video else "audio",
             )
             position = len(db.get(chat_id)) - 1
-            mid_np = await notice_card(
+            await notice_card(
                 _, original_chat_id, "Qᴜᴇᴜᴇ",
                 _["queue_4"].format(position, title[:27], duration_min, user_name),
                 thumb=thumbnail or await gen_qthumb(vidid),
@@ -627,7 +622,7 @@ async def _stream(
                 db[chat_id][0]["source"] = _play_source_tag(stream_link)
             except Exception:
                 pass
-            mid_np = await spawn_now_playing(
+            await spawn_now_playing(
                 _, chat_id, vidid, title, duration_min, user_name,
                 thumb=thumbnail or await gen_thumb(vidid),
             )
@@ -656,7 +651,7 @@ async def _stream(
                     url=link,
                 )
                 position = len(db.get(chat_id)) - 1
-                mid_np = await notice_card(
+                await notice_card(
                     _, original_chat_id, "Qᴜᴇᴜᴇ",
                     _["queue_4"].format(position, title[:30], duration_min, user_name),
                     thumb=thumb,
@@ -681,7 +676,7 @@ async def _stream(
                     forceplay=forceplay,
                     url=link,
                 )
-                mid_np = await spawn_now_playing(
+                await spawn_now_playing(
                     _, chat_id, None, title, duration_min, user_name,
                     thumb=thumb,
                 )
@@ -739,7 +734,7 @@ async def _stream(
                         forceplay=forceplay,
                         url=link,
                     )
-                    mid_np = await spawn_now_playing(
+                    await spawn_now_playing(
                         _, chat_id, None, title, duration_min, user_name,
                         thumb=thumb,
                     )
@@ -747,7 +742,7 @@ async def _stream(
                 return
             else:
                 link = await AoiBin(msg)
-                mid_np = await notice_card(
+                await notice_card(
                     _, original_chat_id, "ᴘʟᴀʏʟɪꜱᴛ ꜱᴜᴍᴍᴀʀʏ",
                     _["playlist_18"].format(link, position),
                 )
@@ -793,7 +788,7 @@ async def _stream(
                 "audio",
                 forceplay=forceplay,
             )
-            mid_np = await spawn_now_playing(
+            await spawn_now_playing(
                 _, chat_id, None, title, duration_min, user_name,
                 thumb=config.SOUNCLOUD_IMG_URL,
             )
@@ -841,7 +836,7 @@ async def _stream(
             )
             if video:
                 await add_active_video_chat(chat_id)
-            mid_np = await spawn_now_playing(
+            await spawn_now_playing(
                 _, chat_id, None, title, duration_min, user_name,
                 thumb=config.TELEGRAM_VIDEO_URL if video else config.TELEGRAM_AUDIO_URL,
             )
@@ -900,7 +895,7 @@ async def _stream(
                 forceplay=forceplay,
             )
             img = await gen_thumb(vidid)
-            mid_np = await spawn_now_playing(
+            await spawn_now_playing(
                 _, chat_id, vidid, title, duration_min, user_name,
                 thumb=img,
             )
@@ -945,7 +940,7 @@ async def _stream(
                 "video" if video else "audio",
                 forceplay=forceplay,
             )
-            mid_np = await spawn_now_playing(
+            await spawn_now_playing(
                 _, chat_id, None, title, duration_min, user_name,
                 thumb=config.STREAM_IMG_URL,
             )

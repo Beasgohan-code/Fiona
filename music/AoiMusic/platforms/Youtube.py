@@ -2016,7 +2016,6 @@ class YouTube:
 
         @asyncify
         def song_video_dl():
-            dl_t0 = time.monotonic()
             # No explicit pick: go for the largest file the source has, up to
             # 8K (the VC ladder is capped at 2160 — see _VIDEO_FMT_8K).
             formats = f"{format_id}+bestaudio/best/18/best" if format_id else _VIDEO_FMT_8K
@@ -2047,7 +2046,6 @@ class YouTube:
 
         @asyncify
         def song_audio_dl():
-            dl_t0 = time.monotonic()
             # "320" is the picker's highest-audio choice, not a yt-dlp format
             # id: pull the best native audio and hold the mp3 transcode at
             # CBR 320 kbps (YouTube's own streams top out near 130 kbps).
@@ -2110,13 +2108,11 @@ class YouTube:
                 )
             elif video:
                 _log("info", "download() dispatching video_dl()")
-                direct = True
                 result = await asyncio.wait_for(
                     video_dl(), timeout=_YT_DLP_TIMEOUT * 3
                 )
             else:
                 _log("info", "download() dispatching audio_dl()")
-                direct = True
                 result = await asyncio.wait_for(
                     audio_dl(), timeout=_YT_DLP_TIMEOUT * 3
                 )

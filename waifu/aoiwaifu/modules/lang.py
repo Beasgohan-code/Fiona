@@ -186,9 +186,7 @@ async def open_group_settings_callback(client: Client, query: CallbackQuery):
 # 🔹 Callback: Select DM Language (First-Start or Menu)
 @app.on_callback_query(filters.regex(r"^set_dm_lang:([a-z]{2})(?::(start|menu))?$"))
 async def set_dm_lang_callback(client: Client, query: CallbackQuery):
-    lang = await get_effective_lang(query)
     lang_code = query.matches[0].group(1)
-    mode = query.matches[0].group(2) or "start"
     user_id = query.from_user.id if query.from_user else (query.message.chat.id if query.message and query.message.chat else 0)
 
     new_lang = await set_user_lang(user_id, lang_code)

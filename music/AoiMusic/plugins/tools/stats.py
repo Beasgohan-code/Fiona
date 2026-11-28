@@ -381,8 +381,6 @@ async def bot_stats_sudo_cb(client, CallbackQuery, _):
     served_chats = len(await get_served_chats())
     served_users = len(await get_served_users())
     total_queries = await get_queries()
-    blocked = len(BANNED_USERS)
-    sudoers = len(await get_sudoers())
     body = rich_img(config.STATS_IMG_URL)
     body += rich_heading(f'{pemoji("🖥")} System Statistics', level=4)
     body += (

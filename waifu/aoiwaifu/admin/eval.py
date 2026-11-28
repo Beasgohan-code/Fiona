@@ -24,7 +24,6 @@ async def edit_or_reply(msg: Message, **kwargs):
 @app.on_edited_message(filters.command('eval') & filters.user(EVAL) & ~filters.forwarded & ~filters.via_bot)
 @app.on_message(filters.command('eval') & filters.user(EVAL) & ~filters.forwarded & ~filters.via_bot)
 async def executor(client: app, message: Message):
-    lang = await get_effective_lang(message)
     if len(message.command) < 2:
         return await edit_or_reply(message, text='<b>ᴡʜᴀᴛ ʏᴏᴜ ᴡᴀɴɴᴀ ᴇxᴇᴄᴜᴛᴇ ʙᴀʙʏ ?</b>')
     try:
@@ -95,7 +94,6 @@ async def forceclose_command(_, CallbackQuery):
 @app.on_edited_message(filters.command('sh') & filters.user(EVAL) & ~filters.forwarded & ~filters.via_bot)
 @app.on_message(filters.command('sh') & filters.user(EVAL) & ~filters.forwarded & ~filters.via_bot)
 async def shellrunner(_, message: Message):
-    lang = await get_effective_lang(message)
     if len(message.command) < 2:
         return await edit_or_reply(message, text='<b>ᴇxᴀᴍᴩʟᴇ :</b>\n/sh git pull')
     text = message.text.split(None, 1)[1]

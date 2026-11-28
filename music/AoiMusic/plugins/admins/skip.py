@@ -121,7 +121,6 @@ async def skip(cli, message: Message, _, chat_id):
     queued = check[0]["file"]
     title = (check[0]["title"]).title()
     user = check[0]["by"]
-    user_id = message.from_user.id
     streamtype = check[0]["streamtype"]
     videoid = check[0]["vidid"]
     duration_min = check[0]["dur"]
@@ -137,7 +136,7 @@ async def skip(cli, message: Message, _, chat_id):
             )
         except Exception:
             return await reply_note(message, _["call_7"])
-        mid_np = await spawn_now_playing(
+        await spawn_now_playing(
             _, chat_id, None, title, duration_min, user,
             thumb=await gen_thumb(videoid),
         )
@@ -175,7 +174,7 @@ async def skip(cli, message: Message, _, chat_id):
             if not recovered:
                 return await mystic.edit_text(_["call_7"])
         asyncio.create_task(_start_lyrics_for_skip(chat_id, title, check[0]["dur"]))
-        mid_np = await spawn_now_playing(
+        await spawn_now_playing(
             _, chat_id, videoid, title, duration_min, user, thumb=await gen_thumb(videoid),
         )
         await mystic.delete()
@@ -184,7 +183,7 @@ async def skip(cli, message: Message, _, chat_id):
             await AoiCall.skip_stream(chat_id, videoid, video=status)
         except Exception:
             return await reply_note(message, _["call_7"])
-        mid_np = await spawn_now_playing(
+        await spawn_now_playing(
             _, chat_id, None, title, duration_min, user,
             thumb=config.STREAM_IMG_URL,
         )
@@ -194,7 +193,7 @@ async def skip(cli, message: Message, _, chat_id):
         except Exception:
             return await reply_note(message, _["call_7"])
         if videoid == "telegram":
-            mid_np = await spawn_now_playing(
+            await spawn_now_playing(
                 _, chat_id, None, title, check[0]["dur"], user,
                 thumb=(
                     config.TELEGRAM_AUDIO_URL
@@ -203,19 +202,19 @@ async def skip(cli, message: Message, _, chat_id):
                 ),
             )
         elif videoid == "soundcloud":
-            mid_np = await spawn_now_playing(
+            await spawn_now_playing(
                 _, chat_id, None, title, check[0]["dur"], user,
                 thumb=config.SOUNDCLOUD_IMG_URL,
             )
         elif "saavn" in videoid:
             url = check[0]["url"]
             details = await Platform.saavn.info(url)
-            mid_np = await spawn_now_playing(
+            await spawn_now_playing(
                 _, chat_id, None, title, check[0]["dur"], user,
                 thumb=details["thumb"] or config.TELEGRAM_AUDIO_URL,
             )
         else:
-            mid_np = await spawn_now_playing(
+            await spawn_now_playing(
                 _, chat_id, videoid, title, duration_min, user,
                 thumb=await gen_thumb(videoid),
             )

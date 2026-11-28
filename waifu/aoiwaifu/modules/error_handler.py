@@ -146,7 +146,6 @@ async def global_pyrogram_error(client, error: Exception, update_handler, update
 
 async def global_ptb_error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Report unexpected python-telegram-bot errors to the owner."""
-    lang = await get_effective_lang(update)
     error = context.error
     if error is None:
         return

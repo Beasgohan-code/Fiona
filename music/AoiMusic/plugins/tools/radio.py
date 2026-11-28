@@ -96,7 +96,7 @@ async def radio(client, message: Message):
                     )
         if invitelink.startswith("https://t.me/+"):
             invitelink = invitelink.replace("https://t.me/+", "https://t.me/joinchat/")
-        anon = await msg.edit_text(
+        await msg.edit_text(
             f"ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ...\n\nɪɴᴠɪᴛɪɴɢ {userbot.mention} ᴛᴏ {message.chat.title}."
         )
         try:
@@ -134,7 +134,6 @@ async def radio(client, message: Message):
     if RADIO_URL:
         language = await get_lang(message.chat.id)
         _ = get_string(language)
-        playmode = await get_playmode(message.chat.id)
         playty = await get_playtype(message.chat.id)
         if playty != "Everyone":
             if message.from_user.id not in SUDOERS:
