@@ -51,7 +51,7 @@ async def build_referral_text(bot_username: str, user_id: int, referrals_count: 
         history_block = '\n'.join(history_lines)
     else:
         history_block = '  <i>No referrals yet — share your link below!</i>'
-    text = t('refer_caption', lang, ref_dollars=REFERRAL_DOLLARS, ref_coins=REFERRAL_COINS, referrals_count=referrals_count, char_milestone_status=char_milestone_status, ref_link=ref_link)
+    text = t('refer_caption', lang, ref_dollars=REFERRAL_DOLLARS, ref_coins=REFERRAL_COINS, referrals_count=referrals_count, char_milestone_status=char_milestone_status, total_dollars=total_dollars, total_coins=total_coins, history_block=history_block, ref_link=ref_link)
     return text
 
 def build_referral_keyboard(bot_username: str, user_id: int) -> InlineKeyboardMarkup:

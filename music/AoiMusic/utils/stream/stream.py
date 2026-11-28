@@ -747,11 +747,6 @@ async def _stream(
                 return
             else:
                 link = await AoiBin(msg)
-                lines = msg.count("\n")
-                if lines >= 17:
-                    car = os.linesep.join(msg.split(os.linesep)[:17])
-                else:
-                    car = msg
                 mid_np = await notice_card(
                     _, original_chat_id, "ᴘʟᴀʏʟɪꜱᴛ ꜱᴜᴍᴍᴀʀʏ",
                     _["playlist_18"].format(link, position),

@@ -622,7 +622,6 @@ async def _show_bid_result(target, caption: str, keyboard, bid_target: int, anti
 
 async def _send_auction_detail(message, auction: dict, lang: str) -> None:
     character = auction.get("character") or {}
-    code = _auction_code(auction.get("auction_id"))
     caption = premium_text(rich_card(
         "Live auction",
         rich_quote(tr(_auction_body(auction), lang)),

@@ -233,7 +233,6 @@ async def start_comm(client, message: Message, _):
                 duration = result["duration"]
                 views = result["viewCount"]["short"]
                 thumbnail = result["thumbnails"][0]["url"].split("?")[0]
-                channellink = result["channel"]["link"]
                 channel = result["channel"]["name"]
                 link = result["link"]
                 published = result["publishedTime"]

@@ -11,6 +11,7 @@ from aoiwaifu.unit.rich_ui import (
     rich_table,
 )
 import html
+import re
 from datetime import date, datetime, timedelta
 from urllib.parse import urlsplit
 
@@ -270,9 +271,9 @@ async def _resolve_target_user(client: Client, message: Message):
             except Exception:
                 return (uid, "", f"User {uid}")
         else:
-            clean_uname = arg.lstrip("@")
+            clean_uname = arg.lstrip("@").strip()
             db_user = await user_collection.find_one(
-                {"username": {"$regex": f"^{clean_uname}$", "$options": "i"}}
+                {"username": {"$regex": f"^{re.escape(clean_uname)}$", "$options": "i"}}
             )
             if db_user and db_user.get("id"):
                 return (

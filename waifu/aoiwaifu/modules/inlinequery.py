@@ -33,7 +33,6 @@ async def inlinequery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     inline_query = update.inline_query
     query = inline_query.query or ""
     stripped_query = query.strip()
-    lower_query = stripped_query.lower()
     offset = int(inline_query.offset) if inline_query.offset else 0
 
     # /sips See button: show only the 10 matching characters from the selected page.
@@ -42,7 +41,6 @@ async def inlinequery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     if see_match:
         query = see_match.group(1).strip()
         stripped_query = query
-        lower_query = query.lower()
 
 
     if query.startswith("collection."):
@@ -70,7 +68,7 @@ async def inlinequery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                         if char.get("rarity") == filter_rarity
                     ]
                 if search_terms and " ".join(search_terms).strip():
-                    regex = re.compile(" ".join(search_terms), re.IGNORECASE)
+                    regex = re.compile(re.escape(" ".join(search_terms).strip()), re.IGNORECASE)
                     all_characters = [
                         char
                         for char in all_characters

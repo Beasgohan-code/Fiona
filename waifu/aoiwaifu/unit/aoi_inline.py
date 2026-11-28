@@ -23,7 +23,7 @@ async def search_characters(query, force_refresh=False):
     if not force_refresh and cache_key in all_characters_cache:
         return all_characters_cache[cache_key]
 
-    regex = re.compile(query, re.IGNORECASE)
+    regex = re.compile(re.escape(query), re.IGNORECASE)
     characters = await collection.find({"$or": [
         {"name": regex},
         {"anime": regex},
