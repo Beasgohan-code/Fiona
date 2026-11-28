@@ -156,16 +156,17 @@ class Telegram:
                         f"{pemoji('📥')} ᴘʀᴏɢʀᴇss: {percentage[:5]}%\n"
                         f"{'▰' * bar}{'▱' * (10 - bar)}"
                     )
+                    bot_label = rich_esc(app.name or "BOT")
                     text = f"""
-**{app.mention} ᴛᴇʟᴇɢʀᴀᴍ ᴍᴇᴅɪᴀ ᴅᴏᴡɴʟᴏᴀᴅᴇʀ**
+<b>{bot_label} ᴛᴇʟᴇɢʀᴀᴍ ᴍᴇᴅɪᴀ ᴅᴏᴡɴʟᴏᴀᴅᴇʀ</b>
 
 {progress_line}
 
-**Total file size:** {total_size}
-**Completed:** {completed_size}
+<b>Total file size:</b> {total_size}
+<b>Completed:</b> {completed_size}
 
-**Speed:** {speed}/s
-**Elapsed Time:** {eta}"""
+<b>Speed:</b> {speed}/s
+<b>Elapsed Time:</b> {eta}"""
                     try:
                         await edit_any(mystic, text, reply_markup=upl)
                     except Exception:

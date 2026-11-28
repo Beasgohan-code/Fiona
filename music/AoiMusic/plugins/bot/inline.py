@@ -2,8 +2,10 @@
 #
 
 import asyncio
+import html
 
 from py_yt import VideosSearch
+from pyrogram import enums
 from pyrogram.types import (
     InlineKeyboardMarkup,
     InlineQueryResultPhoto,
@@ -60,18 +62,31 @@ async def inline_query_handler(client, query):
                     ],
                 ]
             )
+
+            def esc(value):
+                return html.escape(str(value))
+
+            def esc_attr(value):
+                return html.escape(str(value), quote=True)
+            link_e = esc_attr(link)
+            channellink_e = esc_attr(channellink)
+            bot_e = (
+                f"<a href='tg://user?id={int(app.id)}'>{esc(app.name)}</a>"
+                if getattr(app, "id", None) is not None
+                else esc(app.name)
+            )
             searched_text = f"""
-❇️**ᴛɪᴛʟᴇ:** [{title}]({link})
+❇️<b>ᴛɪᴛʟᴇ:</b> <a href='{link_e}'>{esc(title)}</a>
 
-⏳**ᴅᴜʀᴀᴛɪᴏɴ:** {duration} Mins
-👀**ᴠɪᴇᴡs:** `{views}`
-⏰**ᴘᴜʙʟɪsʜᴇᴅ ᴛɪᴍᴇ:** {published}
-🎥**ᴄʜᴀɴɴᴇʟ ɴᴀᴍᴇ:** {channel}
-📎**ᴄʜᴀɴɴᴇʟ ʟɪɴᴋ:** [ᴠɪsɪᴛ ғʀᴏᴍ ʜᴇʀᴇ]({channellink})
+⏳<b>ᴅᴜʀᴀᴛɪᴏɴ:</b> {esc(duration)} Mins
+👀<b>ᴠɪᴇᴡs:</b> <code>{esc(views)}</code>
+⏰<b>ᴘᴜʙʟɪsʜᴇᴅ ᴛɪᴍᴇ:</b> {esc(published)}
+🎥<b>ᴄʜᴀɴɴᴇʟ ɴᴀᴍᴇ:</b> {esc(channel)}
+📎<b>ᴄʜᴀɴɴᴇʟ ʟɪɴᴋ:</b> <a href='{channellink_e}'>ᴠɪsɪᴛ ғʀᴏᴍ ʜᴇʀᴇ</a>
 
-__ʀᴇᴘʟʏ ᴡɪᴛʜ /play ᴏɴ ᴛʜɪs sᴇᴀʀᴄʜᴇᴅ ᴍᴇssᴀɢᴇ ᴛᴏ sᴛʀᴇᴀᴍ ɪᴛ ᴏɴ ᴠᴏɪᴄᴇᴄʜᴀᴛ.__
+<i>ʀᴇᴘʟʏ ᴡɪᴛʜ /play ᴏɴ ᴛʜɪs sᴇᴀʀᴄʜᴇᴅ ᴍᴇssᴀɢᴇ ᴛᴏ sᴛʀᴇᴀᴍ ɪᴛ ᴏɴ ᴠᴏɪᴄᴇᴄʜᴀᴛ.</i>
 
-⚡️ ** ɪɴʟɪɴᴇ sᴇᴀʀᴄʜ ʙʏ {app.mention} **"""
+⚡️ <b>ɪɴʟɪɴᴇ sᴇᴀʀᴄʜ ʙʏ {bot_e}</b>"""
             answers.append(
                 InlineQueryResultPhoto(
                     photo_url=thumbnail,
@@ -79,6 +94,7 @@ __ʀᴇᴘʟʏ ᴡɪᴛʜ /play ᴏɴ ᴛʜɪs sᴇᴀʀᴄʜᴇᴅ ᴍᴇssᴀ�
                     thumb_url=thumbnail,
                     description=description,
                     caption=searched_text,
+                    parse_mode=enums.ParseMode.HTML,
                     reply_markup=buttons,
                 )
             )

@@ -9,7 +9,7 @@ try:
 except RuntimeError:
     asyncio.set_event_loop(asyncio.new_event_loop())
 
-from pyrogram import Client
+from pyrogram import Client, enums
 from pyrogram.enums import ChatMemberStatus
 from pyrogram.types import (
     BotCommand,
@@ -120,16 +120,20 @@ class AyuBot(Client):
                 python_version = "%d.%d.%d" % sys.version_info[:3]
                 tgcalls_version = _package_version("py-tgcalls")
                 owner_display = config.OWNER_ID[0] if config.OWNER_ID else "N/A"
+                import html as _html
+                safe_name = _html.escape(str(self.name))
+                safe_username = _html.escape(str(self.username))
+                safe_mention = f"<a href='tg://user?id={int(self.id)}'>{safe_name}</a>"
                 start_msg = f"""
-🎵 **{self.mention} started successfully**
+🎵 <b>{safe_mention} started successfully</b>
 
-🔑 **ID:** <code>{self.id}</code>
-🧑 **Name:** {self.name}
-🔗 **Username:** @{self.username}
-📡 **Owner:** {owner_display}
-🌐 **Platform:** Cloud Linux
-🐍 **Python:** {python_version}
-⚙️ **PyTgCalls:** v{tgcalls_version}
+🔑 <b>ID:</b> <code>{int(self.id)}</code>
+🧑 <b>Name:</b> {safe_name}
+🔗 <b>Username:</b> @{safe_username}
+📡 <b>Owner:</b> {owner_display}
+🌐 <b>Platform:</b> Cloud Linux
+🐍 <b>Python:</b> {python_version}
+⚙️ <b>PyTgCalls:</b> v{tgcalls_version}
 
 🚀 Ready to play music
 💎 Premium UI active
@@ -139,6 +143,7 @@ class AyuBot(Client):
                     self.send_message(
                         config.LOGGER_ID,
                         text=start_msg,
+                        parse_mode=enums.ParseMode.HTML,
                     ),
                     timeout=15,
                 )

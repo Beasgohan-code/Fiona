@@ -86,7 +86,7 @@ async def radio(client, message: Message):
                     await app.approve_chat_join_request(message.chat.id, userbot.id)
                 except Exception as e:
                     return await msg.edit(
-                        f"ғᴀɪʟᴇᴅ ᴛᴏ ɪɴᴠɪᴛᴇ {rich_user_link(userbot)} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {html.escape(str(message.chat.title))}.\n\n<b>ʀᴇᴀsᴏɴ:</b> {e}"
+                        f"ғᴀɪʟᴇᴅ ᴛᴏ ɪɴᴠɪᴛᴇ {rich_user_link(userbot)} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {html.escape(str(message.chat.title))}.\n\n<b>ʀᴇᴀsᴏɴ:</b> {html.escape(str(e))}"
                     )
             except Exception as ex:
                 if "channels.JoinChannel" in str(ex) or "Username not found" in str(ex):
@@ -95,7 +95,7 @@ async def radio(client, message: Message):
                     )
                 else:
                     return await msg.edit_text(
-                        f"ғᴀɪʟᴇᴅ ᴛᴏ ɪɴᴠɪᴛᴇ {rich_user_link(userbot)} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {html.escape(str(message.chat.title))}.\n\n<b>ʀᴇᴀsᴏɴ:</b> {ex}"
+                        f"ғᴀɪʟᴇᴅ ᴛᴏ ɪɴᴠɪᴛᴇ {rich_user_link(userbot)} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {html.escape(str(message.chat.title))}.\n\n<b>ʀᴇᴀsᴏɴ:</b> {html.escape(str(ex))}"
                     )
         if invitelink.startswith("https://t.me/+"):
             invitelink = invitelink.replace("https://t.me/+", "https://t.me/joinchat/")
@@ -115,7 +115,7 @@ async def radio(client, message: Message):
                 await app.approve_chat_join_request(message.chat.id, userbot.id)
             except Exception as e:
                 return await msg.edit(
-                    f"ғᴀɪʟᴇᴅ ᴛᴏ ɪɴᴠɪᴛᴇ {rich_user_link(userbot)} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {html.escape(str(message.chat.title))}.\n\n<b>ʀᴇᴀsᴏɴ:</b> {e}"
+                    f"ғᴀɪʟᴇᴅ ᴛᴏ ɪɴᴠɪᴛᴇ {rich_user_link(userbot)} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {html.escape(str(message.chat.title))}.\n\n<b>ʀᴇᴀsᴏɴ:</b> {html.escape(str(e))}"
                 )
         except Exception as ex:
             if "channels.JoinChannel" in str(ex) or "Username not found" in str(ex):
@@ -124,7 +124,7 @@ async def radio(client, message: Message):
                 )
             else:
                 return await msg.edit_text(
-                    f"ғᴀɪʟᴇᴅ ᴛᴏ ɪɴᴠɪᴛᴇ {rich_user_link(userbot)} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {html.escape(str(message.chat.title))}.\n\n<b>ʀᴇᴀsᴏɴ:</b> {ex}"
+                    f"ғᴀɪʟᴇᴅ ᴛᴏ ɪɴᴠɪᴛᴇ {rich_user_link(userbot)} ᴀssɪsᴛᴀɴᴛ ᴛᴏ {html.escape(str(message.chat.title))}.\n\n<b>ʀᴇᴀsᴏɴ:</b> {html.escape(str(ex))}"
                 )
 
         try:
