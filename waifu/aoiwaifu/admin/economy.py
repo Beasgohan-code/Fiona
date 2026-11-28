@@ -1,4 +1,4 @@
-"""Admin economy & user data management commands (/add, /kill)."""
+"""Admin economy & user data management commands (/add, /kill, /give)."""
 from aoiwaifu.unit.rich_ui import (
     rich_card,
     reply_notice,
@@ -8,7 +8,7 @@ import html
 from pyrogram import Client, enums, filters
 from pyrogram.types import Message
 
-from aoiwaifu import OWNER_ID, app, require_power, user_collection
+from aoiwaifu import OWNER_ID, app, collection, require_power, user_collection
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
 
 
@@ -213,7 +213,7 @@ async def _owner_money_adjustment(message, *, add: bool):
         return
 
     if add:
-        result = await user_collection.update_one(
+        await user_collection.update_one(
             {"id": target_id}, {"$inc": {"balance": requested_amount}}
         )
         adjusted = requested_amount
@@ -256,3 +256,62 @@ async def give_money_command(client: Client, message: Message):
 @app.on_message(filters.command(["rmmoney"]))
 async def remove_money_command(client: Client, message: Message):
     await _owner_money_adjustment(message, add=False)
+
+
+@app.on_message(filters.command(["give"]) & filters.group)
+async def give_character_to_user(client: Client, message: Message):
+    lang = await get_effective_lang(message)
+    if not message.from_user or message.from_user.id != OWNER_ID:
+        await reply_notice(message, tr("This character grant is restricted to the bot owner.", lang))
+        return
+    if not message.reply_to_message or not message.reply_to_message.from_user:
+        await reply_notice(message, tr("Reply to a user's message with <code>/give &lt;character_id&gt;</code>.", lang))
+        return
+    if len(message.command or []) != 2:
+        await reply_notice(message, tr("Usage: reply to a user with <code>/give &lt;character_id&gt;</code>.", lang))
+        return
+
+    recipient = message.reply_to_message.from_user
+    if recipient.is_bot:
+        await reply_notice(message, tr("Characters cannot be granted to bot accounts.", lang))
+        return
+    character_id = message.command[1].strip()
+    character = await collection.find_one(
+        {"id": character_id},
+        {"_id": 0, "id": 1, "name": 1, "anime": 1, "rarity": 1, "img_url": 1, "vid_url": 1},
+    )
+    if not character and character_id.isdigit():
+        character = await collection.find_one(
+            {"id": int(character_id)},
+            {"_id": 0, "id": 1, "name": 1, "anime": 1, "rarity": 1, "img_url": 1, "vid_url": 1},
+        )
+    if not character:
+        await reply_notice(message, tr("That character ID is not in Fiona's catalog.", lang))
+        return
+
+    new_copy = dict(character)
+    await user_collection.update_one(
+        {"id": recipient.id},
+        {
+            "$setOnInsert": {
+                "id": recipient.id,
+                "username": recipient.username,
+                "first_name": recipient.first_name or "Collector",
+                "balance": 0,
+                "tokens": 0,
+            },
+            "$push": {"characters": new_copy},
+        },
+        upsert=True,
+    )
+    await reply_panel(
+        message,
+        rich_card(
+            "Character granted",
+            f"<b>{html.escape(str(character.get('name') or 'Unknown'))}</b> · "
+            f"{html.escape(str(character.get('anime') or 'Unknown'))}\n"
+            f"ID <code>{html.escape(str(character.get('id')))}</code> added to "
+            f"{html.escape(recipient.first_name or 'the collector')}'s collection.",
+            "🎁",
+        ),
+    )

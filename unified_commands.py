@@ -74,6 +74,8 @@ GROUP_COMMANDS = (
 )
 
 ADMIN_COMMANDS = (
+    ('give', 'Grant a catalog character to a replied-to user (owner only)'),
+    ('removeall', 'Clear a collector harem after confirmation (owner only)'),
     ('givemoney', 'Add coins to a collector (owner only)'),
     ('rmmoney', 'Remove coins from a collector (owner only)'),
     ('claimweights', 'List daily claim rarity weights (owner only)'),

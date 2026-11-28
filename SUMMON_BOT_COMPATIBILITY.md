@@ -24,7 +24,8 @@ are not copied wholesale.
 | `/achievements`, `/ach`, `/badges` | `/achievements` and aliases; milestones are derived from Fiona's Mongo user data |
 | Rarity catalog | Fiona's canonical upload/shop/spawn/filter options follow Summon-bot's rarity order and names, with rarity 15 customized to `🔞 Ecchi` at the user's request; `/rarity` and `/rarities` show the configured options plus a grouped legacy count, without deleting catalog characters or user collection entries |
 | `/claim`, `/hclaim`, `/redeem`, `/setclaim` | Fiona's `/claim`, `/hclaim`, `/redeem`; owner-only `/setclaim <rarity_id> <weight>` persists daily-claim weights, shown with `/claimweights` (Fiona keeps `/claimlist` for a user's collected characters) |
-| `/transfer`, `/addchar` | Fiona's `/transfer`, `/addchar` |
+| `/transfer`, `/addchar`, `/give` | Fiona's `/transfer`, `/addchar`; owner-only `/give <character_id>` replies to a user and grants the catalog character |
+| `/removeall` | Owner-only `/removeall <user_id>` clears only the target's character copies after a one-use confirmation; economy and profile data are preserved |
 | `/add`, `/update`, `/deletechar` | Fiona's `/add`, `/update`, `/deletechar`, with existing aliases `/gupload`, `/gupdate`, and `/gdelete` retained |
 | Admin character uploads | `/add` accepts direct Catbox, ImgBB, or Endtrz HTTPS image URLs; `/gupload` asks per upload whether to use ImgBB or Catbox, then posts image and metadata to `CHARA_CHANNEL_ID` (falls back to `GLOG`) |
 | `/checkspawn`, `/changetime` | `/checkspawn` reports the per-group threshold, in-memory progress, and catch-round state; `/changetime <count>` aliases Fiona's admin-authorized `/ctime <count>` |
@@ -50,9 +51,7 @@ thin aliases to unrelated Fiona commands:
 - Streak-dependent reward bonuses/achievements are not copied. Fiona now tracks
   a daily-reward streak and longest streak with `/streak`, while retaining its
   existing fixed daily payout and achievement model.
-- `/give`, `/removeall`, and claim-code
-  administration beyond Fiona's existing `/add`, `/kill`, `/transfer`, `/cgen`,
-  and `/redeem` flows.
+- Claim-code administration beyond Fiona's existing `/cgen` and `/redeem` flows.
 - `/font`/`/style`, `/premium`/`/unpremium`, `/nguess`, `/restart`, and
   database-specific `/savegroup` tooling.
 

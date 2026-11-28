@@ -91,6 +91,8 @@ HELP_DATA = {
             "• `/chance <rarity_id> <weight>` / `/chancelist` — Set or inspect relative automatic spawn weights (owner only; weight 0 disables that rarity)\n"
             "• `/setclaim <rarity_id> <weight>` / `/claimweights` — Configure daily claim rarity weights (owner only; weight 0 disables that rarity)\n"
             "• `/givemoney <user_id> <amount>` / `/rmmoney <user_id> <amount>` — Adjust collector coins (owner only).\n"
+            "• `/give <character_id>` — Reply to a user to grant a character (owner only).\n"
+            "• `/removeall <user_id>` — Clear a user's character collection after owner confirmation; their economy/profile are preserved.\n"
             "• `/cgen <char_id> <limit>` — Generate a character redeem code\n"
             "• `/add`, `/kill`, `/transfer`, `/backtransfer` — Manage user data & currency\n"
             "• `/blocklist`, `/removeblocklist`, `/addblocklistgc`, `/removeblocklistgc` — Blocklists\n"
