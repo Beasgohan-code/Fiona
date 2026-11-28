@@ -51,10 +51,10 @@ async def add_sudo(client, message):
     replied_user_id = message.reply_to_message.from_user.id
     existing_user = await sudo_users.find_one({'_id': replied_user_id})
     if existing_user:
-        await reply_notice(message, tr(f'User `{replied_user_id}` is already a sudo.', lang))
+        await reply_notice(message, tr(f'User <code>{replied_user_id}</code> is already a sudo.', lang))
         return
     await sudo_users.update_one({'_id': replied_user_id}, {'$set': {'powers': {'add_character': True}}}, upsert=True)
-    await reply_notice(message, tr(f"User `{replied_user_id}` has been added as a sudo with 'add_character' power.", lang))
+    await reply_notice(message, tr(f"User <code>{replied_user_id}</code> has been added as a sudo with 'add_character' power.", lang))
 
 
 @app.on_message(filters.command('sremovesudo'))
@@ -70,10 +70,10 @@ async def remove_sudo(client, message):
         return
     existing_user = await sudo_users.find_one({'_id': user_id})
     if not existing_user:
-        await reply_notice(message, tr(f'⚠️ User `{user_id}` is not a sudo.', lang))
+        await reply_notice(message, tr(f'⚠️ User <code>{user_id}</code> is not a sudo.', lang))
         return
     await sudo_users.delete_one({'_id': user_id})
-    await reply_notice(message, tr(f'✅ User [{user_id}](tg://user?id={user_id}) has been removed from sudo.', lang))
+    await reply_notice(message, tr(f"✅ User <a href='tg://user?id={user_id}'>{user_id}</a> has been removed from sudo.", lang))
 
 
 @app.on_message(filters.command('seditsudo') & filters.reply)
@@ -87,7 +87,7 @@ async def edit_sudo(client, message):
         return
     powers = user_data.get('powers', {})
     keyboard = _powers_keyboard(replied_user_id, powers)
-    await reply_notice(message, tr(f'Edit powers for `{replied_user_id}`:', lang), reply_markup=keyboard)
+    await reply_notice(message, tr(f'Edit powers for <code>{replied_user_id}</code>:', lang), reply_markup=keyboard)
 
 
 @app.on_callback_query(filters.regex('^toggle_(\\d+)_(\\w+)$'))
@@ -134,7 +134,7 @@ def require_power(required_power):
                     return await func(client, message, *args, **kwargs)
                 user_data = await sudo_users.find_one({'_id': user_id})
                 if not user_data or not user_data.get('powers', {}).get(required_power, False):
-                    await message.answer(tr(f'You do not have the `{required_power}` power required to use this button.', lang), show_alert=True)
+                    await message.answer(tr(f'You do not have the {required_power} power required to use this button.', lang), show_alert=True)
                     return
                 return await func(client, message, *args, **kwargs)
             user_id = message.from_user.id
@@ -142,7 +142,7 @@ def require_power(required_power):
                 return await func(client, message, *args, **kwargs)
             user_data = await sudo_users.find_one({'_id': user_id})
             if not user_data or not user_data.get('powers', {}).get(required_power, False):
-                await reply_notice(message, tr(f'You do not have the `{required_power}` power required to use this command.', lang))
+                await reply_notice(message, tr(f'You do not have the <code>{required_power}</code> power required to use this command.', lang))
                 return
             return await func(client, message, *args, **kwargs)
         return wrapper

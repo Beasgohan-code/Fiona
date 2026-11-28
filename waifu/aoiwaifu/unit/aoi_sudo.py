@@ -32,7 +32,7 @@ def require_power(required_power):
                 user_data = await sudo_users.find_one({"_id": user_id})
                 if not user_data or not user_data.get("powers", {}).get(required_power, False):
                     await message.answer(
-                        tr(f"You do not have the `{required_power}` power required to use this button.", lang),
+                        tr(f"You do not have the {required_power} power required to use this button.", lang),
                         show_alert=True,
                     )
                     return
@@ -46,7 +46,7 @@ def require_power(required_power):
             user_data = await sudo_users.find_one({"_id": user_id})
             if not user_data or not user_data.get("powers", {}).get(required_power, False):
                 await message.reply_text(
-                    tr(f"You do not have the `{required_power}` power required to use this command.", lang)
+                    tr(f"You do not have the <code>{required_power}</code> power required to use this command.", lang)
                 )
                 return
             return await func(client, message, *args, **kwargs)

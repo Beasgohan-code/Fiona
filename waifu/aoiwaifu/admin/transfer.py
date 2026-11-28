@@ -60,7 +60,7 @@ async def transfer_collection(client: Client, message: Message):
     if user_id == owner_id:
         return await reply_notice(message, tr('User ID and Owner ID must be different.', lang))
     if is_transfer_active_and_valid():
-        return await reply_notice(message, tr(f"⚠️ A transfer is already in progress (requested by user ID `{active_transfer['requester_id']}`). Please complete or cancel it first, or wait for it to expire.", lang))
+        return await reply_notice(message, tr(f"⚠️ A transfer is already in progress (requested by user ID <code>{active_transfer['requester_id']}</code>). Please complete or cancel it first, or wait for it to expire.", lang))
     user = await user_collection.find_one({'id': {'$in': [int(user_id), str(user_id)]}})
     if not user:
         return await reply_notice(message, tr('User not found.', lang))

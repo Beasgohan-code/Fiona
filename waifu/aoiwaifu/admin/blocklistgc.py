@@ -30,15 +30,15 @@ async def add_blocklist_group(client, message: Message):
         return
     chat = await blocked_groups_collection.find_one({'_id': group_id})
     if chat:
-        await reply_notice(message, tr(f'ℹ️ Group `{group_id}` is already on the character-drop blocklist.', lang))
+        await reply_notice(message, tr(f'ℹ️ Group <code>{group_id}</code> is already on the character-drop blocklist.', lang))
         return
     await blocked_groups_collection.update_one({'_id': group_id}, {'$set': {'chat_id': group_id, 'blocked_by': message.from_user.id}}, upsert=True)
     notice = '🚫 <b>This group has been blocklisted by the bot administrator.</b>\n\nCharacter drops are disabled in this group, so no characters can appear for grabbing.'
     try:
         await send_panel(client,group_id, notice, parse_mode='html')
-        await reply_notice(message, tr(f'✅ Group `{group_id}` has been added to the character-drop blocklist. Notification sent.', lang))
+        await reply_notice(message, tr(f'✅ Group <code>{group_id}</code> has been added to the character-drop blocklist. Notification sent.', lang))
     except Exception as exc:
-        await reply_notice(message, tr(f"✅ Group `{group_id}` was added to the blocklist, but I couldn't send the notification. Please make sure the bot is still in that group and can send messages.", lang))
+        await reply_notice(message, tr(f"✅ Group <code>{group_id}</code> was added to the blocklist, but I couldn't send the notification. Please make sure the bot is still in that group and can send messages.", lang))
         logger.warning(f'Could not notify blocklisted group {group_id}: {exc}')
 @app.on_message(filters.command('removeblocklistgc'))
 @require_power('VIP')
@@ -50,9 +50,9 @@ async def remove_blocklist_group(client, message: Message):
         return
     result = await blocked_groups_collection.delete_one({'_id': group_id})
     if not result.deleted_count:
-        await reply_notice(message, tr(f'ℹ️ Group `{group_id}` is not on the character-drop blocklist.', lang))
+        await reply_notice(message, tr(f'ℹ️ Group <code>{group_id}</code> is not on the character-drop blocklist.', lang))
         return
-    await reply_notice(message, tr(f'✅ Group `{group_id}` has been removed from the character-drop blocklist. Character drops can resume when the next spawn threshold is reached.', lang))
+    await reply_notice(message, tr(f'✅ Group <code>{group_id}</code> has been removed from the character-drop blocklist. Character drops can resume when the next spawn threshold is reached.', lang))
 
 @app.on_message(filters.command('blocklistgc'))
 @require_power('VIP')

@@ -1,6 +1,7 @@
 
 #
 
+import html
 from pyrogram import filters
 from pyrogram.types import Message
 
@@ -134,7 +135,7 @@ async def authusers(client, message: Message, _):
                 j += 1
             except Exception:
                 continue
-            text += f"{j}➤ {user}[`{user_id}`]\n"
-            text += f"   {_['auth_8']} {admin_name}[`{admin_id}`]\n\n"
+            text += f"{j}➤ {html.escape(str(user))} <code>{user_id}</code>\n"
+            text += f"   {_['auth_8']} {html.escape(str(admin_name))} <code>{admin_id}</code>\n\n"
         await mystic.delete()
         await reply_note(message, text)

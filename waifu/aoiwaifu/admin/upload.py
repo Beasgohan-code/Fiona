@@ -264,7 +264,7 @@ async def add_character_command(client, message):
 async def find_next_id_cmd(client, message):
     lang = await get_effective_lang(message)
     available_id = await find()
-    await reply_notice(message, tr(f"Next available character ID: `{available_id}`", lang))
+    await reply_notice(message, tr(f"Next available character ID: <code>{available_id}</code>", lang))
 
 
 def _prune_pending_uploads() -> None:
