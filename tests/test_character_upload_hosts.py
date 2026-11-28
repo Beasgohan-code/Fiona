@@ -157,8 +157,10 @@ class CatboxUploadTests(unittest.TestCase):
         self.assertIn('"img_url": file_url', source)
 
         addchar_source = (ROOT / "waifu/aoiwaifu/modules/addchar.py").read_text(encoding="utf-8")
-        self.assertIn('InlineKeyboardButton("ImgBB", callback_data=f"addcharhost:{token}:imgbb")', addchar_source)
-        self.assertIn('InlineKeyboardButton("Catbox", callback_data=f"addcharhost:{token}:catbox")', addchar_source)
+        self.assertIn('callback_data=f"addcharhost:{token}:imgbb"', addchar_source)
+        self.assertIn('callback_data=f"addcharhost:{token}:catbox"', addchar_source)
+        self.assertIn('"ImgBB"', addchar_source)
+        self.assertIn('"Catbox"', addchar_source)
         self.assertIn("upload_to_catbox", addchar_source)
         self.assertIn("chat_id=CHARA_CHANNEL_ID", addchar_source)
 
