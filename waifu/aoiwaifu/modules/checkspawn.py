@@ -3,7 +3,7 @@
 from aoiwaifu.unit.rich_ui import (
     reply_panel,
     premium_text,
-    rich_card,
+    rich_showcase_panel,
 )
 from html import escape
 
@@ -82,7 +82,7 @@ async def check_spawn_status(client, message):
         "<i>The message counter is held in memory and resets after a trigger or bot restart.</i>"
     )
     await reply_panel(message,
-        premium_text(tr(rich_card("Character spawn status", body, "📊"), lang)),
+        premium_text(tr(rich_showcase_panel("Group spawn status", body, "📊"), lang)),
         parse_mode=enums.ParseMode.HTML,
         disable_web_page_preview=True,
     )

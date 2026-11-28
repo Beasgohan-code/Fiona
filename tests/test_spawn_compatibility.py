@@ -75,12 +75,15 @@ class SpawnCompatibilityTests(unittest.TestCase):
         manual = (ROOT / "waifu/aoiwaifu/admin/spawn.py").read_text(encoding="utf-8")
         self.assertIn("send_media_panel", source)
         self.assertIn("send_panel", source)
-        self.assertIn("premium_text(rich_card(", source)
+        self.assertIn("premium_text(rich_showcase_panel(", source)
         self.assertIn("<blockquote>", source)
         self.assertIn("<blockquote>", status)
         self.assertIn("<blockquote>", guess)
         self.assertIn("reply_panel(", manual)
         self.assertIn("<blockquote>", manual)
+        rich_ui = (ROOT / "waifu/aoiwaifu/unit/rich_ui.py").read_text(encoding="utf-8")
+        self.assertIn("def rich_showcase_panel(", rich_ui)
+        self.assertIn('heading = f"<h4>{emoji}', rich_ui)
 
 
 if __name__ == "__main__":

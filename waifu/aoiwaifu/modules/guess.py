@@ -4,7 +4,7 @@ from aoiwaifu.unit.rich_ui import (
     reply_panel,
     premium_button,
     premium_text,
-    rich_card,
+    rich_showcase_panel,
     reply_notice,
 )
 import asyncio
@@ -118,7 +118,7 @@ async def guess(client: Client, message: Message):
         new_balance = int((updated_user or {}).get("balance", 40) or 40)
 
         char = last_characters[chat_id]
-        caption = rich_card(
+        caption = rich_showcase_panel(
             "Character caught",
             "<blockquote>" + "\n".join((
                 f"🎉 <b><a href='tg://user?id={user_id}'>{escape(message.from_user.first_name or 'Player')}</a></b> caught a character!",

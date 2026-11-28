@@ -5,7 +5,7 @@ from pyrogram import enums, filters
 from aoiwaifu import OWNER_ID, app
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
 from aoiwaifu.unit.aoi_send_img import spawn_character
-from aoiwaifu.unit.rich_ui import premium_text, rich_card, reply_notice, reply_panel
+from aoiwaifu.unit.rich_ui import premium_text, rich_showcase_panel, reply_notice, reply_panel
 
 
 @app.on_message(filters.command(["spawn"]) & filters.group)
@@ -20,7 +20,7 @@ async def manual_spawn(client, message):
     except Exception:
         await reply_panel(
             message,
-            premium_text(rich_card(
+            premium_text(rich_showcase_panel(
                 "Manual spawn failed",
                 "<blockquote>Check the catalog connection and bot permissions, then try again.</blockquote>",
                 "⚠️",
@@ -38,7 +38,7 @@ async def manual_spawn(client, message):
     if result == "spawned":
         await reply_panel(
             message,
-            premium_text(rich_card(
+            premium_text(rich_showcase_panel(
                 "Manual spawn launched",
                 "<blockquote>A new character round has been posted. Be quick and catch it!</blockquote>",
                 "🎯",
@@ -48,7 +48,7 @@ async def manual_spawn(client, message):
     elif result in messages:
         await reply_panel(
             message,
-            premium_text(rich_card(
+            premium_text(rich_showcase_panel(
                 "Manual spawn unavailable",
                 f"<blockquote>{tr(messages[result], lang)}</blockquote>",
                 "⚠️",

@@ -56,6 +56,17 @@ def rich_card(title: str, body: str, emoji: str = "✨") -> str:
     return "\n\n".join((heading, body)) if body else heading
 
 
+def rich_showcase_panel(title: str, body: str, emoji: str = "✨") -> str:
+    """Build an emphasized Richgram panel with a structural heading.
+
+    ``body`` is trusted Richgram HTML assembled by the caller. The title is
+    escaped so user-provided names cannot inject markup.
+    """
+    body = str(body or "").strip()
+    heading = f"<h4>{emoji} {rich_esc(str(title or 'Fiona'))}</h4>"
+    return "\n".join((heading, body)) if body else heading
+
+
 def richgram_notice_card(
     text: str,
     emoji: str | None = None,

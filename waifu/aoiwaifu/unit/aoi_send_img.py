@@ -16,7 +16,12 @@ from collections import defaultdict, deque
 from telegram import Update
 from telegram.ext import CallbackContext
 
-from aoiwaifu.unit.rich_ui import premium_text, rich_card, send_media_panel, send_panel
+from aoiwaifu.unit.rich_ui import (
+    premium_text,
+    rich_showcase_panel,
+    send_media_panel,
+    send_panel,
+)
 
 logger = logging.getLogger(__name__)
 system_random = random.SystemRandom()
@@ -180,12 +185,12 @@ async def _expire_spawn(bot, chat_id: int, spawn_token: str) -> None:
         await send_panel(
             bot,
             chat_id=chat_id,
-            text=rich_card(
+            text=premium_text(rich_showcase_panel(
                 "Character escaped",
-                "<blockquote>The catch window closed before anyone caught this character.</blockquote>\n"
-                "Keep chatting to trigger the next round.",
+                "<blockquote>The catch window closed before anyone caught this character.</blockquote>"
+                "<p>Keep chatting to trigger the next round.</p>",
                 "⏰",
-            ),
+            )),
         )
     except Exception as exc:
         logger.warning("Could not post character escape notice in %s: %s", chat_id, exc)
@@ -221,13 +226,13 @@ async def spawn_character(bot, chat_id: int, *, manual: bool = False) -> str:
     first_correct_guesses.pop(chat_id, None)
 
     spawned = last_characters[chat_id]
-    caption = premium_text(rich_card(
+    caption = premium_text(rich_showcase_panel(
         "A character appeared!",
         "<blockquote>"
-        f"🎌 <b>Anime:</b> {html.escape(spawned['anime'])}\n"
-        f"💎 <b>Rarity:</b> {html.escape(spawned['rarity'])}"
-        "</blockquote>\n"
-        "Be the first to catch it with <code>/guess &lt;name&gt;</code> or <code>/summon &lt;name&gt;</code>.",
+        f"🎌 <b>Anime</b> · {html.escape(spawned['anime'])}\n"
+        f"💎 <b>Rarity</b> · {html.escape(spawned['rarity'])}"
+        "</blockquote>"
+        "<p><b>Catch it first:</b> <code>/guess &lt;name&gt;</code> or <code>/summon &lt;name&gt;</code></p>",
         "🌠",
     ))
     photo = spawned.get("img_url")
