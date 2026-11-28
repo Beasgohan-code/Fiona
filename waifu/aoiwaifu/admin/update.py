@@ -1,11 +1,12 @@
 from aoiwaifu.unit.rich_ui import (
     reply_notice,
     edit_notice,
+    premium_button,
 )
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 import asyncio
 from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+from pyrogram.types import Message, InlineKeyboardMarkup, CallbackQuery
 from pymongo import ReturnDocument
 from aoiwaifu import collection, SUDO, app, user_collection, require_power
 from aoiwaifu.admin.upload import require_character_image_url
@@ -242,8 +243,8 @@ async def rarity_delete_handler(client, message):
 
     keyboard = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton('⚠️ Confirm Delete', callback_data=f'rdel_yes_{rarity_number}_{message.from_user.id}'),
-            InlineKeyboardButton('❌ Cancel', callback_data=f'rdel_no_{message.from_user.id}')
+            premium_button('Confirm Delete', emoji='TRASH_DELETE', style='DANGER', callback_data=f'rdel_yes_{rarity_number}_{message.from_user.id}'),
+            premium_button('Cancel', emoji='CLOSE', callback_data=f'rdel_no_{message.from_user.id}')
         ]
     ])
     await reply_notice(message,
