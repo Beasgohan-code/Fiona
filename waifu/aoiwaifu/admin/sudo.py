@@ -1,5 +1,6 @@
 from aoiwaifu.unit.rich_ui import (
     reply_notice,
+    premium_button,
 )
 # ==============================================================================
 # How to Use:
@@ -15,7 +16,7 @@ from aoiwaifu.unit.rich_ui import (
 
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+from pyrogram.types import InlineKeyboardMarkup, CallbackQuery
 from pymongo import MongoClient
 from aoiwaifu import OWNER_ID, SUDO
 from aoiwaifu import app, db, require_power
@@ -24,6 +25,22 @@ from aoiwaifu.unit.aoi_parse_fix import SudoUsersHybrid
 
 sudo_users = SudoUsersHybrid(db['sudo_users'], SUDO, OWNER_ID)
 ALL_POWERS = ['add_character', 'delete_character', 'update_character', 'approve_request', 'approve_inventory_request', 'VIP']
+
+
+def _powers_keyboard(user_id: int, powers: dict):
+    """Premium toggle keyboard for sudo power flags."""
+    buttons = []
+    for power in ALL_POWERS:
+        enabled = bool(powers.get(power, False))
+        toggle = premium_button(
+            'Enabled' if enabled else 'Disabled',
+            emoji='CHECK_CIRCLE' if enabled else 'CROSS_BADGE',
+            style='SUCCESS' if enabled else 'DANGER',
+            callback_data=f'toggle_{user_id}_{power}',
+        )
+        buttons.append([premium_button(power, emoji='KEY_ACCESS', callback_data='noop'), toggle])
+    buttons.append([premium_button('Close', emoji='CLOSE', style='DANGER', callback_data='close_keyboard')])
+    return InlineKeyboardMarkup(buttons)
 
 
 @app.on_message(filters.command('saddsudo') & filters.reply)
@@ -67,13 +84,8 @@ async def edit_sudo(client, message):
     if not user_data:
         await reply_notice(message, tr('This user is not a sudo.', lang))
         return
-    buttons = []
     powers = user_data.get('powers', {})
-    for i, power in enumerate(ALL_POWERS):
-        current_status = 'Yes' if powers.get(power, False) else 'No'
-        buttons.append([InlineKeyboardButton(f'{power}', callback_data='noop'), InlineKeyboardButton(f'{current_status}', callback_data=f'toggle_{replied_user_id}_{power}')])
-    buttons.append([InlineKeyboardButton('Closed', callback_data='close_keyboard')])
-    keyboard = InlineKeyboardMarkup(buttons)
+    keyboard = _powers_keyboard(replied_user_id, powers)
     await reply_notice(message, tr(f'Edit powers for `{replied_user_id}`:', lang), reply_markup=keyboard)
 
 
@@ -96,12 +108,7 @@ async def toggle_power(client, callback_query):
     await callback_query.answer(tr(f"Power '{power}' updated to {('Yes' if new_status else 'No')}.", lang), show_alert=True)
     user_data = await sudo_users.find_one({'_id': user_id})
     powers = user_data.get('powers', {})
-    buttons = []
-    for p in ALL_POWERS:
-        status = 'Yes' if powers.get(p, False) else 'No'
-        buttons.append([InlineKeyboardButton(f'{p}', callback_data='noop'), InlineKeyboardButton(f'{status}', callback_data=f'toggle_{user_id}_{p}')])
-    buttons.append([InlineKeyboardButton('Closed', callback_data='close_keyboard')])
-    keyboard = InlineKeyboardMarkup(buttons)
+    keyboard = _powers_keyboard(user_id, powers)
     await callback_query.message.edit_reply_markup(reply_markup=keyboard)
 
 
