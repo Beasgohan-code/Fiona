@@ -1,6 +1,7 @@
 
 #
 import asyncio
+import html
 from pyrogram import filters
 from pyrogram.types import Message
 
@@ -43,7 +44,7 @@ async def stop_music(cli, message: Message):
                 filter = " ".join(message.command[1:])
                 deleted = await delete_filter(message.chat.id, filter)
                 if deleted:
-                    return await reply_note(message, f"**ᴅᴇʟᴇᴛᴇᴅ ғɪʟᴛᴇʀ {filter}.**")
+                    return await reply_note(message, f"**ᴅᴇʟᴇᴛᴇᴅ ғɪʟᴛᴇʀ {html.escape(filter)}.**")
                 else:
                     return await reply_note(message, "**ɴᴏ sᴜᴄʜ ғɪʟᴛᴇʀ.**")
 

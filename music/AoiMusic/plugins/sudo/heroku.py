@@ -1,5 +1,6 @@
 
 #
+import html
 import asyncio
 import math
 import os
@@ -130,7 +131,7 @@ async def varget_(client, message, _):
         if not output:
             await reply_note(message, _["heroku_4"])
         else:
-            return await reply_note(message, f"**{check_var}:** `{str(output)}`")
+            return await reply_note(message, f"**{html.escape(str(check_var))}:** `{html.escape(str(output))}`")
 
 
 @app.on_message(command("DELVAR_COMMAND") & SUDOERS)
