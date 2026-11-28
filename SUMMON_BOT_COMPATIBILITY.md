@@ -32,7 +32,7 @@ are not copied wholesale.
 | `/spawn`, `/chance`, `/chancelist` | Owner-only manual group spawn; persistent relative rarity weights for automatic drops (0–1,000,000), configurable with `/chance <rarity_id> <weight>`; `/chancelist` displays current weights and estimated odds |
 | `/ban`, `/unban`, `/warn` | Existing Fiona group moderation commands |
 | `/broadcast` | Owner/Sudo-only `/waifubcast` and `/waifubroadcast` |
-| `/owner`, `/panel` | Private, `OWNER_ID`-gated `/owner` overview and `/panel` alias; existing restricted admin commands remain separately protected |
+| `/owner`, `/panel` | Private, `OWNER_ID`-gated interactive Richgram owner overview with character, economy, spawn/claim, and safety sections; callback navigation is owner-only and admin commands retain their own checks |
 
 Fiona reserves `/claimlist` for a user's character collection, so Summon's claim-weight listing is available as `/claimweights`. `/addchar` also asks the submitter to choose ImgBB or Catbox before posting a pending approval request to `CHARA_CHANNEL_ID`. Fiona's old `/reupload` command is removed as requested. Endtrz direct HTTPS image URLs are accepted by `/add` and `/update image`; Endtrz is not offered as an upload destination in `/gupload` or `/addchar` because this link alone does not establish its upload API.
 
