@@ -16,9 +16,8 @@ import time
 import config
 from AoiMusic import LOGGER
 from AoiMusic.misc import db
-from AoiMusic.utils.database import autoplay_cache, is_autoplay
-from AoiMusic.utils.inline.play import get_progress_bar
-from AoiMusic.utils.premium_emoji import BLANK_BTN_TEXT, pe
+from AoiMusic.utils.database import autoplay_cache, is_autoplay, is_music_playing
+from AoiMusic.utils.premium_emoji import pe
 from AoiMusic.utils.rich_msg import (
     RichMystic,
     edit_rich,
@@ -49,28 +48,6 @@ def mark_panel_closed(chat_id: int, message_id: int) -> None:
     _menu_page.pop((chat_id, message_id), None)
 
 
-def _bar_style(percentage: float) -> str:
-    pct = int(percentage) if percentage else 0
-    if pct <= 10:
-        return "primary"
-    if pct < 25:
-        return "success"
-    if pct < 40:
-        return "danger"
-    if pct < 55:
-        return "primary"
-    if pct < 70:
-        return "success"
-    if pct < 85:
-        return "danger"
-    return "primary"
-
-
-def _ctl_style() -> str:
-    # Keep the skip button style stable across periodic panel refreshes.
-    return "primary"
-
-
 def _xeno_bar(percentage: float) -> str:
     umm = int(percentage or 0)
     if umm <= 10:
@@ -97,7 +74,7 @@ def _xeno_bar(percentage: float) -> str:
 def _autoplay_button(chat_id: int) -> str:
     enabled = bool(autoplay_cache.get(chat_id, False))
     return rich_button(
-        f"ᴀᴜᴛᴏ : {'ᴏɴ' if enabled else 'ᴏғғ'}",
+        f"Autoplay {'On' if enabled else 'Off'}",
         callback_data=f"AutoplayToggle|{chat_id}",
         style="success" if enabled else "",
         emoji="SPARKLES_AI" if enabled else "BAN_BLOCK",
@@ -105,28 +82,10 @@ def _autoplay_button(chat_id: int) -> str:
 
 
 def _toggle_button(chat_id: int, playing: bool = True) -> str:
-    if playing and db.get(chat_id):
-        return rich_button("ᴘᴀᴜsᴇ", callback_data=f"ADMIN Pp|{chat_id}", style="primary", emoji="PAUSE")
-    return rich_button("ʀᴇsᴜᴍᴇ", callback_data=f"ADMIN Pp|{chat_id}", style="success", emoji="PLAY")
-
-
-def _toggle_icon_button(chat_id: int, playing: bool = True) -> str:
-    """Single Pause/Resume icon-only toggle button for Row 2."""
-    if playing and db.get(chat_id):
-        return rich_button(
-            BLANK_BTN_TEXT,
-            callback_data=f"ADMIN Pp|{chat_id}",
-            style="primary",
-            emoji="PAUSE",
-            icon_only=True,
-        )
-    return rich_button(
-        BLANK_BTN_TEXT,
-        callback_data=f"ADMIN Pp|{chat_id}",
-        style="success",
-        emoji="PLAY",
-        icon_only=True,
-    )
+    """Labeled pause/resume action; `playing` reflects the real voice state."""
+    if playing:
+        return rich_button("Pause", callback_data=f"ADMIN Pp|{chat_id}", style="primary", emoji="PAUSE")
+    return rich_button("Resume", callback_data=f"ADMIN Pp|{chat_id}", style="success", emoji="PLAY")
 
 
 def _rows(chat_id: int, videoid, elapsed: float, total_sec: float, playing: bool = True) -> str:
@@ -154,26 +113,31 @@ def _rows(chat_id: int, videoid, elapsed: float, total_sec: float, playing: bool
             emoji="TIMER",
         )
     )
-    # Row 2: 4-icon controls row (Pause/Resume toggle | Replay | Skip | Stop)
+    # Row 2: Clear, labeled transport controls (same callbacks as the legacy buttons).
     rows += rich_button_row(
-        _toggle_icon_button(chat_id, playing=playing),
-        rich_button(BLANK_BTN_TEXT, callback_data=f"ADMIN Replay|{chat_id}", style="primary", emoji="REPEAT", icon_only=True),
-        rich_button(BLANK_BTN_TEXT, callback_data=f"ADMIN Skip|{chat_id}", style="primary", emoji="NEXT_TRACK", icon_only=True),
-        rich_button(BLANK_BTN_TEXT, callback_data=f"ADMIN Stop|{chat_id}", style="danger", emoji="STOP", icon_only=True),
+        _toggle_button(chat_id, playing=playing),
+        rich_button("Replay", callback_data=f"ADMIN Replay|{chat_id}", style="primary", emoji="REPEAT"),
+        rich_button("Skip", callback_data=f"ADMIN Skip|{chat_id}", style="primary", emoji="NEXT_TRACK"),
+        rich_button("Stop", callback_data=f"ADMIN Stop|{chat_id}", style="danger", emoji="STOP"),
     )
-    # Row 3: Playlist + compact Autoplay toggle
+
+    # Row 3: Common library and queue actions, plus an at-a-glance autoplay toggle.
+    shortcuts = [
+        rich_button("Queue", callback_data=f"GetQueued {chat_id}|{videoid}", style="primary", emoji="QUEUE_LIST"),
+    ]
+    track_id = str(videoid or "")
+    if track_id and track_id not in ("telegram", "soundcloud") and "index_" not in track_id and "live_" not in track_id:
+        shortcuts.append(
+            rich_button("Save track", callback_data=f"add_playlist {videoid}", style="success", emoji="PLUS")
+        )
+    shortcuts.append(_autoplay_button(chat_id))
+    rows += rich_button_row(*shortcuts)
+
+    # Row 4: Discovery, advanced controls, and close.
     rows += rich_button_row(
-        rich_button("ᴘʟᴀʏʟɪsᴛ", callback_data=f"add_playlist {videoid}", style="success", emoji="PLUS"),
-        _autoplay_button(chat_id),
-    )
-    # Row 4: Compact Suggestions + Controls Menu
-    rows += rich_button_row(
-        rich_button("sᴜɢɢᴇsᴛ", callback_data=f"GetSuggestions|{chat_id}", style="", emoji="SPARKLES_AI"),
-        rich_button("ᴍᴇɴᴜ", callback_data=f"PanelMarkup {videoid}|{chat_id}", style="primary", emoji="SLIDERS_EQ"),
-    )
-    # Row 5: Close
-    rows += rich_button_row(
-        rich_button("ᴄʟᴏsᴇ", callback_data="close", style="danger", emoji="CLOSE"),
+        rich_button("Suggestions", callback_data=f"GetSuggestions|{chat_id}", style="", emoji="SPARKLES_AI"),
+        rich_button("More controls", callback_data=f"PanelMarkup {videoid}|{chat_id}", style="primary", emoji="SLIDERS_EQ"),
+        rich_button("Close", callback_data="close", style="danger", emoji="CLOSE"),
     )
     return rows
 
@@ -517,14 +481,17 @@ async def _ensure_body(_, chat_id: int, mid: int, videoid) -> tuple[str, float]:
 async def show_menu(_, chat_id: int, mid: int, videoid, page: int) -> bool:
     """Open a menu page on the rich panel; False if the message is not rich."""
     body, _t = await _ensure_body(_, chat_id, mid, videoid)
-    ok = await edit_rich(chat_id, mid, body + menu_pages_rows(_, videoid, chat_id, page))
+    playing = await is_music_playing(chat_id)
+    ok = await edit_rich(chat_id, mid, body + menu_pages_rows(_, videoid, chat_id, page, playing=playing))
     if ok:
         _menu_page[(chat_id, mid)] = page
     return ok
 
 
-async def show_main(chat_id: int, mid: int, videoid, playing: bool = True) -> bool:
-    """Leave the menu and re-render the main progress rows."""
+async def show_main(chat_id: int, mid: int, videoid, playing: bool | None = None) -> bool:
+    """Leave the menu and re-render the main progress rows in the current state."""
+    if playing is None:
+        playing = await is_music_playing(chat_id)
     body, total_sec = await _ensure_body(None, chat_id, mid, videoid)
     played = 0.0
     cur = db.get(chat_id)
@@ -538,7 +505,7 @@ async def show_main(chat_id: int, mid: int, videoid, playing: bool = True) -> bo
     return ok
 
 
-def menu_pages_rows(_, videoid, chat_id: int, page: int) -> str:
+def menu_pages_rows(_, videoid, chat_id: int, page: int, playing: bool = True) -> str:
     """The 3-page player menu (controls / audio+queue / seek) in XENOBOT2 style."""
     fuzzy = f"MainMarkup {videoid}|{chat_id}"
     nav = rich_button_row(
@@ -549,7 +516,7 @@ def menu_pages_rows(_, videoid, chat_id: int, page: int) -> str:
     if page == 0:
         rows = (
             rich_button_row(
-                _toggle_button(chat_id),
+                _toggle_button(chat_id, playing=playing),
                 rich_button("sᴋɪᴘ", callback_data=f"ADMIN Skip|{chat_id}", style="primary", emoji="NEXT_TRACK"),
                 rich_button("sᴛᴏᴘ", callback_data=f"ADMIN Stop|{chat_id}", style="danger", emoji="STOP"),
             )
