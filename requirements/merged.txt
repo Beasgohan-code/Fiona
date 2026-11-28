@@ -33,5 +33,9 @@ nodejs-wheel==22.20.0
 yt-dlp-getpot-wpc==1.1.2
 py-yt-search==0.8.2
 static-ffmpeg
+# Optional thumbnail renderers (HTML -> PNG). The code imports these lazily
+# and degrades gracefully to a Chromium CLI tier when they are absent, so
+# they are intentionally NOT installed. Add `playwright` (+ playwright
+# install chromium) or `selenium` to enable Tier 1 / Tier 3 rendering.
 kurigram
 speedtest-cli==2.1.3

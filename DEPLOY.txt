@@ -136,3 +136,14 @@ The container runs as the non-root fiona user. MongoDB holds bot data; local
 cache/download files are container-local and may be discarded on replacement.
 The image has not been built in this environment; validate it on a Docker host
 before relying on it in production.
+
+STAFF / SUDO POWERS
+-------------------
+Two separate sudo systems exist in the merged bot and do not share state:
+the waifu collector's MongoDB-backed power flags and the music package's
+`sudoers` document. In short: character staff use /saddsudo (reply) and,
+for approval-only rights, grant `approve_request`; music moderators use
+/addsudo. The waifu OWNER_ID always bypasses every power check. See
+docs/SUDO.md for the full power matrix, both command sets, and the static
+SUDO env var's (narrower) role. The optional EXTRA_ADMIN_ID env var grants
+one extra second-admin bypass account alongside OWNER_ID.
