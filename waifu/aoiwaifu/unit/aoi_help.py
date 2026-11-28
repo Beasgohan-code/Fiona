@@ -19,6 +19,7 @@ HELP_DATA = {
             "• `/fav <id>` — Set your featured profile character\n"
             "• `/wishlist [id]` (alias `/wish`) — View your wishlist or add a catalog character; `/unwish <id>` removes one\n"
             "• `/pincharacter <id>` / `/unpincharacter <id>` / `/pinnedcharacters` — Manage pinned collection characters; `/pinnedcharacters` includes one-tap unpin buttons (aliases: `/hpin`, `/hunpin`, `/pinlist`)\n"
+            "• `/collectionvalue` — Estimate the market value of your collection\n"
             "• Group-message pinning uses the separate admin commands `/pin` and `/unpin`."
         ),
     },
@@ -58,6 +59,19 @@ HELP_DATA = {
             "• `/gift <char_id>` — Reply to a user to gift a character\n"
             "• `/redeem <code>` — Redeem a character code\n"
             "• `/refer` — Invite friends and earn coin rewards"
+        ),
+    },
+    "auction": {
+        "HELP_NAME": "Auctions",
+        "HELP": (
+            "Live character auctions — escrow a copy, collectors bid with coins:\n\n"
+            "• `/auction <id> <start_price> [minutes]` — Escrow one copy of a character and list it for live auction\n"
+            "• `/bid <auction_id> <amount>` — Place a bid; tap the quick-bid buttons on the auction card for instant bids\n"
+            "• `/auctionlist` (alias `/auctions`) — Browse live auctions\n"
+            "• `/mybids` — Track the auctions you have bid on\n"
+            "• `/cancelauction <auction_id>` — Cancel your auction before any bid is placed; the character is returned\n"
+            "• `/auctionhistory` (alias `/auctionlog`) — Browse recently closed auctions\n"
+            "• `/auctionstats` (alias `/auctionsummary`) — Your closed-auction profit and escrowed-coin summary\n"
         ),
     },
     "search": {

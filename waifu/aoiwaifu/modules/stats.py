@@ -16,6 +16,7 @@ from datetime import date, datetime, timedelta
 from urllib.parse import urlsplit
 
 import aiohttp
+from cachetools import TTLCache
 from pyrogram import Client, enums, filters
 from pyrogram.types import CallbackQuery, InlineKeyboardMarkup, InputMediaPhoto, Message
 
@@ -26,6 +27,19 @@ from aoiwaifu.unit.profile_card import build_profile_card
 
 
 MAX_FEATURED_IMAGE_BYTES = 5 * 1024 * 1024
+
+# The catalog total barely changes (characters are uploaded by admins), yet it was
+# counted on every profile render. Cache it briefly instead.
+_catalog_total_cache: TTLCache = TTLCache(maxsize=1, ttl=300)
+
+
+async def _catalog_total() -> int:
+    cached = _catalog_total_cache.get("total")
+    if cached is None:
+        cached = await collection.count_documents({})
+        _catalog_total_cache["total"] = cached
+    return cached
+
 
 
 async def _fetch_featured_image(url: str | None) -> bytes | None:
@@ -106,7 +120,7 @@ async def get_user_stats(user_id: int, username: str = "", first_name: str = "Co
 
     raw_characters = user_doc.get("characters") or []
     characters = [c for c in raw_characters if isinstance(c, dict) and c.get("id") is not None]
-    total_characters = await collection.count_documents({})
+    total_characters = await _catalog_total()
     character_count = len(characters)
     unique_character_count = len({str(c.get("id")) for c in characters})
     progress_percentage = min(
@@ -124,18 +138,19 @@ async def get_user_stats(user_id: int, username: str = "", first_name: str = "Co
 
     blocked_ids = await get_blocklisted_id_variants()
     user_is_blocklisted = await is_user_blocklisted(user_id)
-    cursor = user_collection.find({"id": {"$nin": blocked_ids}}, {"_id": 0, "id": 1, "characters": 1})
-    all_users = await cursor.to_list(length=None)
-    all_users.sort(
-        key=lambda x: len(x.get("characters") or []) if isinstance(x.get("characters"), list) else 0,
-        reverse=True,
-    )
-    total_users = len(all_users)
-    rank = (
-        None
-        if user_is_blocklisted
-        else next((i + 1 for i, u in enumerate(all_users) if str(u.get("id")) == str(user_id)), None)
-    )
+    base_filter = {"id": {"$nin": blocked_ids}} if blocked_ids else {}
+    total_users = await user_collection.count_documents(base_filter)
+    if user_is_blocklisted:
+        rank = None
+    else:
+        # Competition ranking ("1224"): collectors with strictly more copies rank
+        # ahead and ties share a rank. Counted server-side so a profile view no
+        # longer streams every user's characters array into Python just to rank.
+        higher = await user_collection.count_documents({
+            **base_filter,
+            "$expr": {"$gt": [{"$size": {"$ifNull": ["$characters", []]}}, character_count]},
+        })
+        rank = higher + 1
 
     rarity_counts = {rarity: 0 for rarity in rarity_map.values()}
     legacy_rarity_count = 0

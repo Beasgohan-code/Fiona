@@ -6,6 +6,20 @@ from aoiwaifu import user_collection, collection
 all_characters_cache = TTLCache(maxsize=10000, ttl=300)  # Reduced from 10 hours to 5 minutes
 user_collection_cache = TTLCache(maxsize=10000, ttl=30)  # Reduced from 1 minute to 30 seconds
 
+# Only the fields the inline renderer and /total consume. Character documents carry
+# bulky extra metadata, so project these to keep the catalog cache lean.
+_CHAR_PROJECTION = {
+    "_id": 0,
+    "id": 1,
+    "name": 1,
+    "anime": 1,
+    "rarity": 1,
+    "img_url": 1,
+    "thum_url": 1,
+    "vid_url": 1,
+    "aliases": 1,
+}
+
 async def get_user_collection(user_id):
     """Get user collection from database with forced refresh option"""
     user_id = str(user_id)  # Ensure consistent type
@@ -24,11 +38,13 @@ async def search_characters(query, force_refresh=False):
         return all_characters_cache[cache_key]
 
     regex = re.compile(re.escape(query), re.IGNORECASE)
+    # Bounded: inline answers show 50 per page, so 500 leaves ample room for
+    # paging deep results without streaming an entire catalog match into memory.
     characters = await collection.find({"$or": [
         {"name": regex},
         {"anime": regex},
         {"aliases": regex}  # Added support for aliases
-    ]}).to_list(length=None)
+    ]}, _CHAR_PROJECTION).limit(500).to_list(length=500)
 
     all_characters_cache[cache_key] = characters
     return characters
@@ -38,7 +54,7 @@ async def get_all_characters(force_refresh=False):
     if not force_refresh and 'all_characters' in all_characters_cache:
         return all_characters_cache['all_characters']
 
-    characters = await collection.find({}).to_list(length=None)
+    characters = await collection.find({}, _CHAR_PROJECTION).to_list(length=None)
     all_characters_cache['all_characters'] = characters
     return characters
 

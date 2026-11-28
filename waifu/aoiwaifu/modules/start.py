@@ -358,6 +358,7 @@ HELP_MODULE_EMOJIS = {
     "profile": "USER",
     "balance": "WALLET",
     "trade": "GIFT",
+    "auction": "GIFT",
     "search": "SEARCH",
     "lang": "GLOBE_LANG",
     "admin": "SHIELD_ADMIN",
