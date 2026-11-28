@@ -18,11 +18,13 @@ from telegram import Update
 from telegram.ext import CallbackContext
 
 from aoiwaifu.unit.rich_ui import (
+    premium_button,
     premium_text,
     rich_showcase_panel,
     send_media_panel,
     send_panel,
 )
+from pyrogram.types import InlineKeyboardMarkup
 
 logger = logging.getLogger(__name__)
 system_random = random.SystemRandom()
@@ -237,11 +239,17 @@ async def spawn_character(bot, chat_id: int, *, manual: bool = False) -> str:
 
     char_id = character.get("id", character.get("_id"))
     spawn_token = f"{chat_id}:{char_id}:{time.time_ns()}"
+    raw_rarity = str(character.get("rarity") or "").strip()
+    if not raw_rarity:
+        logger.warning(
+            "Spawn character %s has no rarity in the catalog; showing 'Unknown'",
+            char_id,
+        )
     last_characters[chat_id] = {
         "id": character.get("id"),
         "name": str(character.get("name") or "Unknown"),
-        "anime": str(character.get("anime") or "Unknown"),
-        "rarity": str(character.get("rarity") or "Unknown"),
+        "anime": str(character.get("anime") or "").strip() or "Unknown",
+        "rarity": raw_rarity or "Unknown",
         "img_url": character.get("img_url") or character.get("image") or character.get("url"),
         "timestamp": time.time(),
         "message_id": None,
@@ -251,13 +259,16 @@ async def spawn_character(bot, chat_id: int, *, manual: bool = False) -> str:
     first_correct_guesses.pop(chat_id, None)
 
     spawned = last_characters[chat_id]
+    hint_markup = InlineKeyboardMarkup([[
+        premium_button("Hint", emoji="SEARCH_ALT", style="PRIMARY", callback_data=f"spawn_hint:{chat_id}"),
+    ]])
     caption = premium_text(rich_showcase_panel(
         "A character appeared!",
         "<blockquote>"
         f"🎌 <b>Anime</b> · {html.escape(spawned['anime'])}\n"
         f"💎 <b>Rarity</b> · {html.escape(spawned['rarity'])}"
         "</blockquote>"
-        "<p><b>Catch it first:</b> <code>/guess &lt;name&gt;</code> or <code>/summon &lt;name&gt;</code></p>",
+        "<p><b>Catch it first:</b> <code>/hunt &lt;name&gt;</code> or <code>/guess &lt;name&gt;</code></p>",
         "🌠",
     ))
     photo = spawned.get("img_url")
@@ -270,13 +281,18 @@ async def spawn_character(bot, chat_id: int, *, manual: bool = False) -> str:
                 photo=photo,
                 caption=caption,
                 parse_mode="html",
+                reply_markup=hint_markup,
             )
         else:
-            sent = await send_panel(bot, chat_id=chat_id, text=caption, parse_mode="html")
+            sent = await send_panel(bot, chat_id=chat_id, text=caption, parse_mode="html", reply_markup=hint_markup)
     except Exception as exc:
         logger.warning("Character media send failed in %s; trying text fallback: %s", chat_id, exc)
         try:
-            sent = await bot.send_message(chat_id=chat_id, text=caption, parse_mode="html")
+            try:
+                sent = await bot.send_message(chat_id=chat_id, text=caption, parse_mode="html", reply_markup=hint_markup)
+            except Exception:
+                # Bot API may reject the pyrogram-built markup; post without it.
+                sent = await bot.send_message(chat_id=chat_id, text=caption, parse_mode="html")
         except Exception:
             logger.exception("Could not post character spawn in %s", chat_id)
             if last_characters.get(chat_id, {}).get("spawn_token") == spawn_token:

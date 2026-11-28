@@ -144,3 +144,41 @@ async def guess(client: Client, message: Message):
             await reply_panel(message,premium_text(tr(incorrect_text, lang)), reply_markup=keyboard, parse_mode=enums.ParseMode.HTML)
         else:
             await reply_notice(message, tr(incorrect_text, lang), parse_mode=enums.ParseMode.HTML)
+
+
+@app.on_callback_query(filters.regex(r"^spawn_hint:(-?\d+)$"))
+async def spawn_hint(client: Client, callback_query):
+    """Reveal a safe, deterministic hint for the active spawn in this chat."""
+    try:
+        chat_id = int(callback_query.matches[0].group(1))
+    except (TypeError, ValueError, AttributeError, IndexError):
+        return await callback_query.answer("Hint is unavailable.", show_alert=True)
+
+    state = last_characters.get(chat_id)
+    message = getattr(callback_query, "message", None)
+    message_id = getattr(message, "id", None) or getattr(message, "message_id", None)
+    state_message_id = (state or {}).get("message_id")
+    if (
+        not state
+        or state.get("ranaway")
+        or chat_id in first_correct_guesses
+        or (
+            message_id is not None
+            and state_message_id is not None
+            and int(state_message_id) != int(message_id)
+        )
+    ):
+        return await callback_query.answer("This spawn already ended.", show_alert=True)
+
+    name = str(state.get("name") or "").strip()
+    if not name or name.lower() == "unknown":
+        return await callback_query.answer("No hint available for this one.", show_alert=True)
+
+    words = [word for word in name.split() if word]
+    letters = sum(1 for ch in name if ch.isalnum())
+    vowels = sum(1 for ch in name.lower() if ch in "aeiou")
+    first = words[0][0].upper()
+    word_label = f"{len(words)} word{'s' if len(words) != 1 else ''}"
+    vowel_label = f"{vowels} vowel{'s' if vowels != 1 else ''}"
+    hint = f"💡 {letters} letters · {word_label} · starts with “{first}” · {vowel_label}"
+    await callback_query.answer(hint, show_alert=True)
