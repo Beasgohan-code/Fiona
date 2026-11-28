@@ -15,6 +15,16 @@ from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, CallbackQuery
 from html import escape
 
+
+def _character_id_candidates(raw_id):
+    """Match current string IDs plus legacy zero-padded/numeric catalog IDs."""
+    value = str(raw_id or "").strip()
+    candidates = [value]
+    if value.isdigit():
+        candidates.extend((value.zfill(2), int(value)))
+    return list(dict.fromkeys(candidates))
+
+
 @app.on_message(filters.command('check'))
 async def check_character(client, message):
     lang = await get_effective_lang(message)
@@ -23,17 +33,23 @@ async def check_character(client, message):
         await reply_notice(message, tr('Please provide a Character ID: `/check <character_id>`', lang))
         return
     character_id = args[1]
-    character = await character_collection.find_one({'id': character_id})
+    id_candidates = _character_id_candidates(character_id)
+    character = await character_collection.find_one({'id': {'$in': id_candidates}})
     if not character:
         await reply_notice(message, tr('Character not found.', lang))
         return
+    stored_character_id = character.get('id', character_id)
     keyboard = InlineKeyboardMarkup([[
-        premium_button('Find collectors', emoji='USERS_GROUP', callback_data=f'whohaveit_{character_id}')
+        premium_button(
+            'Find collectors',
+            emoji='USERS_GROUP',
+            callback_data=f'whohaveit_{stored_character_id}',
+        )
     ]])
     text = rich_showcase_panel(
         'CHARACTER DOSSIER',
         "<blockquote>"
-        f"🆔 <b>ID</b> · <code>{escape(str(character_id))}</code>\n"
+        f"🆔 <b>ID</b> · <code>{escape(str(stored_character_id))}</code>\n"
         f"👤 <b>Name</b> · {escape(str(character.get('name', 'Unknown')))}\n"
         f"🎌 <b>Anime</b> · {escape(str(character.get('anime', 'Unknown')))}\n"
         f"✨ <b>Rarity</b> · {escape(str(character.get('rarity', 'Unknown')))}"
@@ -52,9 +68,12 @@ async def check_character(client, message):
 @app.on_callback_query(filters.regex('^whohaveit_'))
 async def who_have_it(client, callback_query):
     lang = await get_effective_lang(callback_query)
-    character_id = callback_query.data.split('_')[1]
+    character_id = callback_query.data[len('whohaveit_'):]
+    id_candidates = _character_id_candidates(character_id)
     blocked_ids = await get_blocklisted_id_variants()
-    users = await user_collection.find({'characters.id': character_id, 'id': {'$nin': blocked_ids}}).to_list(length=10)
+    users = await user_collection.find(
+        {'characters.id': {'$in': id_candidates}, 'id': {'$nin': blocked_ids}}
+    ).to_list(length=10)
     if not users:
         await callback_query.answer(tr('No one owns this character yet!', lang), show_alert=True)
         return

@@ -13,9 +13,18 @@ def load_rarity_picker():
         if isinstance(node, ast.Assign)
         and any(isinstance(target, ast.Name) and target.id == "RARITY_WEIGHTS" for target in node.targets)
     )
+    active_picker = next(
+        node for node in tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == "active_spawn_rarities"
+    )
     picker = next(
         node for node in tree.body
         if isinstance(node, ast.FunctionDef) and node.name == "pick_weighted_rarity"
+    )
+    max_weight = next(
+        node for node in tree.body
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name) and target.id == "MAX_SPAWN_WEIGHT" for target in node.targets)
     )
 
     class DeterministicRandom:
@@ -23,8 +32,9 @@ def load_rarity_picker():
         def uniform(low, high):
             return low
 
-    namespace = {"system_random": DeterministicRandom()}
-    exec(compile(ast.Module(body=[weights, picker], type_ignores=[]), str(SPAWN_FILE), "exec"), namespace)
+    import math
+    namespace = {"system_random": DeterministicRandom(), "math": math}
+    exec(compile(ast.Module(body=[weights, max_weight, active_picker, picker], type_ignores=[]), str(SPAWN_FILE), "exec"), namespace)
     return namespace["pick_weighted_rarity"], namespace["RARITY_WEIGHTS"]
 
 
@@ -38,6 +48,17 @@ class SpawnCompatibilityTests(unittest.TestCase):
         )
         self.assertEqual(picker(["Disabled test rarity"]), "")
         self.assertEqual(picker([]), "")
+
+    def test_auto_spawn_picker_ignores_invalid_weights_and_respects_global_disable(self):
+        picker, weights = load_rarity_picker()
+        import math
+        from_source = (ROOT / "waifu/aoiwaifu/unit/aoi_send_img.py").read_text(encoding="utf-8")
+        self.assertIn("if not active_rarities:", from_source)
+        self.assertIn("return None", from_source[from_source.index("if not active_rarities:"):])
+        weights["nan"] = (math.nan, True)
+        weights["infinity"] = (math.inf, True)
+        weights["too large"] = (1_000_001, True)
+        self.assertEqual(picker(["nan", "infinity", "too large"]), "")
 
     def test_threshold_spawn_is_implemented_and_manual_spawn_is_owner_only(self):
         source = SPAWN_FILE.read_text(encoding="utf-8")
@@ -55,7 +76,8 @@ class SpawnCompatibilityTests(unittest.TestCase):
         self.assertIn('filters.command(["chancelist"])', chance)
         self.assertIn("message.from_user.id == OWNER_ID", chance)
         self.assertIn("set_spawn_weight(rarity_id, rarity, weight, message.from_user.id)", chance)
-        self.assertIn("MAX_SPAWN_WEIGHT = 1_000_000", chance)
+        self.assertIn("MAX_SPAWN_WEIGHT = 1_000_000", source)
+        self.assertIn("MAX_SPAWN_WEIGHT", chance)
         self.assertIn('("RARITY", "WEIGHT", "ODDS")', chance)
         self.assertIn("weight / total_weight * 100", chance)
         self.assertIn('db["spawn_rarity_chances"]', source)

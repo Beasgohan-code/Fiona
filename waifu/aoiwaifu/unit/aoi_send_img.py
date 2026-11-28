@@ -10,6 +10,7 @@ from aoiwaifu import *
 import asyncio
 import html
 import logging
+import math
 import random
 import time
 from collections import defaultdict, deque
@@ -26,6 +27,7 @@ from aoiwaifu.unit.rich_ui import (
 logger = logging.getLogger(__name__)
 system_random = random.SystemRandom()
 SPAWN_TIMEOUT_SECONDS = 120
+MAX_SPAWN_WEIGHT = 1_000_000
 
 # Relative weights mirror Summon-bot's default distribution. The second value
 # lets the owner disable a rarity from automatic drops without hiding it from
@@ -56,17 +58,28 @@ recent_global_spawns = deque(maxlen=25)
 recent_chat_spawns = defaultdict(lambda: deque(maxlen=15))
 
 
+def active_spawn_rarities(rarities_list: list[str]) -> list[str]:
+    """Return only rarities with a finite, positive automatic-spawn weight."""
+    active = []
+    for rarity in rarities_list:
+        if not isinstance(rarity, str) or not rarity.strip():
+            continue
+        try:
+            weight, enabled = RARITY_WEIGHTS.get(rarity, (1.0, True))
+            weight = float(weight)
+        except (TypeError, ValueError, OverflowError):
+            continue
+        if enabled and math.isfinite(weight) and 0 < weight <= MAX_SPAWN_WEIGHT:
+            active.append(rarity)
+    return active
+
+
 def pick_weighted_rarity(rarities_list: list[str]) -> str:
     """Pick an enabled rarity by relative weight, or an empty string if none."""
     active = []
-    for rarity in rarities_list:
-        weight, enabled = RARITY_WEIGHTS.get(rarity, (1.0, True))
-        try:
-            weight = float(weight)
-        except (TypeError, ValueError):
-            continue
-        if enabled and weight > 0:
-            active.append((rarity, weight))
+    for rarity in active_spawn_rarities(rarities_list):
+        weight = float(RARITY_WEIGHTS.get(rarity, (1.0, True))[0])
+        active.append((rarity, weight))
     if not active:
         return ""
 
@@ -109,12 +122,14 @@ async def load_spawn_weight_overrides() -> None:
         cursor = db["spawn_rarity_chances"].find({})
         overrides = await cursor.to_list(length=None)
         for item in overrides:
-            rarity = item.get("rarity")
-            if not rarity:
-                continue
             try:
-                weight = max(0.0, float(item.get("weight", 0)))
-            except (TypeError, ValueError):
+                rarity = item.get("rarity")
+                weight = float(item.get("weight", 0))
+            except (AttributeError, TypeError, ValueError, OverflowError):
+                continue
+            if not isinstance(rarity, str) or not rarity.strip():
+                continue
+            if not math.isfinite(weight) or not 0 <= weight <= MAX_SPAWN_WEIGHT:
                 continue
             enabled = bool(item.get("enabled", weight > 0)) and weight > 0
             RARITY_WEIGHTS[rarity] = (weight, enabled)
@@ -127,6 +142,16 @@ async def load_spawn_weight_overrides() -> None:
 async def set_spawn_weight(rarity_id: int, rarity: str, weight: int, updated_by: int) -> None:
     """Persist and immediately apply an owner-configured auto-spawn weight."""
     global _spawn_weights_loaded
+    try:
+        weight = int(weight)
+        rarity_id = int(rarity_id)
+        updated_by = int(updated_by)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("Rarity ID, weight, and owner ID must be whole numbers.") from exc
+    if not 0 <= weight <= MAX_SPAWN_WEIGHT:
+        raise ValueError(f"Spawn weight must be between 0 and {MAX_SPAWN_WEIGHT}.")
+    if not isinstance(rarity, str) or not rarity.strip():
+        raise ValueError("A valid rarity name is required.")
     enabled = weight > 0
     await db["spawn_rarity_chances"].update_one(
         {"rarity_id": int(rarity_id)},
@@ -152,20 +177,20 @@ async def _choose_character(chat_id: int, manual: bool = False):
 
     await load_spawn_weight_overrides()
     rarities = await collection.distinct("rarity")
-    active_rarities = [
-        rarity for rarity in rarities
-        if RARITY_WEIGHTS.get(rarity, (1.0, True))[1]
-        and float(RARITY_WEIGHTS.get(rarity, (1.0, True))[0]) > 0
-    ]
+    active_rarities = active_spawn_rarities(rarities)
+    if not active_rarities:
+        # If the owner disabled every automatic rarity, do not silently bypass
+        # that setting with an unweighted fallback drop.
+        return None
+
     rarity = pick_weighted_rarity(active_rarities)
     if rarity:
         character = await _sample_character({"rarity": rarity}, recent_ids)
         if character:
             return character
 
-    # A rarity may be configured but have no usable records. Fall back safely
-    # to any available catalog character rather than silently losing the drop.
-    return await _sample_character({}, recent_ids)
+    # Recover from a catalog race without ever selecting a disabled rarity.
+    return await _sample_character({"rarity": {"$in": active_rarities}}, recent_ids)
 
 
 async def _expire_spawn(bot, chat_id: int, spawn_token: str) -> None:

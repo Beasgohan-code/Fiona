@@ -6,11 +6,13 @@ import math
 from pyrogram import filters
 
 from aoiwaifu import OWNER_ID, app, rarity_map
-from aoiwaifu.unit.aoi_send_img import RARITY_WEIGHTS, load_spawn_weight_overrides, set_spawn_weight
+from aoiwaifu.unit.aoi_send_img import (
+    MAX_SPAWN_WEIGHT,
+    RARITY_WEIGHTS,
+    load_spawn_weight_overrides,
+    set_spawn_weight,
+)
 from aoiwaifu.unit.rich_ui import rich_card, rich_table, reply_notice, reply_panel
-
-
-MAX_SPAWN_WEIGHT = 1_000_000
 
 
 def _owner_only(message) -> bool:

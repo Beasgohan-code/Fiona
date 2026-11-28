@@ -333,7 +333,7 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                     f"<b>{escape(str(character.get('name', 'Unknown Character')))}</b> "
                     f"×{count}\n"
                 )
-        harem_message = rich_showcase_panel(f'{escape(user_first_name)} · COLLECTION', harem_message, '🎴')
+        harem_message = rich_showcase_panel(f'{user_first_name} · COLLECTION', harem_message, '🎴')
         keyboard = [
             [
                 premium_button(
