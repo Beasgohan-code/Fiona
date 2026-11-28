@@ -88,7 +88,7 @@ HELP_DATA = {
             "• `/find`, `/findani` — Find next available ID or search anime\n"
             "• `/ctime <count>` or `/changetime <count>` — Set group character spawn message threshold\n"
             "• `/spawn` — Manually start a character round (bot owner only)\n"
-            "• `/chance <rarity_id> <weight>` / `/chancelist` — Set or inspect relative automatic spawn weights (owner only; weight 0 disables that rarity)\n"
+            "• `/chance <rarity_id> <weight>` / `/chancelist` — Set relative automatic spawn weights (0–1,000,000) and view estimated odds (owner only; weight 0 disables that rarity)\n"
             "• `/setclaim <rarity_id> <weight>` / `/claimweights` — Configure daily claim rarity weights (owner only; weight 0 disables that rarity)\n"
             "• `/givemoney <user_id> <amount>` / `/rmmoney <user_id> <amount>` — Adjust collector coins (owner only).\n"
             "• `/give <character_id>` — Reply to a user to grant a character (owner only).\n"

@@ -55,6 +55,9 @@ class SpawnCompatibilityTests(unittest.TestCase):
         self.assertIn('filters.command(["chancelist"])', chance)
         self.assertIn("message.from_user.id == OWNER_ID", chance)
         self.assertIn("set_spawn_weight(rarity_id, rarity, weight, message.from_user.id)", chance)
+        self.assertIn("MAX_SPAWN_WEIGHT = 1_000_000", chance)
+        self.assertIn('("RARITY", "WEIGHT", "ODDS")', chance)
+        self.assertIn("weight / total_weight * 100", chance)
         self.assertIn('db["spawn_rarity_chances"]', source)
         self.assertIn("/chancelist", (ROOT / "SUMMON_BOT_COMPATIBILITY.md").read_text(encoding="utf-8"))
 
