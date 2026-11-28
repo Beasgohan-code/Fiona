@@ -10,6 +10,7 @@ from pyrogram.types import Message
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime, timedelta
 import asyncio
+import html
 import logging
 backup_logger = logging.getLogger('BACKUP')
 
@@ -106,7 +107,7 @@ class AutoBackup:
     async def send_backup_notification(self, backup_name, total_docs, total_collections):
         """Send backup success notification to owner"""
         try:
-            message = f"✅ **Database Backup Completed**\n\n📅 **Backup Name:** `{backup_name}`\n📊 **Collections:** {total_collections}\n📄 **Documents:** {total_docs}\n⏰ **Time:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n\n🔒 **Status:** Your data is safely backed up!"
+            message = f"✅ <b>Database Backup Completed</b>\n\n📅 <b>Backup Name:</b> <code>{html.escape(str(backup_name))}</code>\n📊 <b>Collections:</b> {total_collections}\n📄 <b>Documents:</b> {total_docs}\n⏰ <b>Time:</b> {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n\n🔒 <b>Status:</b> Your data is safely backed up!"
             await send_panel(app,chat_id=self.owner_id, text=message)
             backup_logger.info('Backup notification sent to owner')
         except Exception as e:
@@ -115,7 +116,7 @@ class AutoBackup:
     async def send_error_notification(self, error_msg):
         """Send backup error notification to owner"""
         try:
-            message = f"❌ **Database Backup Failed**\n\n🚨 **Error:** {error_msg}\n⏰ **Time:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n\n⚠️ Please check the backup system!"
+            message = f"❌ <b>Database Backup Failed</b>\n\n🚨 <b>Error:</b> {html.escape(str(error_msg))}\n⏰ <b>Time:</b> {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n\n⚠️ Please check the backup system!"
             await send_panel(app,chat_id=self.owner_id, text=message)
             backup_logger.error('Backup error notification sent to owner')
         except Exception as e:
@@ -173,9 +174,9 @@ async def backup_status(client: Client, message: Message):
         last_backup = await backup_system.check_last_backup()
         if last_backup:
             time_since = datetime.now() - last_backup
-            status_msg = f"📊 **Backup System Status**\n\n✅ **Last Backup:** {last_backup.strftime('%d/%m/%Y %H:%M:%S')}\n⏰ **Time Since:** {time_since}\n🔄 **Next Backup:** {('Soon' if time_since >= timedelta(hours=24) else 'In ' + str(timedelta(hours=24) - time_since))}\n📁 **Max Backups:** {backup_system.max_backups} days\n🔧 **Status:** Active"
+            status_msg = f"📊 <b>Backup System Status</b>\n\n✅ <b>Last Backup:</b> {last_backup.strftime('%d/%m/%Y %H:%M:%S')}\n⏰ <b>Time Since:</b> {time_since}\n🔄 <b>Next Backup:</b> {('Soon' if time_since >= timedelta(hours=24) else 'In ' + str(timedelta(hours=24) - time_since))}\n📁 <b>Max Backups:</b> {backup_system.max_backups} days\n🔧 <b>Status:</b> Active"
         else:
-            status_msg = f'📊 **Backup System Status**\n\n❌ **Last Backup:** No backups found\n🔄 **Next Backup:** Will create first backup soon\n📁 **Max Backups:** {backup_system.max_backups} days\n🔧 **Status:** Active'
+            status_msg = f'📊 <b>Backup System Status</b>\n\n❌ <b>Last Backup:</b> No backups found\n🔄 <b>Next Backup:</b> Will create first backup soon\n📁 <b>Max Backups:</b> {backup_system.max_backups} days\n🔧 <b>Status:</b> Active'
         await reply_notice(message, tr(status_msg, lang))
     except Exception as e:
         await reply_notice(message, tr(f'❌ Error checking backup status: {str(e)}', lang))
@@ -200,10 +201,10 @@ async def list_backups(client: Client, message: Message):
             except ValueError:
                 continue
         backup_info.sort(reverse=True)
-        backup_list = '📁 **Available Backups:**\n\n'
+        backup_list = '📁 <b>Available Backups:</b>\n\n'
         for i, (backup_date, db_name) in enumerate(backup_info, 1):
             age = datetime.now() - backup_date
-            backup_list += f"{i}. `{db_name}`\n   📅 {backup_date.strftime('%d/%m/%Y')}\n   ⏰ {age.days} days ago\n\n"
+            backup_list += f"{i}. <code>{html.escape(str(db_name))}</code>\n   📅 {backup_date.strftime('%d/%m/%Y')}\n   ⏰ {age.days} days ago\n\n"
         await reply_notice(message, tr(backup_list, lang))
     except Exception as e:
         await reply_notice(message, tr(f'❌ Error listing backups: {str(e)}', lang))

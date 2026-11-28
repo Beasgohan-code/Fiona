@@ -70,12 +70,12 @@ async def transfer_collection(client: Client, message: Message):
         return await reply_notice(message, tr('🚫 Character transfers to or from a blocklisted user are disabled.', lang))
     user_chars = user.get('characters', [])
     if not user_chars:
-        return await reply_notice(message, tr(f'❌ User `{user_id}` has no characters to transfer.', lang))
+        return await reply_notice(message, tr(f'❌ User <code>{user_id}</code> has no characters to transfer.', lang))
     from_id = message.from_user.id
     transfer_id = generate_transfer_id()
     transfer_in_progress = True
     active_transfer = {'transfer_id': transfer_id, 'user_id': user_id, 'owner_id': owner_id, 'requester_id': from_id, 'timestamp': time.time()}
-    text = f'⚠️ **Confirm Character Transfer?**\n\n👤 From: `{user_id}` (has {len(user_chars)} characters)\n➡️ To: `{owner_id}`\n🆔 Transfer ID: `{transfer_id}`\n\nClick the appropriate button below to proceed or cancel. This prompt will expire in 60 seconds.'
+    text = f'⚠️ <b>Confirm Character Transfer?</b>\n\n👤 From: <code>{user_id}</code> (has {len(user_chars)} characters)\n➡️ To: <code>{owner_id}</code>\n🆔 Transfer ID: <code>{transfer_id}</code>\n\nClick the appropriate button below to proceed or cancel. This prompt will expire in 60 seconds.'
     keyboard = InlineKeyboardMarkup([[premium_button('Confirm Transfer', emoji='CHECK_CIRCLE', style='SUCCESS', callback_data=f'confirm_tr:{transfer_id}'), premium_button('Cancel', emoji='CLOSE', style='DANGER', callback_data=f'cancel_tr:{transfer_id}')]])
     await reply_notice(message, tr(text, lang), reply_markup=keyboard)
 
@@ -191,4 +191,4 @@ async def back_transfer(client: Client, message: Message):
             first_name = f'User {user_id}'
         await user_collection.insert_one({'id': int(user_id), 'username': username, 'first_name': first_name, 'characters': transferred_chars})
     await transfer_logs.update_one({'_id': transfer_id}, {'$set': {'status': 'reverted'}})
-    await reply_notice(message, tr(f'✅ **Transfer Reverted Successfully!**\n\n🆔 **Transfer ID:** `{transfer_id}`\n👤 Returned `{reverted_count}` characters back to original user `{user_id}`.\n➡️ Removed from user `{owner_id}`.', lang))
+    await reply_notice(message, tr(f'✅ <b>Transfer Reverted Successfully!</b>\n\n🆔 <b>Transfer ID:</b> <code>{transfer_id}</code>\n👤 Returned <code>{reverted_count}</code> characters back to original user <code>{user_id}</code>.\n➡️ Removed from user <code>{owner_id}</code>.', lang))

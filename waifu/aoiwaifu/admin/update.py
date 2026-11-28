@@ -248,7 +248,7 @@ async def rarity_delete_handler(client, message):
         ]
     ])
     await reply_notice(message,
-        tr(f'⚠️ **WARNING: PERMANENT BULK DELETE**\n\nRarity: {rarity_name}\nCharacters found: {count}\n\nConfirm karne par is rarity ke ALL characters main database aur users ke harem se delete ho jayenge. This action cannot be undone.', lang),
+        tr(f'⚠️ <b>WARNING: PERMANENT BULK DELETE</b>\n\nRarity: {rarity_name}\nCharacters found: {count}\n\nConfirm karne par is rarity ke ALL characters main database aur users ke harem se delete ho jayenge. This action cannot be undone.', lang),
         reply_markup=keyboard
     )
 
@@ -287,6 +287,6 @@ async def rarity_delete_confirm(client, callback_query: CallbackQuery):
         {'$pull': {'characters': {'id': {'$in': character_ids}}}}
     )
     await edit_notice(callback_query.message,
-        tr(f'✅ **Rarity deletion completed**\n\nRarity: {rarity_name}\nDeleted characters: {result.deleted_count}\nUser collections updated: {users_result.modified_count}', lang)
+        tr(f'✅ <b>Rarity deletion completed</b>\n\nRarity: {rarity_name}\nDeleted characters: {result.deleted_count}\nUser collections updated: {users_result.modified_count}', lang)
     )
     await callback_query.answer('Deletion completed.', show_alert=True)

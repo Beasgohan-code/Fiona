@@ -21,6 +21,7 @@ from pymongo import MongoClient
 from aoiwaifu import OWNER_ID, SUDO
 from aoiwaifu import app, db, require_power
 from functools import wraps
+import html
 from aoiwaifu.unit.aoi_parse_fix import SudoUsersHybrid
 
 sudo_users = SudoUsersHybrid(db['sudo_users'], SUDO, OWNER_ID)
@@ -158,13 +159,18 @@ async def sudo_list(client, message):
     if not users:
         await reply_notice(message, tr('There are no sudo users.', lang))
         return
-    sudo_list_text = '🛠 **Sudo Users List:**\n\n'
+    sudo_list_text = '🛠 <b>Sudo Users List:</b>\n\n'
     for user in users:
         user_id = user.get('_id')
         try:
             user_info = await client.get_users(user_id)
-            first_name = user_info.first_name
+            name = html.escape(str(user_info.first_name or 'Unknown'))
+            uname = getattr(user_info, 'username', None)
         except Exception:
-            first_name = 'Unknown'
-        sudo_list_text += f'➤ [{first_name}](tg://user?id={user_id}) (`{user_id}`)\n'
+            name = 'Unknown'
+            uname = None
+        if uname:
+            sudo_list_text += f'➤ <a href="https://t.me/{html.escape(str(uname), quote=True)}">{name}</a> (<code>{user_id}</code>)\n'
+        else:
+            sudo_list_text += f'➤ {name} (<code>{user_id}</code>)\n'
     await reply_notice(message, tr(sudo_list_text, lang))
