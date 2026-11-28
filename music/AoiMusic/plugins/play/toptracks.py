@@ -3,6 +3,7 @@
 # Top-tracks module — rich-message panels (Bot API 10.3) + AoiMusic branding.
 #
 
+import html
 import asyncio
 
 from pyrogram import filters
@@ -79,7 +80,7 @@ async def server_to_play(client, CallbackQuery, _):
     mid = await send_rich(
         chat_id,
         rich_heading(
-            f'{pemoji("⏳")} ᴄᴏᴍᴘɪʟɪɴɢ {rich_esc(what)} ᴛᴏᴘ ʟɪsᴛ ᴏꜰ {rich_esc(CallbackQuery.from_user.first_name)}...',
+            f'{pemoji("⏳")} ᴄᴏᴍᴘɪʟɪɴɢ {html.escape(str(what))} ᴛᴏᴘ ʟɪsᴛ ᴏꜰ {html.escape(str(CallbackQuery.from_user.first_name))}...',
             level=4,
         ),
     )
@@ -95,7 +96,7 @@ async def server_to_play(client, CallbackQuery, _):
         return await edit_rich(
             chat_id,
             mid,
-            f"<p>{rich_esc(_['tracks_2'].format(what))}</p>"
+            f"<p>{html.escape(_['tracks_2'].format(what))}</p>"
             + failed_top_markup(_),
         )
 
@@ -135,7 +136,7 @@ async def server_to_play(client, CallbackQuery, _):
         return await edit_rich(
             chat_id,
             mid,
-            f"<p>{rich_esc(_['tracks_2'].format(what))}</p>"
+            f"<p>{html.escape(_['tracks_2'].format(what))}</p>"
             + failed_top_markup(_),
         )
     try:
@@ -153,5 +154,5 @@ async def server_to_play(client, CallbackQuery, _):
     except Exception as e:
         ex_type = type(e).__name__
         err = e if ex_type == "AssistantErr" else _["general_3"].format(ex_type)
-        return await edit_rich(chat_id, mid, f"<p>{rich_esc(err)}</p>")
+        return await edit_rich(chat_id, mid, f"<p>{html.escape(str(err))}</p>")
     return await delete_msg(chat_id, mid)

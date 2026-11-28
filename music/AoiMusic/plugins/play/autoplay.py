@@ -3,6 +3,7 @@
 #
 
 import asyncio
+import html
 from typing import Tuple
 
 import aiohttp
@@ -210,8 +211,8 @@ async def get_suggestions_cb(client, CallbackQuery: CallbackQuery, _):
     ]
     num_btns = []
     for idx, item in enumerate(suggestions[:5], start=1):
-        s_title = rich_esc(str(item.get("title") or "Unknown")[:45])
-        s_dur = rich_esc(str(item.get("duration_min") or "--:--"))
+        s_title = html.escape(str(item.get("title") or "Unknown")[:45])
+        s_dur = html.escape(str(item.get("duration_min") or "--:--"))
         lines.append(f"<b>{idx}.</b> {s_title} <code>[{s_dur}]</code>")
         if item.get("vidid"):
             num_btns.append(

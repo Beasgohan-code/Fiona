@@ -15,6 +15,8 @@ from AoiMusic import app
 from AoiMusic.core.call import AoiCall
 from AoiMusic.misc import SUDOERS, db
 from AoiMusic.utils.database import group_assistant
+from html import escape as _html_escape
+
 from AoiMusic.utils.rich_msg import pemoji, reply_note, send_note
 
 # chat_id -> (track identity key, set of voter ids)
@@ -61,7 +63,7 @@ async def _cast_vote(chat_id: int, uid: int, title: str) -> tuple:
 async def _run_vote_skip(chat_id: int, title: str, voters: int = 1):
     await send_note(
         chat_id,
-        f"{pemoji('🚫')} ꜱᴋɪᴘᴘᴇᴅ — <b>{title}</b>"
+        f"{pemoji('🚫')} ꜱᴋɪᴘᴘᴇᴅ — <b>{_html_escape(title)}</b>"
         + (f" <i>({voters} ᴠᴏᴛᴇꜱ)</i>" if voters > 1 else ""),
     )
     try:

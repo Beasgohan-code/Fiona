@@ -4,6 +4,7 @@
 #
 
 import asyncio
+import html
 import re
 
 from pyrogram import filters
@@ -55,16 +56,16 @@ def get_duration(playing):
 def player_html(_, image, title, stream_type, user, run_info, cplay, videoid):
     body = rich_img(image)
     body += rich_heading(f'{pemoji("🎧")} Music Queue', level=4)
-    body += f"<p>{pemoji('🎼')} ᴘʟᴀʏɪɴɢ : <b>{rich_esc(title)}</b></p>"
-    body += f"<p>{pemoji('🔊')} sᴛʀᴇᴀᴍ : {rich_esc(stream_type)}</p>"
-    body += f"<p>{pemoji('👤')} ᴘʟᴀʏᴇᴅ ʙʏ : <b>{rich_esc(_name(user))}</b></p>"
+    body += f"<p>{pemoji('🎼')} ᴘʟᴀʏɪɴɢ : <b>{html.escape(str(title))}</b></p>"
+    body += f"<p>{pemoji('🔊')} sᴛʀᴇᴀᴍ : {html.escape(str(stream_type))}</p>"
+    body += f"<p>{pemoji('👤')} ᴘʟᴀʏᴇᴅ ʙʏ : <b>{html.escape(_name(user))}</b></p>"
     if run_info is None:
         body += f"<p>{pemoji('⏳')} ᴅᴜʀᴀᴛɪᴏɴ : ᴜɴᴋɴᴏᴡɴ</p>"
         body += f"<p>{pemoji('🗂')} ᴛᴀᴘ ᴏᴜᴛᴘᴜᴛ ᴛᴏ ᴠɪᴇᴡ ᴛʜᴇ ᴡʜᴏʟᴇ ǫᴜᴇᴜᴇ</p>"
         body += queue_markup(_, "Unknown", cplay, videoid)
     else:
         played, dur = run_info
-        body += f"<p>{pemoji('⏱')} ᴛɪᴍᴇʀ : <b>{rich_esc(played)}</b> / {rich_esc(dur)}</p>"
+        body += f"<p>{pemoji('⏱')} ᴛɪᴍᴇʀ : <b>{html.escape(str(played))}</b> / {html.escape(str(dur))}</p>"
         body += queue_markup(_, "Inline", cplay, videoid, played, dur)
     return body
 
@@ -98,9 +99,14 @@ def _name(value):
 
 
 def _track_link(item):
-    link = item.get("url")
+    link = str(item.get("url") or "").strip()
     if link:
-        return link
+        # Only http(s) links may appear as anchors, and the URL is escaped
+        # before being embedded so a crafted link cannot break out of the
+        # href attribute and inject markup into the queue card.
+        if link.startswith(("https://", "http://")):
+            return html.escape(link, quote=True)
+        return None
     vidid = str(item.get("vidid") or "")
     if "index_" in vidid or "live_" in vidid:
         return None
@@ -127,11 +133,11 @@ def queue_list_html(_, got, buttons_html, what="g", shown: int = 19):
     now = got[0]
     now_url = _track_link(now)
     now_title = _short(now.get("title"), 30)
-    now_head = f'<a href="{now_url}">{rich_esc(now_title)}</a>' if now_url else rich_esc(now_title)
+    now_head = f'<a href="{now_url}">{html.escape(now_title)}</a>' if now_url else html.escape(now_title)
     body += (
         f'<aside>{pemoji("🔴")} <b>ɴᴏᴡ ᴘʟᴀʏɪɴɢ</b><br>{now_head}<br>'
-        f'{pemoji("⏱")} {rich_esc(str(now.get("dur") or "--:--").replace(" ", ""))}  •  '
-        f'{pemoji("👤")} {rich_esc(_short(_name(now.get("by")), 14))}</aside>'
+        f'{pemoji("⏱")} {html.escape(str(now.get("dur") or "--:--").replace(" ", ""))}  •  '
+        f'{pemoji("👤")} {html.escape(_short(_name(now.get("by")), 14))}</aside>'
     )
 
     if upnext > 0:
@@ -145,14 +151,14 @@ def queue_list_html(_, got, buttons_html, what="g", shown: int = 19):
             by = _short(_name(x.get("by")), 14)
             dur = str(x.get("dur") or "--:--").replace(" ", "")
             track_cell = (
-                f'<a href="{row_url}">{rich_esc(row_title)}</a>'
+                f'<a href="{row_url}">{html.escape(row_title)}</a>'
                 if row_url
-                else rich_esc(row_title)
+                else html.escape(row_title)
             )
             body += (
                 f'<tr><td>{i}</td><td>{track_cell}</td>'
-                f'<td>{rich_esc(dur)}</td>'
-                f'<td>{rich_esc(by)}</td>'
+                f'<td>{html.escape(dur)}</td>'
+                f'<td>{html.escape(by)}</td>'
                 f'<td><tg-button type="callback_data" style="danger" '
                 f'data="qdel {what}|{i}">✕</tg-button></td></tr>'
             )

@@ -1,6 +1,7 @@
 
 #
 
+import html
 from pyrogram import filters
 from pyrogram.types import Message
 
@@ -34,5 +35,5 @@ async def playmode_(client, message: Message, _):
     buttons = playmode_users_markup(_, Direct, Group, Playtype)
     await send_rich(
         message.chat.id,
-        f"<p>{rich_esc(_['playmode_1'].format(message.chat.title))}</p>{buttons}",
+        f"<p>{html.escape(_['playmode_1'].format(message.chat.title))}</p>{buttons}",
     )

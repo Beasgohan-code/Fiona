@@ -2,6 +2,7 @@
 # Language settings — clean flag-only language buttons (no extra premium emojis on language buttons).
 #
 
+import html
 from pyrogram import filters
 from pyrogram.types import Message
 
@@ -58,7 +59,7 @@ def lanuages_keyboard(_):
 
 def languages_panel(_, title, chat_id):
     body = rich_heading(f"{pe('GLOBE_LANG')} Language Settings", level=4)
-    body += f"<p>{rich_esc(_['setting_1'].format(title, chat_id))}</p>"
+    body += f"<p>{html.escape(_['setting_1'].format(title, chat_id))}</p>"
     body += lanuages_keyboard(_)
     return body
 

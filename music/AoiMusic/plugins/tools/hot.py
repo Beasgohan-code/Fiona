@@ -3,6 +3,8 @@
 # Plays are counted at card spawn (rich_panels._board_bump → mongo playstats).
 #
 
+import html
+
 from pyrogram import filters
 
 from config import BANNED_USERS
@@ -25,7 +27,7 @@ async def hot_chart(client, message, _):
     medals = ["🥇", "🥈", "🥉"]
     for rank, t in enumerate(tracks, 1):
         badge = medals[rank - 1] if rank <= 3 else f"{rank}."
-        title = rich_esc(str(t["title"])[:42])
+        title = html.escape(str(t["title"])[:42])
         lines.append(f"{badge} <b>{title}</b> — <mark>{t['plays']} ᴘʟᴀʏꜱ</mark>")
     body = (
         rich_heading(f"{pemoji('🔥')} Trending Chart", level=4)

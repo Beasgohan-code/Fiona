@@ -3,6 +3,7 @@
 # Personal playlist module — rich-message panels (Bot API 10.3) + AoiMusic branding.
 #
 
+import html
 import os
 from random import randint
 
@@ -74,7 +75,7 @@ async def get_keyboard_html(_, user_id):
         title = _note["title"].title()
         row.append(
             rich_button(
-                f"{pemoji('🗑')} {rich_esc(title)}",
+                f"{pemoji('🗑')} {html.escape(str(title))}",
                 callback_data=f"del_playlist {x}",
                 style="primary",
             )

@@ -9,6 +9,7 @@ forty lines would otherwise bury the chat.
 """
 
 import asyncio
+import html
 import re
 import time
 
@@ -410,7 +411,7 @@ async def _run(chat_id, message, lines, started_at, client=None, title=True):  #
             if message is not None:
                 try:
                     from pyrogram.errors import MessageNotModified, FloodWait
-                    await message.edit_text(f"🎵 <b>{text}</b>", parse_mode=None)
+                    await message.edit_text(f"🎵 <b>{html.escape(str(text))}</b>", parse_mode=None)
                 except MessageNotModified:
                     pass
                 except FloodWait as fw:

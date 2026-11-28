@@ -3,6 +3,7 @@
 # Settings module — rich-message panels (Bot API 10.3) + AoiMusic branding.
 #
 
+import html
 from pyrogram import filters
 from pyrogram.enums import ChatType
 from pyrogram.errors import MessageNotModified
@@ -62,7 +63,7 @@ from AoiMusic.utils.rich_msg import (
 def _settings_head(_, chat_title, chat_id):
     return (
         rich_heading(f'{pemoji("⚙")} Group Settings', level=4)
-        + f"<p>{rich_esc(_['setting_1'].format(chat_title, chat_id))}</p>"
+        + f"<p>{html.escape(_['setting_1'].format(chat_title, chat_id))}</p>"
     )
 
 
@@ -563,9 +564,9 @@ async def authusers_mar(client, CallbackQuery, _):
                 except Exception:
                     continue
                 body += (
-                    f"<p>{j}➤ {rich_esc(user)} <code>{user_id}</code></p>"
+                    f"<p>{j}➤ {html.escape(str(user))} <code>{user_id}</code></p>"
                     f"<p>{pemoji('➡')} {rich_esc(_['auth_8'])} "
-                    f"{rich_esc(admin_name)} <code>{admin_id}</code></p>"
+                    f"{html.escape(str(admin_name))} <code>{admin_id}</code></p>"
                 )
             body += rich_button_row(
                 rich_button(f"{pemoji('⬅')} {_['BACK_BUTTON']}", callback_data="AU", style="primary"),

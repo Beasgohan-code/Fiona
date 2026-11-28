@@ -4,6 +4,7 @@
 #
 
 import asyncio
+import html
 import logging
 import time
 import traceback
@@ -22,17 +23,17 @@ def _format_error(tag: str, error: Exception, context: str = "") -> str:
     err_type = type(error).__name__
     err_msg = str(error)[:500]
     lines = [
-        f"🔴 <b>{tag}</b>",
-        f"<b>Error:</b> <code>{err_type}</code>",
-        f"<b>Message:</b> <code>{err_msg}</code>",
+        f"🔴 <b>{html.escape(str(tag))}</b>",
+        f"<b>Error:</b> <code>{html.escape(err_type)}</code>",
+        f"<b>Message:</b> <code>{html.escape(err_msg)}</code>",
     ]
     if context:
-        lines.append(f"<b>Context:</b> {context[:300]}")
+        lines.append(f"<b>Context:</b> {html.escape(context[:300])}")
     # Append a short traceback (last 5 frames)
     tb = traceback.format_exception(type(error), error, error.__traceback__)
     tail = "".join(tb[-5:]).strip()[:600]
     if tail:
-        lines.append(f"<b>Traceback:</b>\n<pre>{tail}</pre>")
+        lines.append(f"<b>Traceback:</b>\n<pre>{html.escape(tail)}</pre>")
     lines.append(f"<code>{time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}</code>")
     return "\n".join(lines)
 

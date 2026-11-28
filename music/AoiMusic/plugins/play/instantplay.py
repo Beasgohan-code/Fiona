@@ -1,4 +1,5 @@
 #
+import html
 from pyrogram import filters
 from pyrogram.types import Message
 
@@ -19,5 +20,5 @@ async def instantplay_mar(client, message: Message, _):
     status = "✅ Enabled" if instant else "❌ Disabled"
     await send_rich(
         message.chat.id,
-        f"<p>{rich_esc(_['instantplay_1'].format(message.chat.title, status))}</p>{buttons}",
+        f"<p>{html.escape(_['instantplay_1'].format(message.chat.title, status))}</p>{buttons}",
     )

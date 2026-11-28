@@ -97,6 +97,11 @@ def rich_esc(text: str) -> str:
     return "".join(out)
 
 
+def _attr_escape(value) -> str:
+    """Escape a value for inclusion in a double-quoted rich-HTML attribute."""
+    return str(value or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
 def not_hm(tag: str) -> str:
     """Normalise one allowed tag: quote bare href values."""
     fixed = re.sub(r'href=([^"\' >][^ >]*)', r'href="\1"', tag)
@@ -264,20 +269,20 @@ def rich_button(
 ) -> str:
     extra = ""
     if emoji:
-        extra += f' emoji="{emoji}"'
+        extra += f' emoji="{_attr_escape(emoji)}"'
     if icon_only:
         extra += ' icon_only="1"'
-    style_attr = f' style="{style}"' if style else ""
+    style_attr = f' style="{_attr_escape(style)}"' if style else ""
     return (
         f'<tg-button type="callback_data"{style_attr}{extra} '
-        f'data="{callback_data}">{text}</tg-button>'
+        f'data="{_attr_escape(callback_data)}">{text}</tg-button>'
     )
 
 
 def rich_url_button(text: str, url: str, style: str = "primary", emoji: str = "") -> str:
-    extra = f' emoji="{emoji}"' if emoji else ""
-    style_attr = f' style="{style}"' if style else ""
-    return f'<tg-button type="url"{style_attr}{extra} url="{url}">{text}</tg-button>'
+    extra = f' emoji="{_attr_escape(emoji)}"' if emoji else ""
+    style_attr = f' style="{_attr_escape(style)}"' if style else ""
+    return f'<tg-button type="url"{style_attr}{extra} url="{_attr_escape(url)}">{text}</tg-button>'
 
 
 def rich_user_button(text: str, user_id: int, style: str = "", emoji: str = "") -> str:
@@ -288,8 +293,8 @@ def rich_user_button(text: str, user_id: int, style: str = "", emoji: str = "") 
 
 def rich_switch_button(text: str, query: str, style: str = "primary") -> str:
     return (
-        f'<tg-button type="switch_inline_query_current_chat" style="{style}" '
-        f'query="{query}">{text}</tg-button>'
+        f'<tg-button type="switch_inline_query_current_chat" style="{_attr_escape(style)}" '
+        f'query="{_attr_escape(query)}">{text}</tg-button>'
     )
 
 

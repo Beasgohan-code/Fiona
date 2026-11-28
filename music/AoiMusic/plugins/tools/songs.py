@@ -3,6 +3,7 @@
 # (Aoi Music API primary + yt-dlp automatic fallback) with rich-message panels.
 #
 
+import html
 import logging
 import os
 import re
@@ -40,7 +41,7 @@ _FALLBACK_THUMB = str(Path(__file__).resolve().parents[3] / "assets" / "fiona_so
 def song_panel_html(_, thumbnail, title, vidid):
     body = rich_img(thumbnail)
     body += rich_heading(f'{pemoji("🎧")} Song Downloader', level=4)
-    body += f"<p>{rich_esc(_['song_4'].format(title))}</p>"
+    body += f"<p>{html.escape(_['song_4'].format(title))}</p>"
     body += song_markup(_, vidid)
     return body
 
@@ -91,7 +92,7 @@ async def song_commad_private(client, message: Message, _):
         if int(duration_sec) > SONG_DOWNLOAD_DURATION_LIMIT:
             return await send_rich(
                 message.chat.id,
-                f"<p>{rich_esc(_['play_4'].format(SONG_DOWNLOAD_DURATION, duration_min))}</p>",
+                f"<p>{html.escape(_['play_4'].format(SONG_DOWNLOAD_DURATION, duration_min))}</p>",
             )
 
         return await send_rich(
@@ -126,7 +127,7 @@ async def song_commad_private(client, message: Message, _):
     if int(duration_sec) > SONG_DOWNLOAD_DURATION_LIMIT:
         return await send_rich(
             message.chat.id,
-            f"<p>{rich_esc(_['play_6'].format(SONG_DOWNLOAD_DURATION, duration_min))}</p>",
+            f"<p>{html.escape(_['play_6'].format(SONG_DOWNLOAD_DURATION, duration_min))}</p>",
         )
 
     return await send_rich(
@@ -182,7 +183,7 @@ async def _download_and_send_song(CallbackQuery, _, stype: str, vidid: str) -> N
             raise RuntimeError("Downloaded file not found on disk.")
     except Exception as e:
         LOGGER.warning("Direct /song download failed (%s, %s): %s", stype, vidid, e)
-        await edit_rich(chat_id, mid, f"<p>{pemoji('⚠')} {rich_esc(_['song_9'].format(e))}</p>")
+        await edit_rich(chat_id, mid, f"<p>{pemoji('⚠')} {html.escape(_['song_9'].format(e))}</p>")
         return
 
     try:

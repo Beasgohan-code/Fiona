@@ -1,3 +1,4 @@
+import html
 
 #
 # Logger play-log — classic tree card, sent as photo (thumbnail) + caption.
@@ -7,7 +8,6 @@ from pyrogram.enums import ParseMode
 from config import LOG, LOGGER_ID
 from AoiMusic import app
 from AoiMusic.utils.database import is_on_off
-from AoiMusic.utils.rich_msg import rich_esc
 
 
 def _or_dash(value):
@@ -33,27 +33,27 @@ async def play_logs(message, streamtype, thumbnail=None):
         chat_link = f"https://t.me/{message.chat.username}"
         chat_name = (
             f'<a href="{chat_link}">'
-            f"{rich_esc(message.chat.title or 'Unknown')}</a>"
+            f"{html.escape(str(message.chat.title or 'Unknown'))}</a>"
         )
     else:
         username = "—"
-        chat_name = rich_esc(message.chat.title or "Private Group")
+        chat_name = html.escape(str(message.chat.title or "Private Group"))
 
-    bot_name = rich_esc(getattr(app, "name", None) or "AoiMusic")
+    bot_name = html.escape(str(getattr(app, "name", None) or "AoiMusic"))
 
     text = (
         f"🎵 <b>{bot_name} play log</b>\n\n"
         "🏰 <b>Chat info</b>\n"
         f"• Chat: {chat_name}\n"
         f"• Chat ID: <code>{_or_dash(message.chat.id)}</code>\n"
-        f"• Username: {rich_esc(username)}\n\n"
+        f"• Username: {html.escape(str(username))}\n\n"
         "👤 <b>Requested by</b>\n"
         f"• Name: {user.mention}\n"
         f"• User ID: <code>{_or_dash(user.id)}</code>\n"
-        f"• Username: {rich_esc('@' + user.username) if user.username else '—'}\n\n"
+        f"• Username: {html.escape('@' + str(user.username)) if user.username else '—'}\n\n"
         "🎶 <b>Track details</b>\n"
-        f"• Query: {rich_esc(query)}\n"
-        f"• Stream: {rich_esc(str(streamtype))}\n\n"
+        f"• Query: {html.escape(str(query))}\n"
+        f"• Stream: {html.escape(str(streamtype))}\n\n"
         "⚡ Mode: Direct stream · Premium UI"
     )
 

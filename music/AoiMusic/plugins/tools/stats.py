@@ -4,6 +4,7 @@
 #
 
 import asyncio
+import html
 import platform
 from sys import version as pyver
 
@@ -160,7 +161,7 @@ async def gstats_global(client, message, _):
     body = rich_img(thumbnail)
     body += rich_heading(f'{pemoji("🏆")} ᴛᴏᴘ ᴘʟᴀʏᴇᴅ ᴛʀᴀᴄᴋ', level=4)
     body += (
-        f"<p><b>{rich_esc(title)}</b></p>"
+        f"<p><b>{html.escape(str(title))}</b></p>"
         f"<p>{pemoji('🔥')} {rich_esc(app.mention)} — {rich_esc(co)}x</p>"
     )
     body += upl
@@ -232,7 +233,7 @@ async def top_users_ten(client, CallbackQuery: CallbackQuery, _):
                 if items == "telegram":
                     msg += f"📁 ᴛᴇʟᴇɢʀᴀᴍ ꜰɪʟᴇꜱ  {count}x \n"
                 else:
-                    msg += f" {rich_esc(title)}  {count}x \n"
+                    msg += f" {html.escape(str(title))}  {count}x \n"
             temp = (
                 _["gstats_4"].format(
                     queries,
@@ -244,7 +245,7 @@ async def top_users_ten(client, CallbackQuery: CallbackQuery, _):
                 if what == "Tracks"
                 else _["gstats_7"].format(len(stats), total_count, limit)
             )
-            msg = temp + msg
+            msg = rich_esc(temp) + msg
         return msg, list_arranged
 
     try:
@@ -274,13 +275,13 @@ async def top_users_ten(client, CallbackQuery: CallbackQuery, _):
             except Exception:
                 continue
             limit += 1
-            msg += f" {rich_esc(extract)}  {count}x \n"
+            msg += f" {html.escape(str(extract))}  {count}x \n"
         temp = (
             _["gstats_5"].format(limit, app.mention)
             if what == "Chats"
             else _["gstats_6"].format(limit, app.mention)
         )
-        msg = temp + msg
+        msg = rich_esc(temp) + msg
     body = rich_img(config.GLOBAL_IMG_URL)
     body += rich_heading(f'{pemoji("📊")} Top Tracks', level=4)
     body += f"<p>{msg}</p>"

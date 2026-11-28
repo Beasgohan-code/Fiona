@@ -1,6 +1,7 @@
 
 #
 
+import html
 import asyncio
 from datetime import datetime, timedelta
 
@@ -114,7 +115,7 @@ async def braodcast_message(client, message, _):
                 m = (
                     await app.forward_messages(i, y, x)
                     if message.reply_to_message
-                    else await send_rich(i, f"<p>{rich_esc(query)}</p>")
+                    else await send_rich(i, f"<p>{html.escape(str(query))}</p>")
                 )
                 if "-pin" in message.text:
                     try:
@@ -154,7 +155,7 @@ async def braodcast_message(client, message, _):
                 m = (
                     await app.forward_messages(i, y, x)
                     if message.reply_to_message
-                    else await send_rich(i, f"<p>{rich_esc(query)}</p>")
+                    else await send_rich(i, f"<p>{html.escape(str(query))}</p>")
                 )
                 if "-pin" in message.text:
                     try:

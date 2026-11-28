@@ -4,6 +4,7 @@
 #
 
 import asyncio
+import html
 import time
 
 from py_yt import VideosSearch
@@ -59,9 +60,9 @@ def _logger_user(user) -> str:
     username exists and stays plain text otherwise. The username is the
     searchable identifier; printing only the first name was spoofable.
     """
-    name = rich_esc(user.first_name or "ᴜɴᴋɴᴏᴡɴ")
+    name = html.escape(str(user.first_name or "ᴜɴᴋɴᴏᴡɴ"))
     if user.username:
-        _uname_str = rich_esc(user.username)
+        _uname_str = html.escape(str(user.username or ""), quote=True)
         user_line = f'<a href="https://t.me/{_uname_str}">{name}</a>'
         uname_line = f"@{_uname_str}"
     else:
@@ -167,7 +168,7 @@ async def start_comm(client, message: Message, _):
                     if vidid == "telegram":
                         msg += f"{pemoji('🔗')} ᴛᴇʟᴇɢʀᴀᴍ ꜰɪʟᴇꜱ  {count}x \n"
                     else:
-                        msg += f"{pemoji('🔗')} {rich_esc(title)}  {count}x \n"
+                        msg += f"{pemoji('🔗')} {html.escape(str(title))}  {count}x \n"
                 msg = rich_esc(_["ustats_2"].format(tot, tota, limit)) + msg
                 return videoid, msg
 
@@ -238,11 +239,11 @@ async def start_comm(client, message: Message, _):
                 published = result["publishedTime"]
             body = rich_img(thumbnail)
             body += (
-                f"<p><b>{rich_esc(title)}</b></p>"
-                f"<p>{pemoji('⏳')} <b>ᴅᴜʀᴀᴛɪᴏɴ</b>: {rich_esc(duration)} ᴍɪɴꜱ\n"
-                f"{pemoji('👀')} <b>ᴠɪᴇᴡꜱ</b>: {rich_esc(views)}\n"
-                f"{pemoji('⏰')} <b>ᴘᴜʙʟɪꜱʜᴇᴅ</b>: {rich_esc(published)}\n"
-                f"{pemoji('🎥')} <b>ᴄʜᴀɴɴᴇʟ</b>: {rich_esc(channel)}</p>"
+                f"<p><b>{html.escape(str(title))}</b></p>"
+                f"<p>{pemoji('⏳')} <b>ᴅᴜʀᴀᴛɪᴏɴ</b>: {html.escape(str(duration))} ᴍɪɴꜱ\n"
+                f"{pemoji('👀')} <b>ᴠɪᴇᴡꜱ</b>: {html.escape(str(views))}\n"
+                f"{pemoji('⏰')} <b>ᴘᴜʙʟɪꜱʜᴇᴅ</b>: {html.escape(str(published))}\n"
+                f"{pemoji('🎥')} <b>ᴄʜᴀɴɴᴇʟ</b>: {html.escape(str(channel))}</p>"
             )
             body += rich_button_row(
                 rich_url_button(f"{pemoji('👀')} ᴡᴀᴛᴄʜ ᴏɴ ʏᴏᴜᴛᴜʙᴇ", link, style="primary"),
@@ -253,7 +254,7 @@ async def start_comm(client, message: Message, _):
             if await is_on_off(config.LOG):
                 return await send_rich(
                     config.LOGGER_ID,
-                    f"<p>{pemoji('🚀')} <b>#Track_Info</b> {rich_esc(title)}</p>"
+                    f"<p>{pemoji('🚀')} <b>#Track_Info</b> {html.escape(str(title))}</p>"
                     + _logger_user(message.from_user),
                 )
     else:

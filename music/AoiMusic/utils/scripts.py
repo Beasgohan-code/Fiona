@@ -1,6 +1,7 @@
 
 
 import asyncio
+import html
 import importlib
 import math
 import os
@@ -193,11 +194,17 @@ def format_exc(e: Exception, suffix="") -> str:
     traceback.print_exc()
     err = traceback.format_exc()
     if isinstance(e, errors.RPCError):
+        ecode = html.escape(str(getattr(e, "CODE", "")))
+        ename = html.escape(str(getattr(e, "ID", None) or getattr(e, "NAME", "")))
+        try:
+            emessage = e.MESSAGE.format(value=getattr(e, "value", ""))
+        except Exception:  # noqa: BLE001 — never fail an error report
+            emessage = str(getattr(e, "MESSAGE", ""))
         return (
             f"<b>Telegram API error!</b>\n"
-            f"<code>[{e.CODE} {e.ID or e.NAME}] — {e.MESSAGE.format(value=e.value)}</code>\n\n<b>{suffix}</b>"
+            f"<code>[{ecode} {ename}] — {html.escape(str(emessage))}</code>\n\n<b>{html.escape(str(suffix))}</b>"
             )
-    return f"<b>Error!</b>\n" f"<code>{err}</code>"
+    return f"<b>Error!</b>\n" f"<code>{html.escape(err)}</code>"
 
 
 def import_library(library_name: str, package_name: str = None):
