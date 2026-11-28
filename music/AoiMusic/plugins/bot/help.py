@@ -253,7 +253,7 @@ async def paginate_modules(page_n, chat_id: int, close: bool = False):
             "ᴄʟᴏsᴇ" if close else "ʙᴀᴄᴋ",
             style="danger" if close else "primary",
             emoji="CLOSE" if close else "BACK_ARROW",
-            callback_data="close" if close else "settingsback_helper",
+            callback_data=f"help_prev(0,{int(close)})" if not close else "close",
         )
     )
     if modulo_page < max_num_pages - 1:

@@ -16,6 +16,8 @@ are not copied wholesale.
 | Wishlist management | Fiona's `/wishlist` / `/wish` views or adds to a character wishlist (up to 20 catalog IDs); `/unwish <id>` removes one |
 | Duplicate selling | Fiona's `/sell <character_id>` sells one spare copy while preserving your last copy; `/sellall` first previews duplicate-sale value and only sells duplicates with `/sellall confirm` |
 | `/auction`, `/bid`, `/auctionlist`, `/mybids`, `/cancelauction` | Fiona-native live character auctions backed by `db["character_auctions"]`; bids are escrowed atomically, previous high bidders are refunded after a CAS, and ended auctions settle idempotently (winner receives the escrowed copy, seller is paid once) |
+| `/auctionhistory`, `/auctionstats` | Fiona-only auction follow-ups showing closed auction activity, live bids, escrowed coins, and net auction profit |
+| `/collectionvalue` | Fiona-only collection estimate based on Fiona rarity prices |
 | Fiona collection pins | `/pincharacter`, `/unpincharacter`, `/pinnedcharacters` (legacy aliases `/hpin`, `/hunpin`, `/pinlist`); the pinned list provides owner-scoped one-tap unpin controls |
 | `/check`, `/info` | `/check` |
 | `/search`, `/find` | `/search`, `/sips` or the bot's inline search |

@@ -68,6 +68,7 @@ __HELP__ = f"""
 <code>/export</code> / <code>/import</code> — Backup or restore group settings JSON
 <code>/id</code>, <code>/info</code> [user] — Get user/chat ID &amp; profile info
 <code>/grouphelp</code> — Open the interactive group-management guide
+<code>/ginfo</code> — Show group size, moderation settings, bot permissions, and configured safety tools
 """
 
 _GROUP_HELP = {
@@ -99,7 +100,7 @@ _GROUP_HELP = {
         "Group utilities",
         "LINK",
         "<code>/report</code> — Reply to a message to alert admins\n"
-        "<code>/admins</code>, <code>/id</code>, <code>/info</code> — Inspect group and member details\n"
+        "<code>/admins</code>, <code>/id</code>, <code>/info</code>, <code>/ginfo</code> — Inspect group and member details\n"
         "<code>/tagall</code> [message], <code>/canceltag</code> — Mention members in controlled batches\n"
         "<code>/setlog</code>, <code>/logchannel</code> — Configure moderation logs\n"
         "<code>/export</code>, <code>/import</code> — Back up or restore settings\n"

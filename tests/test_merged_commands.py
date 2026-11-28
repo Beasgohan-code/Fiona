@@ -420,7 +420,7 @@ class MergedCommandTests(unittest.TestCase):
         self.assertIn("show_alert=True", autoplay)
 
     def test_major_waifu_cards_share_rich_text_and_premium_controls(self):
-        modules = ("shop", "trade", "gift", "fav", "check", "guess", "rank", "leaderboard", "balance", "sips", "addchar", "referral", "hclaim", "gen", "rarity", "total", "ping", "lang", "auction")
+        modules = ("shop", "trade", "gift", "fav", "check", "guess", "rank", "leaderboard", "balance", "sips", "addchar", "referral", "hclaim", "gen", "rarity", "total", "ping", "lang", "auction", "collection_value", "auction_history")
         for module in modules:
             source = (WAIFU / f"modules/{module}.py").read_text(encoding="utf-8")
             self.assertIn("rich_ui", source, f"{module} should use shared card rendering")
@@ -471,6 +471,8 @@ class MergedCommandTests(unittest.TestCase):
             WAIFU / "modules/trade.py",
             WAIFU / "modules/gift.py",
             WAIFU / "modules/auction.py",
+            WAIFU / "modules/collection_value.py",
+            WAIFU / "modules/auction_history.py",
             WAIFU / "modules/fav.py",
             WAIFU / "modules/check.py",
             WAIFU / "modules/guess.py",
