@@ -15,6 +15,7 @@ are not copied wholesale.
 | `/collection`, `/harem`, `/claimlist` | `/harem`, `/collection`, `/claimlist`; accepts an optional case-insensitive anime-title fragment, keeps it while paging, and shows per-anime progress percentages plus duplicate-copy totals |
 | Wishlist management | Fiona's `/wishlist` / `/wish` views or adds to a character wishlist (up to 20 catalog IDs); `/unwish <id>` removes one |
 | Duplicate selling | Fiona's `/sell <character_id>` sells one spare copy while preserving your last copy; `/sellall` first previews duplicate-sale value and only sells duplicates with `/sellall confirm` |
+| `/auction`, `/bid`, `/auctionlist`, `/mybids`, `/cancelauction` | Fiona-native live character auctions backed by `db["character_auctions"]`; bids are escrowed atomically, previous high bidders are refunded after a CAS, and ended auctions settle idempotently (winner receives the escrowed copy, seller is paid once) |
 | Fiona collection pins | `/pincharacter`, `/unpincharacter`, `/pinnedcharacters` (legacy aliases `/hpin`, `/hunpin`, `/pinlist`); the pinned list provides owner-scoped one-tap unpin controls |
 | `/check`, `/info` | `/check` |
 | `/search`, `/find` | `/search`, `/sips` or the bot's inline search |
@@ -48,9 +49,10 @@ These features need Summon-bot's SQL tables, market state, callback workflows,
 or semantics that Fiona does not currently have. They are not safe to attach as
 thin aliases to unrelated Fiona commands:
 
-- `/market`, `/inv`, `/inventory`, auctions, `/bomb`,
+- `/market`, `/inv`, `/inventory`, `/bomb`,
   `/steal`, and `/pinfo` (no equivalent marketplace/inventory model). Fiona does have
-  direct duplicate sales via `/sell` and `/sellall confirm`, but not a player-to-player marketplace.
+  direct duplicate sales via `/sell` and `/sellall confirm`, plus live character auctions
+  with escrowed bids; it does not have Summon-bot's player-to-player item marketplace.
 - Streak-dependent reward bonuses/achievements are not copied. Fiona now tracks
   a daily-reward streak and longest streak with `/streak`, while retaining its
   existing fixed daily payout and achievement model.
