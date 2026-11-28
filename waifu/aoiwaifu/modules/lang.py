@@ -19,7 +19,7 @@ try:
     from pyrogram.enums import ChatMemberStatus
 except ImportError:
     ChatMemberStatus = getattr(enums, 'ChatMemberStatus', None)
-from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from pyrogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 
 from aoiwaifu import (
     app,

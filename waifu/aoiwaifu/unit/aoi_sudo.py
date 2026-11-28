@@ -1,5 +1,5 @@
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+from pyrogram.types import InlineKeyboardMarkup, CallbackQuery
 from pymongo import MongoClient
 from aoiwaifu import *
 from functools import wraps

@@ -4,7 +4,6 @@
 import html as html_
 import math
 
-from pyrogram.types import InlineKeyboardButton
 
 from AoiMusic.utils.formatters import time_to_seconds
 from AoiMusic.utils.rich_msg import (

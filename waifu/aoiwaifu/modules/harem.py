@@ -12,7 +12,7 @@ from aoiwaifu.unit.rich_ui import (
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t
 from aoiwaifu import *
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
+from pyrogram.types import InlineKeyboardMarkup, CallbackQuery, Message
 from pyrogram.errors import ChatAdminRequired, UserNotParticipant
 from collections import Counter
 from itertools import groupby
@@ -509,8 +509,15 @@ async def hmode_handler(client: Client, message: Message):
     keyboard = []
     row = []
     for i, (rarity, emoji) in enumerate(rarity_map2.items(), 1):
-        row.append(InlineKeyboardButton(emoji, callback_data=f'set_rarity:{user_id}:{rarity}'))
-        if i % 4 == 0:
+        label = rarity.split(maxsplit=1)[1] if ' ' in rarity else rarity
+        if label.endswith(' Edition'):
+            label = label[:-len(' Edition')]
+        row.append(premium_button(
+            f'{emoji} {label}',
+            emoji=emoji,
+            callback_data=f'set_rarity:{user_id}:{rarity}',
+        ))
+        if i % 3 == 0:
             keyboard.append(row)
             row = []
     if row:
