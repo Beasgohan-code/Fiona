@@ -5,6 +5,8 @@ from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 START_FILE = ROOT / "waifu/aoiwaifu/modules/start.py"
+MUSIC_START_FILE = ROOT / "music/AoiMusic/plugins/bot/start.py"
+EN_STRINGS = ROOT / "music/strings/langs/en.yml"
 
 
 def load_media_kind():
@@ -25,6 +27,14 @@ class StartMediaTests(unittest.TestCase):
         self.assertEqual(media_kind("https://cdn.example/start.png?token=123"), "photo")
         self.assertEqual(media_kind("https://cdn.example/start.gif?expires=1"), "animation")
         self.assertEqual(media_kind("https://cdn.example/start.mp4?download=1"), "video")
+
+    def test_start_add_button_is_renamed_and_character_link_is_removed(self):
+        strings = EN_STRINGS.read_text(encoding="utf-8")
+        start_source = MUSIC_START_FILE.read_text(encoding="utf-8")
+        self.assertIn('S_B_5 : "➕ Add me"', strings)
+        self.assertNotIn("Summon Me", strings)
+        self.assertNotIn("Open character collection", start_source)
+        self.assertNotIn("?start=waifu", start_source)
 
     def test_failed_remote_media_send_has_local_and_text_fallbacks(self):
         tree = ast.parse(START_FILE.read_text(encoding="utf-8"))

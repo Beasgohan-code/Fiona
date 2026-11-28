@@ -267,13 +267,6 @@ async def start_comm(client, message: Message, _):
         body = rich_img(START_IMG_URL) if config.START_IMG_URL else ""
         body += _['start_1'].format(app.mention)
         body += out
-        body += rich_button_row(
-            rich_url_button(
-                f"{pemoji('🎴')} ᴏᴘᴇɴ ᴄʜᴀʀᴀᴄᴛᴇʀ ᴄᴏʟʟᴇᴄᴛɪᴏɴ",
-                f"https://t.me/{app.username}?start=waifu",
-                style="primary",
-            )
-        )
         await send_rich(chat_id, body)
 
         if await is_on_off(config.LOG):
