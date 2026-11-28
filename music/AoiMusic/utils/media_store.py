@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import re
+import uuid
 from pathlib import Path
 from typing import AsyncIterator, Any
 
@@ -182,20 +183,27 @@ async def download_cached_audio(video_id: Any, downloads_dir: str | Path = "down
     safe_video_id = _video_id(video_id)
     ext = _extension(file_name)
     target = Path(downloads_dir) / f"store_{safe_video_id}{ext}"
+    temp = target.with_name(f".{target.stem}.{uuid.uuid4().hex}.part")
     try:
         target.parent.mkdir(parents=True, exist_ok=True)
         if target.exists() and target.stat().st_size > 0:
             return str(target)
-        downloaded = await client.download_media(file_id, file_name=str(target))
-        path = Path(downloaded or target)
-        if path.exists() and path.stat().st_size > 0:
-            return str(path)
+        if target.exists():
+            target.unlink()
+        downloaded = await client.download_media(file_id, file_name=str(temp))
+        downloaded_path = Path(downloaded or temp)
+        if downloaded_path.exists() and downloaded_path.stat().st_size > 0:
+            await asyncio.to_thread(downloaded_path.replace, target)
+            return str(target)
     except Exception:
-        try:
-            if target.exists():
-                target.unlink()
-        except OSError:
-            pass
+        pass
+    finally:
+        for path in (temp,):
+            try:
+                if path.exists():
+                    path.unlink()
+            except OSError:
+                pass
     return None
 
 
