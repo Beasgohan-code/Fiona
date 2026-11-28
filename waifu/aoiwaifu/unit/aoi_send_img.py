@@ -16,6 +16,8 @@ from collections import defaultdict, deque
 from telegram import Update
 from telegram.ext import CallbackContext
 
+from aoiwaifu.unit.rich_ui import premium_text, rich_card, send_media_panel, send_panel
+
 logger = logging.getLogger(__name__)
 system_random = random.SystemRandom()
 SPAWN_TIMEOUT_SECONDS = 120
@@ -175,9 +177,15 @@ async def _expire_spawn(bot, chat_id: int, spawn_token: str) -> None:
 
     current["ranaway"] = True
     try:
-        await bot.send_message(
+        await send_panel(
+            bot,
             chat_id=chat_id,
-            text="⏰ The character escaped! Keep chatting for the next spawn.",
+            text=rich_card(
+                "Character escaped",
+                "<blockquote>The catch window closed before anyone caught this character.</blockquote>\n"
+                "Keep chatting to trigger the next round.",
+                "⏰",
+            ),
         )
     except Exception as exc:
         logger.warning("Could not post character escape notice in %s: %s", chat_id, exc)
@@ -213,24 +221,28 @@ async def spawn_character(bot, chat_id: int, *, manual: bool = False) -> str:
     first_correct_guesses.pop(chat_id, None)
 
     spawned = last_characters[chat_id]
-    caption = (
-        "<b>🌠 A character has appeared!</b>\n\n"
+    caption = premium_text(rich_card(
+        "A character appeared!",
+        "<blockquote>"
         f"🎌 <b>Anime:</b> {html.escape(spawned['anime'])}\n"
-        f"💎 <b>Rarity:</b> {html.escape(spawned['rarity'])}\n\n"
-        "Use <code>/guess &lt;name&gt;</code> or <code>/summon &lt;name&gt;</code> to catch it."
-    )
+        f"💎 <b>Rarity:</b> {html.escape(spawned['rarity'])}"
+        "</blockquote>\n"
+        "Be the first to catch it with <code>/guess &lt;name&gt;</code> or <code>/summon &lt;name&gt;</code>.",
+        "🌠",
+    ))
     photo = spawned.get("img_url")
     sent = None
     try:
         if photo:
-            sent = await bot.send_photo(
+            sent = await send_media_panel(
+                bot,
                 chat_id=chat_id,
                 photo=photo,
                 caption=caption,
                 parse_mode="html",
             )
         else:
-            sent = await bot.send_message(chat_id=chat_id, text=caption, parse_mode="html")
+            sent = await send_panel(bot, chat_id=chat_id, text=caption, parse_mode="html")
     except Exception as exc:
         logger.warning("Character media send failed in %s; trying text fallback: %s", chat_id, exc)
         try:

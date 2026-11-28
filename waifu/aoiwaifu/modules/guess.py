@@ -120,14 +120,14 @@ async def guess(client: Client, message: Message):
         char = last_characters[chat_id]
         caption = rich_card(
             "Character caught",
-            "\n".join((
+            "<blockquote>" + "\n".join((
                 f"🎉 <b><a href='tg://user?id={user_id}'>{escape(message.from_user.first_name or 'Player')}</a></b> caught a character!",
                 f"💮 <b>Name:</b> {escape(str(char['name']))}",
                 f"🌸 <b>Anime:</b> {escape(str(char['anime']))}",
                 f"💎 <b>Rarity:</b> {escape(str(char['rarity']))}",
                 f"⏱ <b>Time:</b> {escape(time_taken_str)}",
                 f"💰 <b>Reward:</b> +40 coins (Total: {new_balance:,})",
-            )),
+            )) + "</blockquote>",
             "🎉",
         )
         keyboard = InlineKeyboardMarkup([[

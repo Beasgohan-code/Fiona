@@ -68,6 +68,20 @@ class SpawnCompatibilityTests(unittest.TestCase):
         self.assertIn('name=f"expire_session_{chat_id}"', source)
         self.assertIn("first_correct_guesses.pop(chat_id, None)", source)
 
+    def test_spawn_lifecycle_uses_richgram_panels_and_blockquotes(self):
+        source = SPAWN_FILE.read_text(encoding="utf-8")
+        status = (ROOT / "waifu/aoiwaifu/modules/checkspawn.py").read_text(encoding="utf-8")
+        guess = (ROOT / "waifu/aoiwaifu/modules/guess.py").read_text(encoding="utf-8")
+        manual = (ROOT / "waifu/aoiwaifu/admin/spawn.py").read_text(encoding="utf-8")
+        self.assertIn("send_media_panel", source)
+        self.assertIn("send_panel", source)
+        self.assertIn("premium_text(rich_card(", source)
+        self.assertIn("<blockquote>", source)
+        self.assertIn("<blockquote>", status)
+        self.assertIn("<blockquote>", guess)
+        self.assertIn("reply_panel(", manual)
+        self.assertIn("<blockquote>", manual)
+
 
 if __name__ == "__main__":
     unittest.main()

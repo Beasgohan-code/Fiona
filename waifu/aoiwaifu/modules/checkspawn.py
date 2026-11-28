@@ -71,13 +71,15 @@ async def check_spawn_status(client, message):
     availability = "Catching is disabled for this group" if blocked else "Catching is enabled"
     progress = "▰" * min(10, percent // 10) + "▱" * (10 - min(10, percent // 10))
     body = (
+        "<blockquote>"
         f"<b>Group:</b> {escape(message.chat.title or str(chat_id))}\n"
         f"<b>Status:</b> {escape(availability)}\n"
         f"<b>Messages counted:</b> <code>{current_count}/{spawn_limit}</code>\n"
         f"<b>Until next configured trigger:</b> <code>{remaining}</code> messages\n"
         f"<b>Progress:</b> {progress} <code>{percent}%</code>\n"
-        f"<b>Catch round:</b> {escape(round_state)}\n\n"
-        "<i>The current message counter is in memory and resets after a trigger or bot restart.</i>"
+        f"<b>Catch round:</b> {escape(round_state)}"
+        "</blockquote>\n"
+        "<i>The message counter is held in memory and resets after a trigger or bot restart.</i>"
     )
     await reply_panel(message,
         premium_text(tr(rich_card("Character spawn status", body, "📊"), lang)),

@@ -28,7 +28,7 @@ are not copied wholesale.
 | `/removeall` | Owner-only `/removeall <user_id>` clears only the target's character copies after a one-use confirmation; economy and profile data are preserved |
 | `/add`, `/update`, `/deletechar` | Fiona's `/add`, `/update`, `/deletechar`, with existing aliases `/gupload`, `/gupdate`, and `/gdelete` retained |
 | Admin character uploads | `/add` accepts direct Catbox, ImgBB, or Endtrz HTTPS image URLs; `/gupload` asks per upload whether to use ImgBB or Catbox, then posts image and metadata to `CHARA_CHANNEL_ID` (falls back to `GLOG`) |
-| `/checkspawn`, `/changetime` | `/checkspawn` reports the per-group threshold, in-memory progress, and catch-round state; `/changetime <count>` aliases Fiona's admin-authorized `/ctime <count>` |
+| `/checkspawn`, `/changetime` | `/checkspawn` shows a Richgram blockquote panel with per-group threshold, in-memory progress, and catch-round state; `/changetime <count>` aliases Fiona's admin-authorized `/ctime <count>` |
 | `/spawn`, `/chance`, `/chancelist` | Owner-only manual group spawn; persistent relative rarity weights for automatic drops (0–1,000,000), configurable with `/chance <rarity_id> <weight>`; `/chancelist` displays current weights and estimated odds |
 | `/ban`, `/unban`, `/warn` | Existing Fiona group moderation commands |
 | `/broadcast` | Owner/Sudo-only `/waifubcast` and `/waifubroadcast` |
