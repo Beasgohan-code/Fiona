@@ -20,7 +20,7 @@ from AoiMusic.utils.database import (
     remove_banned_user,
 )
 from AoiMusic.utils.decorators.language import language
-from AoiMusic.utils.rich_msg import reply_note, status_card
+from AoiMusic.utils.rich_msg import reply_note, rich_user_link, status_card
 
 
 @app.on_message(command("GBAN_COMMAND") & SUDOERS)
@@ -32,10 +32,10 @@ async def gbanuser(client, message: Message, _):
         user = message.text.split(None, 1)[1]
         user = await app.get_users(user)
         user_id = user.id
-        mention = user.mention
+        mention = rich_user_link(user)
     else:
         user_id = message.reply_to_message.from_user.id
-        mention = message.reply_to_message.from_user.mention
+        mention = rich_user_link(message.reply_to_message.from_user)
     if user_id == message.from_user.id:
         return await reply_note(message, _["gban_1"])
     elif user_id == app.id:
@@ -77,10 +77,10 @@ async def gungabn(client, message: Message, _):
         user = message.text.split(None, 1)[1]
         user = await app.get_users(user)
         user_id = user.id
-        mention = user.mention
+        mention = rich_user_link(user)
     else:
         user_id = message.reply_to_message.from_user.id
-        mention = message.reply_to_message.from_user.mention
+        mention = rich_user_link(message.reply_to_message.from_user)
     is_gbanned = await is_banned_user(user_id)
     if not is_gbanned:
         return await reply_note(message, _["gban_7"].format(mention))
@@ -121,7 +121,7 @@ async def gbanned_list(client, message: Message, _):
         count += 1
         try:
             user = await app.get_users(user_id)
-            user = user.first_name if not user.mention else user.mention
+            user = rich_user_link(user)
             msg += f"{count}➤ {user}\n"
         except Exception:
             msg += f"{count}➤ [Unfetched User]{user_id}\n"

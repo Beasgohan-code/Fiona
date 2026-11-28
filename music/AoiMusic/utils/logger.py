@@ -41,6 +41,15 @@ async def play_logs(message, streamtype, thumbnail=None):
 
     bot_name = html.escape(str(getattr(app, "name", None) or "AoiMusic"))
 
+    user_name = html.escape(str(getattr(user, "first_name", None) or "User"))
+    try:
+        user_id = int(getattr(user, "id", 0) or 0)
+    except (TypeError, ValueError):
+        user_id = 0
+    user_html_mention = (
+        f'<a href="tg://user?id={user_id}">{user_name}</a>' if user_id else user_name
+    )
+
     text = (
         f"🎵 <b>{bot_name} play log</b>\n\n"
         "🏰 <b>Chat info</b>\n"
@@ -48,7 +57,7 @@ async def play_logs(message, streamtype, thumbnail=None):
         f"• Chat ID: <code>{_or_dash(message.chat.id)}</code>\n"
         f"• Username: {html.escape(str(username))}\n\n"
         "👤 <b>Requested by</b>\n"
-        f"• Name: {user.mention}\n"
+        f"• Name: {user_html_mention}\n"
         f"• User ID: <code>{_or_dash(user.id)}</code>\n"
         f"• Username: {html.escape('@' + str(user.username)) if user.username else '—'}\n\n"
         "🎶 <b>Track details</b>\n"

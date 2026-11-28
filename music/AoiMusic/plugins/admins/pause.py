@@ -11,7 +11,7 @@ from AoiMusic import app
 from AoiMusic.core.call import AoiCall
 from AoiMusic.utils.database import is_music_playing, music_off
 from AoiMusic.utils.decorators import AdminRightsCheck
-from AoiMusic.utils.rich_msg import reply_note, status_card
+from AoiMusic.utils.rich_msg import reply_note, rich_user_link, status_card
 
 
 @app.on_message(command("PAUSE_COMMAND") & filters.group & ~BANNED_USERS)
@@ -23,4 +23,4 @@ async def pause_admin(cli, message: Message, _, chat_id):
         return await reply_note(message, _["admin_1"])
     await music_off(chat_id)
     await AoiCall.pause_stream(chat_id)
-    await reply_note(message, _["admin_2"].format(message.from_user.mention))
+    await reply_note(message, _["admin_2"].format(rich_user_link(message.from_user)))

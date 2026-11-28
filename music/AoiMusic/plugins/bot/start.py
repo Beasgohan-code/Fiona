@@ -45,6 +45,7 @@ from AoiMusic.utils.rich_msg import (
     rich_esc,
     rich_heading,
     rich_img,
+    rich_user_link,
     send_note,
     send_rich,
 )
@@ -265,7 +266,7 @@ async def start_comm(client, message: Message, _):
             OWNER = None
         out = private_panel(_, app.username, OWNER)
         body = rich_img(START_IMG_URL) if config.START_IMG_URL else ""
-        body += _['start_1'].format(app.mention)
+        body += _['start_1'].format(rich_esc(app.name))
         body += out
         await send_rich(chat_id, body)
 
@@ -318,18 +319,18 @@ async def welcome(client, message: Message):
                     return await app.leave_chat(chat_id)
                 userbot = await get_assistant(message.chat.id)
                 out = start_pannel(_)
-                body = _['start_2'].format(app.mention, userbot.username, userbot.id)
+                body = _['start_2'].format(rich_esc(app.name), rich_esc(userbot.username), userbot.id)
                 body += out
                 await send_rich(chat_id, body)
             if member.id in config.OWNER_ID:
                 return await send_note(
                     chat_id,
-                    _["start_3"].format(app.mention, member.mention),
+                    _["start_3"].format(app.name, rich_user_link(member)),
                 )
             if member.id in SUDOERS:
                 return await send_note(
                     chat_id,
-                    _["start_4"].format(app.mention, member.mention),
+                    _["start_4"].format(app.name, rich_user_link(member)),
                 )
             return
         except:

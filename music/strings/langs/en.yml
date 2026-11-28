@@ -118,14 +118,14 @@ ustats_2 : "🎶 You have played **{0}** tracks till now with a whopping count o
 gstats_1 : "📊 Getting global stats, this could take some time..."
 gstats_2 : "🚫 No global stats found."
 gstats_3 : "📊 Getting global top 10 {0} of the bot, this could take some time..."
-gstats_4 : "**Total queries on bot:** {0}\n\n{1} has played **{2}** tracks till now with a whopping count of **{3}** times.\n\n**Top {4} tracks:**\n"
-gstats_5 : "**Top {0} chats of {1}:**\n\n"
-gstats_6 : "**Top {0} users of {1}:**\n\n"
-gstats_7 : "🎶 This chat group has played **{0}** tracks till now with a whopping count of **{1}** times.\n\nTop {2} played by this chat group:\n\n"
+gstats_4 : "<b>Total queries on bot:</b> {0}\n\n{1} has played <b>{2}</b> tracks till now with a whopping count of <b>{3}</b> times.\n\n<b>Top {4} tracks:</b>\n"
+gstats_5 : "<b>Top {0} chats of {1}:</b>\n\n"
+gstats_6 : "<b>Top {0} users of {1}:</b>\n\n"
+gstats_7 : "🎶 This chat group has played <b>{0}</b> tracks till now with a whopping count of <b>{1}</b> times.\n\nTop {2} played by this chat group:\n\n"
 gstats_8 : "📊 Getting bot's general stats and information.. this could take some time..."
 gstats_9 : "**Global top 10 stats of the bot**\n\nSelect the buttons from below for which you want to check global stats from bot's servers."
-gstats_10 : "**Global stats of {0}**\n\nSelect the buttons from below for which you want to check global stats from bot's servers."
-gstats_11 : "**General stats of {0}**\nSelect the buttons from below for which you want to check global stats from bot's servers.\n\nUse /gstats to check top tracks, chats, users, and many other stuffs."
+gstats_10 : "<b>Global stats of {0}</b>\n\nSelect the buttons from below for which you want to check global stats from bot's servers."
+gstats_11 : "<b>General stats of {0}</b>\nSelect the buttons from below for which you want to check global stats from bot's servers.\n\nUse /gstats to check top tracks, chats, users, and many other stuffs."
 
 # Play
 # Play Callback Messages
@@ -240,7 +240,7 @@ song_11: "📤 Uploading started\nPlease hold on..."
 queue_1: "⏳ » Please wait..."
 queue_2: "🚫 Queued List is empty. No tracks found."
 queue_3: "<u>**Queued Tracks:</u>**  [Checkout More Queued Tracks From Here]({0})"
-queue_4: "**➕ Added to queue at #{0}**\n\n**🎵 Title:** {1}\n**⏱ Duration:** {2}\n**👤 Added by:** {3}"
+queue_4: "<b>➕ Added to queue at #{0}</b>\n\n<b>🎵 Title:</b> {1}\n<b>⏱ Duration:</b> {2}\n<b>👤 Added by:</b> {3}"
 queue_5: "🚫 Only one track is in queue; add some more tracks in the queue to check the whole queue."
 
 # All Streaming Lines

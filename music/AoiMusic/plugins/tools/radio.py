@@ -28,6 +28,7 @@ from AoiMusic.utils.database import (
 )
 from AoiMusic.utils.logger import play_logs
 from AoiMusic.utils.stream.stream import stream
+from AoiMusic.utils.rich_msg import rich_user_link
 from AoiMusic.utils.rich_msg import reply_note, status_card
 
 RADIO_STATION = {
@@ -167,7 +168,7 @@ async def radio(client, message: Message):
                 message.from_user.id,
                 RADIO_URL,
                 chat_id,
-                message.from_user.mention,
+                rich_user_link(message.from_user),
                 message.chat.id,
                 video=video,
                 streamtype="index",

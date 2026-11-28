@@ -48,7 +48,7 @@ from AoiMusic.utils.inline.play import (
     stream_markup,
     telegram_markup,
 )
-from AoiMusic.utils.rich_msg import edit_any, edit_rich, forget_anchor, send_note, status_card
+from AoiMusic.utils.rich_msg import edit_any, edit_rich, forget_anchor, rich_user_link, send_note, status_card
 from AoiMusic.utils.stream.autoclear import auto_clean
 from AoiMusic.utils.stream.stream import stream
 from AoiMusic.utils.thumbnails import gen_thumb
@@ -180,7 +180,7 @@ async def admin_callback(client, CallbackQuery, _):
     chat_id = int(chat)
     if not await is_active_chat(chat_id):
         return await CallbackQuery.answer(_["general_6"], show_alert=True)
-    mention = CallbackQuery.from_user.mention
+    mention = rich_user_link(CallbackQuery.from_user)
     is_non_admin = await is_nonadmin_chat(CallbackQuery.message.chat.id)
     if not is_non_admin:
         if CallbackQuery.from_user.id not in SUDOERS:
@@ -745,7 +745,7 @@ async def stop_download(client, CallbackQuery: CallbackQuery, _):
             await CallbackQuery.answer("Downloading Cancelled", show_alert=True)
             return await edit_any(
                 CallbackQuery.message,
-                f"Downloading cancelled by {CallbackQuery.from_user.mention}",
+                f"Downloading cancelled by {rich_user_link(CallbackQuery.from_user)}",
             )
         except Exception:
             return await CallbackQuery.answer(

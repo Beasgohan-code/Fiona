@@ -27,6 +27,7 @@ from AoiMusic.utils.rich_msg import (
     rich_button_row,
     rich_esc,
     rich_heading,
+    rich_user_link,
     reply_note,
     send_rich,
     status_card,
@@ -111,4 +112,4 @@ async def stop_music(cli, message: Message):
         pass
     await AoiCall.stop_stream(chat_id)
     await set_loop(chat_id, 0)
-    await reply_note(message, _["admin_9"].format(message.from_user.mention))
+    await reply_note(message, _["admin_9"].format(rich_user_link(message.from_user)))

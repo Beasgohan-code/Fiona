@@ -11,7 +11,7 @@ from AoiMusic import app
 from AoiMusic.core.call import AoiCall
 from AoiMusic.utils.database import is_muted, mute_off, mute_on
 from AoiMusic.utils.decorators import AdminRightsCheck
-from AoiMusic.utils.rich_msg import reply_note, status_card
+from AoiMusic.utils.rich_msg import reply_note, rich_user_link, status_card
 
 
 @app.on_message(command("MUTE_COMMAND") & filters.group & ~BANNED_USERS)
@@ -24,7 +24,7 @@ async def mute_admin(cli, message: Message, _, chat_id):
     await mute_on(chat_id)
     await AoiCall.mute_stream(chat_id)
     await reply_note(message,
-        _["admin_6"].format(message.from_user.mention)
+        _["admin_6"].format(rich_user_link(message.from_user))
     )
 
 
@@ -38,5 +38,5 @@ async def unmute_admin(Client, message: Message, _, chat_id):
     await mute_off(chat_id)
     await AoiCall.unmute_stream(chat_id)
     await reply_note(message,
-        _["admin_8"].format(message.from_user.mention)
+        _["admin_8"].format(rich_user_link(message.from_user))
     )

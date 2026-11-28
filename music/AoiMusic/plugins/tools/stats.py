@@ -59,7 +59,7 @@ async def stats_global(client, message, _):
     upl = stats_buttons(_, True if message.from_user.id in SUDOERS else False)
     body = rich_img(config.STATS_IMG_URL)
     body += rich_heading(f'{pemoji("📊")} Bot Statistics', level=4)
-    body += f"<p>{rich_esc(_['gstats_11'].format(app.mention))}</p>"
+    body += f"<p>{rich_esc(_['gstats_11'].format(app.name))}</p>"
     body += upl
     mid = await send_rich(message.chat.id, body)
     if not mid:
@@ -162,7 +162,7 @@ async def gstats_global(client, message, _):
     body += rich_heading(f'{pemoji("🏆")} ᴛᴏᴘ ᴘʟᴀʏᴇᴅ ᴛʀᴀᴄᴋ', level=4)
     body += (
         f"<p><b>{html.escape(str(title))}</b></p>"
-        f"<p>{pemoji('🔥')} {rich_esc(app.mention)} — {rich_esc(co)}x</p>"
+        f"<p>{pemoji('🔥')} {rich_esc(app.name)} — {rich_esc(co)}x</p>"
     )
     body += upl
     await _finish(
@@ -237,7 +237,7 @@ async def top_users_ten(client, CallbackQuery: CallbackQuery, _):
             temp = (
                 _["gstats_4"].format(
                     queries,
-                    app.mention,
+                    app.name,
                     len(stats),
                     total_count,
                     limit,
@@ -277,9 +277,9 @@ async def top_users_ten(client, CallbackQuery: CallbackQuery, _):
             limit += 1
             msg += f" {html.escape(str(extract))}  {count}x \n"
         temp = (
-            _["gstats_5"].format(limit, app.mention)
+            _["gstats_5"].format(limit, app.name)
             if what == "Chats"
-            else _["gstats_6"].format(limit, app.mention)
+            else _["gstats_6"].format(limit, app.name)
         )
         msg = rich_esc(temp) + msg
     body = rich_img(config.GLOBAL_IMG_URL)
@@ -424,7 +424,7 @@ async def back_buttons(client, CallbackQuery, _):
         body = rich_img(config.GLOBAL_IMG_URL)
         body += rich_heading(f'{pemoji("📊")} ꜰᴜʟʟ ꜱᴛᴀᴛꜱ ᴢᴏɴᴇ', level=4)
         body += (
-            f"<p>{rich_esc(_['gstats_10'].format(app.mention))}</p>"
+            f"<p>{rich_esc(_['gstats_10'].format(app.name))}</p>"
             + get_stats_markup(
                 _,
                 True if CallbackQuery.from_user.id in SUDOERS else False,
@@ -435,7 +435,7 @@ async def back_buttons(client, CallbackQuery, _):
         body = rich_img(config.STATS_IMG_URL)
         body += rich_heading(f'{pemoji("📊")} ꜰᴜʟʟ ꜱᴛᴀᴛꜱ ᴢᴏɴᴇ', level=4)
         body += (
-            f"<p>{rich_esc(_['gstats_11'].format(app.mention))}</p>"
+            f"<p>{rich_esc(_['gstats_11'].format(app.name))}</p>"
             + stats_buttons(
                 _,
                 True if CallbackQuery.from_user.id in SUDOERS else False,

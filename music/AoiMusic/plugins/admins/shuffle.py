@@ -11,7 +11,7 @@ from strings import command
 from AoiMusic import app
 from AoiMusic.misc import db
 from AoiMusic.utils.decorators import AdminRightsCheck
-from AoiMusic.utils.rich_msg import reply_note, status_card
+from AoiMusic.utils.rich_msg import reply_note, rich_user_link, status_card
 
 
 @app.on_message(command("SHUFFLE_COMMAND") & filters.group & ~BANNED_USERS)
@@ -32,4 +32,4 @@ async def admins(Client, message: Message, _, chat_id):
         return await reply_note(message, _["admin_22"])
     random.shuffle(check)
     check.insert(0, popped)
-    await reply_note(message, _["admin_23"].format(message.from_user.mention))
+    await reply_note(message, _["admin_23"].format(rich_user_link(message.from_user)))

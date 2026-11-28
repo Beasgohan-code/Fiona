@@ -106,7 +106,7 @@ async def settings_back_markup(client, CallbackQuery: CallbackQuery, _):
         except Exception:
             OWNER = None
         body = rich_img(config.START_IMG_URL) if config.START_IMG_URL else ""
-        body += _['start_1'].format(app.mention)
+        body += _['start_1'].format(rich_esc(app.name))
         body += private_panel(_, app.username, OWNER)
         try:
             await edit_rich(

@@ -30,7 +30,7 @@ async def ping_com(client, message, _):
         message.chat.id,
         rich_img(PING_IMG_URL)
         + rich_heading(f'{pemoji("🏓")} Ping Check', level=4)
-        + f"<p>{rich_esc(_['ping_1'].format(app.mention))}</p>"
+        + f"<p>{rich_esc(_['ping_1'].format(app.name))}</p>"
         + support_group_markup(_),
     )
     start = datetime.now()

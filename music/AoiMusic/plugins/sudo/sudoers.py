@@ -10,7 +10,7 @@ from AoiMusic import app
 from AoiMusic.misc import SUDOERS
 from AoiMusic.utils.database import add_sudo, remove_sudo
 from AoiMusic.utils.decorators.language import language
-from AoiMusic.utils.rich_msg import reply_note, status_card
+from AoiMusic.utils.rich_msg import reply_note, rich_user_link, status_card
 
 
 @app.on_message(command("ADDSUDO_COMMAND") & filters.user(OWNER_ID))
@@ -28,23 +28,23 @@ async def useradd(client, message: Message, _):
             user = user.replace("@", "")
         user = await app.get_users(user)
         if user.id in SUDOERS:
-            return await reply_note(message, _["sudo_1"].format(user.mention))
+            return await reply_note(message, _["sudo_1"].format(rich_user_link(user)))
         added = await add_sudo(user.id)
         if added:
             SUDOERS.add(user.id)
-            await reply_note(message, _["sudo_2"].format(user.mention))
+            await reply_note(message, _["sudo_2"].format(rich_user_link(user)))
         else:
             await reply_note(message, "Something wrong happened")
         return
     if message.reply_to_message.from_user.id in SUDOERS:
         return await reply_note(message,
-            _["sudo_1"].format(message.reply_to_message.from_user.mention)
+            _["sudo_1"].format(rich_user_link(message.reply_to_message.from_user))
         )
     added = await add_sudo(message.reply_to_message.from_user.id)
     if added:
         SUDOERS.add(message.reply_to_message.from_user.id)
         await reply_note(message,
-            _["sudo_2"].format(message.reply_to_message.from_user.mention)
+            _["sudo_2"].format(rich_user_link(message.reply_to_message.from_user))
         )
     else:
         await reply_note(message, "Something wrong happened")
@@ -93,7 +93,7 @@ async def sudoers_list(client, message: Message, _):
     for x in OWNER_ID:
         try:
             user = await app.get_users(x)
-            user = user.first_name if not user.mention else user.mention
+            user = rich_user_link(user)
             count += 1
         except Exception:
             continue
@@ -103,7 +103,7 @@ async def sudoers_list(client, message: Message, _):
         if user_id not in OWNER_ID:
             try:
                 user = await app.get_users(user_id)
-                user = user.first_name if not user.mention else user.mention
+                user = rich_user_link(user)
                 if smex == 0:
                     smex += 1
                     text += _["sudo_6"]

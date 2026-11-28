@@ -42,7 +42,7 @@ from AoiMusic.utils.database import (
 from AoiMusic.utils.decorators import AdminActual, language
 from AoiMusic.utils.pastebin import AoiBin
 from AoiMusic.utils.rich_msg import send_note, send_rich
-from AoiMusic.utils.rich_msg import reply_note, status_card
+from AoiMusic.utils.rich_msg import reply_note, rich_esc, status_card
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -311,7 +311,7 @@ async def update_(client, message, _):
             try:
                 await send_rich(
                     int(x),
-                    f"<p>{app.mention} Is updated herself<br>You can start playing after 15-20 Seconds</p>",
+                    f"<p>{rich_esc(app.name)} is updated<br>Playback resumes after 15-20 seconds</p>",
                 )
                 await remove_active_chat(x)
                 await remove_active_video_chat(x)
@@ -353,7 +353,7 @@ async def update_(client, message, _):
 @AdminActual
 async def reboot(client, message: Message, _):
     mystic = await status_card(message.chat.id,
-        f"Please Wait... \nRebooting{app.mention} For Your Chat."
+        f"Please wait…\nRebooting {rich_esc(app.name)} for your chat."
     )
     await asyncio.sleep(1)
     try:
@@ -387,7 +387,7 @@ async def restart_(client, message):
         try:
             await send_rich(
                 int(x),
-                f"<p>{app.mention} Is restarting...<br>You can start playing after 15-20 seconds</p>",
+                f"<p>{rich_esc(app.name)} is restarting<br>Playback resumes after 15-20 seconds</p>",
             )
             await remove_active_chat(x)
             await remove_active_video_chat(x)

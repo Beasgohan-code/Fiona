@@ -16,7 +16,7 @@ from AoiMusic.utils.rich_msg import (
 def privacy_html():
     parts = [
         rich_heading(f'{pemoji("🔒")} ᴘʀɪᴠᴀᴄʏ ᴢᴏɴᴇ', level=4),
-        f"<p>{pemoji('🔒')} <b>{rich_esc(app.mention)}</b> ᴘʀɪᴠᴀᴄʏ ꜱᴇᴛᴜᴘ</p>",
+        f"<p>{pemoji('🔒')} <b>{rich_esc(app.name)}</b> ᴘʀɪᴠᴀᴄʏ ꜱᴇᴛᴜᴘ</p>",
     ]
     if config.PRIVACY_LINK:
         parts.append(f"<p>{pemoji('🔗')} <a href='{config.PRIVACY_LINK}'>ᴘʀɪᴠᴀᴄʏ ᴘᴏʟɪᴄʏ</a></p>")

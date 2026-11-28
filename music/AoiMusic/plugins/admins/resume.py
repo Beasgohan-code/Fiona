@@ -10,7 +10,7 @@ from AoiMusic import app
 from AoiMusic.core.call import AoiCall
 from AoiMusic.utils.database import is_music_playing, music_on
 from AoiMusic.utils.decorators import AdminRightsCheck
-from AoiMusic.utils.rich_msg import reply_note, status_card
+from AoiMusic.utils.rich_msg import reply_note, rich_user_link, status_card
 
 
 @app.on_message(command("RESUME_COMMAND") & filters.group & ~BANNED_USERS)
@@ -22,4 +22,4 @@ async def resume_com(cli, message: Message, _, chat_id):
         return await reply_note(message, _["admin_3"])
     await music_on(chat_id)
     await AoiCall.resume_stream(chat_id)
-    await reply_note(message, _["admin_4"].format(message.from_user.mention))
+    await reply_note(message, _["admin_4"].format(rich_user_link(message.from_user)))
