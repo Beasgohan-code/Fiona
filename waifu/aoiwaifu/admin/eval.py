@@ -7,9 +7,10 @@ import traceback
 from io import StringIO
 from time import time
 from pyrogram import filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
+from pyrogram.types import InlineKeyboardMarkup, Message
 from pyrogram import enums
 from aoiwaifu import ZYRO as app
+from aoiwaifu.unit.rich_ui import premium_button
 OWNER_ID = [7638720582]
 EVAL = [7638720582, 8734859628]
 
@@ -59,13 +60,13 @@ async def executor(client: app, message: Message):
         with open(filename, 'w+', encoding='utf8') as out_file:
             out_file.write(str(evaluation))
         t2 = time()
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(text='⏳', callback_data=f'runtime {t2 - t1} Seconds')]])
+        keyboard = InlineKeyboardMarkup([[premium_button('Runtime', emoji='HOURGLASS', style='PRIMARY', callback_data=f'runtime {t2 - t1} Seconds')]])
         await message.reply_document(document=filename, caption=f'<b>⥤ ᴇᴠᴀʟ :</b>\n<code>{cmd[0:980]}</code>\n\n<b>⥤ ʀᴇsᴜʟᴛ :</b>\nAttached Document', reply_markup=keyboard)
         await message.delete()
         os.remove(filename)
     else:
         t2 = time()
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(text='⏳', callback_data=f'runtime {round(t2 - t1, 3)} Seconds'), InlineKeyboardButton(text='🗑', callback_data=f'forceclose abc|{message.from_user.id}')]])
+        keyboard = InlineKeyboardMarkup([[premium_button('Runtime', emoji='HOURGLASS', style='PRIMARY', callback_data=f'runtime {round(t2 - t1, 3)} Seconds'), premium_button('Delete', emoji='TRASH', style='DANGER', callback_data=f'forceclose abc|{message.from_user.id}')]])
         await edit_or_reply(message, text=final_output, reply_markup=keyboard)
 
 @app.on_callback_query(filters.regex('runtime'))
