@@ -1,0 +1,38 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Python environments / generated files
+.venv/
+.venv-*/
+venv/
+cache/
+logs/
+__pycache__/
+*.py[cod]
+*.log
+log.txt
+AoiMusicLogs.txt
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Runtime media, sessions, and databases
+sessions/
+downloads/
+tempdb/
+# YouTube browser cookies are credentials; keep only the harmless example tracked.
+music/cookies/*.txt
+!music/cookies/example.txt
+*.session
+*.session-journal
+*.db
+*.sqlite3
+
+# Editor / OS files
+.DS_Store
+.idea/
+.vscode/

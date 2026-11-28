@@ -1,0 +1,81 @@
+import html
+
+#
+from pyrogram.errors import ChannelInvalid
+from pyrogram.types import Message
+
+from strings import command
+from AoiMusic import app
+from AoiMusic.misc import SUDOERS, db
+from AoiMusic.utils.rich_msg import reply_note, status_card
+from AoiMusic.utils.database.memorydatabase import (
+    get_active_chats,
+    get_active_video_chats,
+    remove_active_chat,
+    remove_active_video_chat,
+)
+
+
+# Function for removing the Active voice and video chat also clear the db dictionary for the chat
+async def _clear_(chat_id):
+    db[chat_id] = []
+    await remove_active_video_chat(chat_id)
+    await remove_active_chat(chat_id)
+
+
+@app.on_message(command("ACTIVEVC_COMMAND") & SUDOERS)
+async def activevc(_, message: Message):
+    mystic = await status_card(message.chat.id, "🎧 Getting Active Voicechats....\n⏳ Please hold on")
+    served_chats = await get_active_chats()
+    text = ""
+    j = 0
+    for x in served_chats:
+        try:
+            title = (await app.get_chat(x)).title
+            if (await app.get_chat(x)).username:
+                user = (await app.get_chat(x)).username
+                text += f"<b>{j + 1}.</b>  <a href='https://t.me/{html.escape(str(user), quote=True)}'>{html.escape(str(title))}</a> <code>{x}</code>\n"
+            else:
+                text += f"<b>{j + 1}. {html.escape(str(title))}</b> <code>{x}</code>\n"
+            j += 1
+        except ChannelInvalid:
+            await _clear_(x)
+            continue
+    if not text:
+        await mystic.edit_text("No active Chats Found")
+    else:
+        await mystic.edit_text(
+            f"<b>Active Voice Chat's</b>\n\n{text}",
+        )
+
+
+@app.on_message(command("ACTIVEVIDEO_COMMAND") & SUDOERS)
+async def activevi_(_, message: Message):
+    mystic = await status_card(message.chat.id, "🎧 Getting Active Voicechats....\n⏳ Please hold on")
+    served_chats = await get_active_video_chats()
+    text = ""
+    j = 0
+    for x in served_chats:
+        try:
+            title = (await app.get_chat(x)).title
+            if (await app.get_chat(x)).username:
+                user = (await app.get_chat(x)).username
+                text += f"<b>{j + 1}.</b>  <a href='https://t.me/{html.escape(str(user), quote=True)}'>{html.escape(str(title))}</a> <code>{x}</code>\n"
+            else:
+                text += f"<b>{j + 1}. {html.escape(str(title))}</b> <code>{x}</code>\n"
+            j += 1
+        except ChannelInvalid:
+            await _clear_(x)
+            continue
+    if not text:
+        await mystic.edit_text("No active Chats Found")
+    else:
+        await mystic.edit_text(
+            f"<b>Active Video Chat's</b>\n\n{text}",
+        )
+
+
+@app.on_message(command("AC_COMMAND") & SUDOERS)
+async def vc(client, message: Message):
+    ac_audio = str(len(await get_active_chats()))
+    await reply_note(message, f"📡 Active Chats info: {ac_audio}")

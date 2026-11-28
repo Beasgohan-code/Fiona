@@ -1,0 +1,45 @@
+# Render Blueprint for the unified Fiona bot.
+# Choose a paid always-on instance for reliable long-running Telegram polling.
+# The optional public self-ping is best-effort; an always-on paid plan is recommended.
+services:
+  - type: web
+    name: fiona
+    runtime: docker
+    plan: starter
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: API_ID
+        sync: false
+      - key: API_HASH
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: MONGO_DB_URI
+        sync: false
+      - key: OWNER_ID
+        sync: false
+      - key: STRING_SESSIONS
+        sync: false
+      # Add a Render Secret File named youtube-cookies.txt and use this path.
+      - key: YT_COOKIES
+        value: /etc/secrets/youtube-cookies.txt
+      - key: PORT
+        value: "10000"
+      - key: KEEP_ALIVE_SELF_PING
+        value: "true"
+      - key: KEEP_ALIVE_SELF_PING_INTERVAL
+        value: "300"
+      - key: KEEP_ALIVE_PING_TIMEOUT
+        value: "10"
+      - key: MEDIA_API_URL
+        value: https://host-repository.vercel.app
+      - key: MEDIA_API_KEY
+        sync: false
+      - key: STORE_ID
+        sync: false
+      - key: STORE_MAX_MB
+        value: "45"

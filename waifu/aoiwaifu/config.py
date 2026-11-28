@@ -1,0 +1,96 @@
+"""Centralized environment-based configuration for Fiona."""
+
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+def _parse_int(value: str, default: int = 0) -> int:
+    try:
+        return int(str(value).strip())
+    except (TypeError, ValueError):
+        return default
+
+
+def _parse_chat_target(value: str) -> int | str:
+    """Convert numeric Telegram chat IDs from env strings to integer peer IDs."""
+    value = str(value or "").strip()
+    if value and value.lstrip("-").isdigit():
+        return int(value)
+    return value
+
+
+def _parse_int_list(raw: str) -> list[int]:
+    result: list[int] = []
+    for item in str(raw or "").split(","):
+        item = item.strip()
+        if item and item.lstrip("-").isdigit():
+            result.append(int(item))
+    return result
+
+
+def _parse_str_list(raw: str, fallback: list[str]) -> list[str]:
+    items = [x.strip() for x in str(raw or "").split(",") if x.strip()]
+    return items if items else list(fallback)
+
+
+# --- Telegram Credentials (Required) ---
+API_ID: int = _parse_int(os.getenv("API_ID", "0"), 0)
+API_HASH: str = os.getenv("API_HASH", "").strip()
+TOKEN: str = os.getenv("TOKEN", "").strip()
+
+# --- Database (Required) ---
+MONGO_URL: str = os.getenv("MONGO_URL", "").strip()
+BACKUP_MONGO_URL: str = os.getenv("BACKUP_MONGO_URL", "").strip() or MONGO_URL
+DB_NAME: str = os.getenv("DB_NAME", "aoiwaifu").strip() or "aoiwaifu"
+
+# --- Owner & Sudo Admins ---
+OWNER_ID: int = _parse_int(os.getenv("OWNER_ID", "0"), 0)
+OWNER_USERNAME: str = os.getenv("OWNER_USERNAME", "").strip().lstrip("@")
+SUDO: list[int] = _parse_int_list(os.getenv("SUDO", ""))
+
+# --- Channels & Chats ---
+GLOG: int | str = _parse_chat_target(os.getenv("GLOG", ""))
+CHARA_CHANNEL_ID: int | str = _parse_chat_target(os.getenv("CHARA_CHANNEL_ID", "")) or GLOG
+SUPPORT_CHAT_ID: str = os.getenv("SUPPORT_CHAT_ID", "").strip()
+SUPPORT_CHAT: str = os.getenv("SUPPORT_CHAT", "").strip()
+UPDATE_CHAT: str = os.getenv("UPDATE_CHAT", "").strip()
+
+# --- Image Hosting (ImgBB Only) ---
+IMGBB_API_KEYS: list[str] = [
+    k.strip()
+    for k in os.getenv("IMGBB_API_KEYS", os.getenv("IMGBB_API_KEY", "")).split(",")
+    if k.strip()
+]
+
+# --- Local branded artwork (environment URLs remain supported as overrides) ---
+_ASSET_ROOT = Path(__file__).resolve().parents[2] / "waifu" / "assets"
+WAIFU_START_IMAGE = os.getenv("WAIFU_START_IMAGE", "").strip() or str(_ASSET_ROOT / "fiona_start_ping.jpg")
+WAIFU_COLLECTION_IMAGE = os.getenv("WAIFU_COLLECTION_IMAGE", "").strip() or str(_ASSET_ROOT / "fiona_collection.jpg")
+WAIFU_SHOP_IMAGE = os.getenv("WAIFU_SHOP_IMAGE", "").strip() or str(_ASSET_ROOT / "fiona_shop.jpg")
+
+# START_MEDIA accepts a comma-separated rotation; default start screens alternate
+# between the welcome art and the collection artwork. PHOTO_URL_1 remains a
+# backwards-compatible way to supply a custom first image.
+START_MEDIA: list[str] = _parse_str_list(
+    os.getenv("START_MEDIA", ""),
+    [os.getenv("PHOTO_URL_1", "").strip() or WAIFU_START_IMAGE, WAIFU_COLLECTION_IMAGE],
+)
+PHOTO_URL: list[str] = _parse_str_list(
+    os.getenv("PHOTO_URL", ""),
+    [
+        u
+        for u in (
+            os.getenv("PHOTO_URL_1", "").strip(),
+            os.getenv("PHOTO_URL_2", "").strip(),
+        )
+        if u
+    ]
+    or [WAIFU_COLLECTION_IMAGE],
+)
+STATS_IMG: list[str] = _parse_str_list(
+    os.getenv("STATS_IMG", ""),
+    [WAIFU_COLLECTION_IMAGE],
+)

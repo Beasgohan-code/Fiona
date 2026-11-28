@@ -1,0 +1,149 @@
+FIONA DEPLOYMENT
+================
+
+Unified deployment: one Compose service runs the music and character-collection
+features together. Do not deploy music/ and waifu/ as separate bots.
+
+REQUIREMENTS
+------------
+- Docker Engine with the Compose plugin
+- A Telegram bot token, API_ID, API_HASH, and numeric OWNER_ID
+- MongoDB URI reachable from the container
+- At least one assistant STRING_SESSIONS value for voice-chat playback
+
+FIRST START
+-----------
+1. Copy .env.example to .env.
+2. Fill in API_ID, API_HASH, BOT_TOKEN, MONGO_DB_URI, OWNER_ID, and
+   STRING_SESSIONS. Optional links and API integrations can remain blank.
+3. Keep .env private; it is excluded from the image build context.
+4. From this directory, run:
+
+   docker compose up --build -d
+   docker compose logs -f fiona
+
+STOP / UPDATE
+-------------
+- Stop:  docker compose down
+- Update: docker compose up --build -d
+
+RENDER
+------
+A Render Blueprint is included in render.yaml. Create a Blueprint from this
+repository, then provide the required Telegram, MongoDB, owner, and assistant
+session environment variables in Render. The health server is part of the
+Music runtime and exposes `/health` (readiness) on the Render-provided PORT;
+`/live` reports process liveness, and `/ready` is an explicit readiness alias.
+The event loop sends a heartbeat every 30 seconds. `/health` and `/ready` return
+503 if startup is incomplete, the heartbeat is stale, or either Telegram bot
+or assistant session is disconnected; the JSON response identifies unhealthy
+components. `/live` and `/ping` stay 200 while the HTTP process can respond. A
+lightweight watchdog logs each stale-heartbeat and component failure/recovery
+transition without force-restarting the bot. The launcher also records whether
+Render requested a graceful stop with SIGTERM or a local interrupt with SIGINT.
+Tune detection with `KEEP_ALIVE_MAX_AGE` (default 120 seconds) and
+`KEEP_ALIVE_WATCHDOG_INTERVAL` (default 30 seconds). On Render, a low-rate
+public `/live` self-ping is enabled by default using `RENDER_EXTERNAL_URL`;
+`KEEP_ALIVE_SELF_PING_INTERVAL` defaults to 300 seconds and
+`KEEP_ALIVE_PING_TIMEOUT` to 10 seconds. Override the target with
+`KEEP_ALIVE_PING_URL`, or disable it with `KEEP_ALIVE_SELF_PING=false`. This is
+best-effort only: use an always-on paid web instance for reliable bot uptime;
+a health check or self-ping cannot override the hosting provider's sleep limits.
+
+BUNDLED BOT ARTWORK
+-------------------
+Fiona now ships local, optimized artwork for the Music start/ping cards and
+Waifu start, collection, leaderboard/stat, rank, and shop fallbacks. Waifu start
+screens rotate between the bundled welcome and collection images. Optional
+WAIFU_START_IMAGE, WAIFU_COLLECTION_IMAGE, WAIFU_SHOP_IMAGE, START_IMG_URL, and
+PING_IMG_URL values can override these defaults with local paths or Telegram-
+fetchable URLs. Character images stored in your database remain user content
+and are intentionally not replaced.
+
+FIXING `WEBPAGE_CURL_FAILED` ON /START
+--------------------------------------
+This means Telegram could not fetch the configured start image/video URL. The
+bot now retries by downloading remote media itself and uploading the file; if
+that also fails, it sends the start caption and buttons as a normal text message
+instead of failing the command. If you set START_MEDIA in Render, replace dead
+or protected URLs with stable public HTTPS media URLs. START_MEDIA accepts a
+comma-separated list of image, GIF, or MP4 URLs.
+
+FIONA EVENT LOGGING
+-------------------
+Set GLOG to the shared audit destination. Fiona sends startup/shutdown, first-
+time private user starts, and bot group-added/group-left events there. If
+LOGGER_ID is also configured, lifecycle events are sent there too; membership
+and first-user events are also sent there while the Music LOG switch is enabled.
+If both IDs point to the same chat, Fiona de-duplicates the notification.
+
+FIXING `PEER_ID_INVALID` FOR GLOG
+---------------------------------
+This error means Telegram could not resolve the configured log chat, or Fiona
+cannot access it. In Render Environment, check that GLOG is the correct chat ID
+(usually a `-100...` channel/supergroup ID). Add Fiona to that group/channel;
+for a channel, grant permission to post. A public channel username such as
+`@channelname` can also be used. After changing GLOG or access, redeploy. Event
+log delivery is best-effort and failures are recorded locally without stopping
+bot commands or group-membership handling.
+
+TELEGRAM MEDIA STORE (OPTIONAL)
+-------------------------------
+Set STORE_ID to a private Telegram channel ID (usually a numeric -100... id)
+that Fiona can post in. Audio-only `/play` tracks are cached there after the
+first successful local download. A later request searches that Store channel by
+the exact YouTube video ID, downloads the cached audio, and plays it without a
+second YouTube download. No MongoDB records are created for this cache. Set
+STORE_MAX_MB (default 45) to cap file uploads. Channel search is tried through
+the bot first; if the installed Telegram client does not expose channel search
+to bots, Fiona automatically tries the first configured assistant user session.
+In that case add the assistant account to the same private Store channel too.
+If neither client can search, playback automatically falls back to the
+configured media API, YouTube stream, and yt-dlp flow. Direct stream URLs that never produce a local file are not
+uploaded; only successfully downloaded audio is cached. The Store may contain
+copyrighted material in private, so keep it private and only enable it where
+you are allowed to store that content.
+
+YOUTUBE MEDIA API (OPTIONAL)
+----------------------------
+Fiona can use the configured media API before falling back to yt-dlp. The
+merged config defaults MEDIA_API_URL to the supplied Vercel API base; override
+it if you use another endpoint. Set MEDIA_API_KEY as a private environment
+secret (for Render, add it in the service Environment settings; render.yaml
+marks it `sync: false`). The API may return either `stream_url` or `url` in its
+successful JSON response. Never put the API key in source control or chat. If a
+key has been shared, rotate it at the provider and configure the replacement.
+
+YOUTUBE COOKIES (OPTIONAL)
+--------------------------
+The bot can use YouTube cookies to access videos that require a signed-in
+session. Export your own cookies in Netscape cookies.txt format. Never commit,
+share, or paste this file into chat; it is equivalent to a login credential.
+
+On Render, open the service's Environment settings and add a Secret File named
+"youtube-cookies.txt". Render mounts it at /etc/secrets/youtube-cookies.txt;
+keep YT_COOKIES set to that exact path (the supplied render.yaml already does).
+Redeploy after adding or replacing the secret file. Fiona copies the read-only
+secret into a private writable runtime file before yt-dlp uses it, since yt-dlp
+may refresh its cookie jar. Do not chmod or edit the Render secret itself.
+Cookie files can expire and may need re-exporting. Cookies are optional; leave
+YT_COOKIES empty if you do not need authenticated YouTube playback. The merged
+requirements install Node.js 22 for yt-dlp's JavaScript challenge solver; do not
+remove the pinned `nodejs-wheel` dependency unless another supported JS runtime
+is installed and available on PATH.
+
+The container runs as the non-root fiona user. MongoDB holds bot data; local
+cache/download files are container-local and may be discarded on replacement.
+The image has not been built in this environment; validate it on a Docker host
+before relying on it in production.
+
+STAFF / SUDO POWERS
+-------------------
+Two separate sudo systems exist in the merged bot and do not share state:
+the waifu collector's MongoDB-backed power flags and the music package's
+`sudoers` document. In short: character staff use /saddsudo (reply) and,
+for approval-only rights, grant `approve_request`; music moderators use
+/addsudo. The waifu OWNER_ID always bypasses every power check. See
+docs/SUDO.md for the full power matrix, both command sets, and the static
+SUDO env var's (narrower) role. The optional EXTRA_ADMIN_ID env var grants
+one extra second-admin bypass account alongside OWNER_ID.

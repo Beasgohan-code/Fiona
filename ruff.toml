@@ -1,0 +1,15 @@
+# Fiona is a large Pyrogram codebase that leans on star imports in places
+# (`from aoiwaifu import *`). This gate keeps automated checks to the
+# high-signal pyflakes classes that are currently clean; broader hygiene
+# (unused imports/variables) is reviewed per PR instead, since blanket
+# removal can break re-exports and deliberate shadowing.
+[lint]
+select = ["F821", "F811", "F541"]
+
+[lint.per-file-ignores]
+# Mid-file re-imports after `from aoiwaifu import *` restore the explicit
+# driver/stdlib bindings for code below the star import.
+"waifu/aoiwaifu/admin/back.py" = ["F811"]
+# Deliberately shadows pyrogram's Client class with the bot app
+# (`from aoiwaifu import app as Client`), used by the @Client decorators.
+"waifu/aoiwaifu/modules/rank.py" = ["F811"]
