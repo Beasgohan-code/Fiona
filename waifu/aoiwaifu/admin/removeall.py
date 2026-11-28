@@ -5,10 +5,10 @@ import time
 import uuid
 
 from pyrogram import filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram.types import InlineKeyboardMarkup
 
 from aoiwaifu import OWNER_ID, app, user_collection
-from aoiwaifu.unit.rich_ui import edit_panel, rich_card, reply_notice, reply_panel
+from aoiwaifu.unit.rich_ui import edit_panel, premium_button, rich_card, reply_notice, reply_panel
 
 _PENDING = {}
 _PENDING_TTL = 5 * 60
@@ -27,7 +27,10 @@ async def request_remove_all(client, message):
         await reply_notice(message, "This harem reset is restricted to the bot owner.")
         return
     if len(message.command or []) != 2 or not message.command[1].isdigit():
-        await reply_notice(message, "Usage: <code>/removeall &lt;user_id&gt;</code>")
+        await reply_panel(
+            message,
+            rich_card("Collection reset", "Usage: <code>/removeall &lt;user_id&gt;</code>", "🧹"),
+        )
         return
 
     target_id = int(message.command[1])
@@ -54,8 +57,8 @@ async def request_remove_all(client, message):
     character_count = len(user.get("characters", []) or [])
     keyboard = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("Confirm: clear collection", callback_data=f"removeall:confirm:{token}"),
-            InlineKeyboardButton("Cancel", callback_data=f"removeall:cancel:{token}"),
+            premium_button("Confirm reset", emoji="CHECK_CIRCLE", style="DANGER", callback_data=f"removeall:confirm:{token}"),
+            premium_button("Cancel", emoji="CLOSE", style="PRIMARY", callback_data=f"removeall:cancel:{token}"),
         ]
     ])
     await reply_panel(

@@ -3,6 +3,8 @@ from aoiwaifu.unit.rich_ui import (
     rich_card,
     reply_notice,
     reply_panel,
+    reply_photo_panel,
+    reply_video_panel,
 )
 import html
 from pyrogram import Client, enums, filters
@@ -258,7 +260,7 @@ async def remove_money_command(client: Client, message: Message):
     await _owner_money_adjustment(message, add=False)
 
 
-@app.on_message(filters.command(["give"]) & filters.group)
+@app.on_message(filters.command(["give"]))
 async def give_character_to_user(client: Client, message: Message):
     lang = await get_effective_lang(message)
     if not message.from_user or message.from_user.id != OWNER_ID:
@@ -304,14 +306,17 @@ async def give_character_to_user(client: Client, message: Message):
         },
         upsert=True,
     )
-    await reply_panel(
-        message,
-        rich_card(
-            "Character granted",
-            f"<b>{html.escape(str(character.get('name') or 'Unknown'))}</b> · "
-            f"{html.escape(str(character.get('anime') or 'Unknown'))}\n"
-            f"ID <code>{html.escape(str(character.get('id')))}</code> added to "
-            f"{html.escape(recipient.first_name or 'the collector')}'s collection.",
-            "🎁",
-        ),
+    grant_card = rich_card(
+        "Character granted",
+        f"<b>{html.escape(str(character.get('name') or 'Unknown'))}</b> · "
+        f"{html.escape(str(character.get('anime') or 'Unknown'))}\n"
+        f"ID <code>{html.escape(str(character.get('id')))}</code> added to "
+        f"{html.escape(recipient.first_name or 'the collector')}'s collection.",
+        "🎁",
     )
+    if character.get("vid_url"):
+        await reply_video_panel(message, character["vid_url"], caption=grant_card)
+    elif character.get("img_url"):
+        await reply_photo_panel(message, character["img_url"], caption=grant_card)
+    else:
+        await reply_panel(message, grant_card)
