@@ -13,6 +13,8 @@ are not copied wholesale.
 | `/balance`, `/bal`, `/daily`, `/givemoney`, `/rmmoney` | `/balance`, `/bal`, `/daily` and `/dailygift`; owner-only `/givemoney <user_id> <amount>` and `/rmmoney <user_id> <amount>` adjust collector coins |
 | `/spin` | `/spin` — Fiona-sized daily coin rewards; one atomic 24-hour claim per user |
 | `/collection`, `/harem`, `/claimlist` | `/harem`, `/collection`, `/claimlist`; accepts an optional case-insensitive anime-title fragment, keeps it while paging, and shows per-anime progress percentages plus duplicate-copy totals |
+| Wishlist management | Fiona's `/wishlist` / `/wish` views or adds to a character wishlist (up to 20 catalog IDs); `/unwish <id>` removes one |
+| Duplicate selling | Fiona's `/sell <character_id>` sells one spare copy while preserving your last copy; `/sellall` first previews duplicate-sale value and only sells duplicates with `/sellall confirm` |
 | Fiona collection pins | `/pincharacter`, `/unpincharacter`, `/pinnedcharacters` (legacy aliases `/hpin`, `/hunpin`, `/pinlist`); the pinned list provides owner-scoped one-tap unpin controls |
 | `/check`, `/info` | `/check` |
 | `/search`, `/find` | `/search`, `/sips` or the bot's inline search |
@@ -46,8 +48,9 @@ These features need Summon-bot's SQL tables, market state, callback workflows,
 or semantics that Fiona does not currently have. They are not safe to attach as
 thin aliases to unrelated Fiona commands:
 
-- `/market`, `/inv`, `/inventory`, `/sell`, `/sellchar`, auctions, `/bomb`,
-  `/steal`, and `/pinfo` (no equivalent marketplace/inventory model).
+- `/market`, `/inv`, `/inventory`, auctions, `/bomb`,
+  `/steal`, and `/pinfo` (no equivalent marketplace/inventory model). Fiona does have
+  direct duplicate sales via `/sell` and `/sellall confirm`, but not a player-to-player marketplace.
 - Streak-dependent reward bonuses/achievements are not copied. Fiona now tracks
   a daily-reward streak and longest streak with `/streak`, while retaining its
   existing fixed daily payout and achievement model.
