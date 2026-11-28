@@ -8,7 +8,7 @@ from aoiwaifu.unit.rich_ui import (
 #   - Components: message_counter, _forward_pyrogram_message_to_ptb.
 #   - Roots / Routes:
 #       * Handler: Non-command group messages -> PTB message_counter
-#       * DB Collections: db.group_user_totalsssssss, db.bot_dynamic_settings
+#       * DB Collections: db.group_user_totalsssssss (yes, that is the real collection name), db.bot_dynamic_settings
 #   - Usage: Loaded automatically by aoiwaifu/__main__.py.
 # ==============================================================================
 

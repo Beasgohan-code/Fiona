@@ -139,6 +139,9 @@ backup_ddw = _create_motor_client(
     maxPoolSize=10,
 )
 
+# Historical names below are load-bearing: the live database holds the catalog,
+# user records, and group counters under these exact collection names. Renaming
+# them here without a data migration would orphan the production data.
 db = ddw[DB_NAME]
 collection = db["anime_characters_lol"]
 user_totals_collection = db["user_totals_lmaoooo"]
