@@ -44,6 +44,8 @@ HELP_DATA = {
             "• `/weekly` — Claim your weekly coin reward\n"
             "• `/pay <amount>` — Send coins to another user (reply or pass ID/@username)\n"
             "• `/shop` — Buy characters with coins\n"
+            "• `/sell <character_id>` — Sell one extra copy while keeping your last copy safe\n"
+            "• `/sellall` — Preview duplicate-sale value; `/sellall confirm` sells duplicates only\n"
             "• `/hclaim` or `/claim` — Claim your daily character"
         ),
     },
