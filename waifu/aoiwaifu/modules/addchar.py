@@ -225,7 +225,7 @@ async def choose_addchar_host(client, callback_query):
 
 
 @ZYRO.on_callback_query(filters.regex(r"^rarity_([0-9a-fA-F]+)_(\d+)$"))
-@require_power("add_character")
+@require_power(("add_character", "approve_request"))
 async def approve_upload(client, callback_query):
     lang = await get_effective_lang(callback_query)
     upload_id = callback_query.matches[0].group(1)
@@ -263,7 +263,7 @@ async def approve_upload(client, callback_query):
 
 
 @ZYRO.on_callback_query(filters.regex(r"^cancel_([0-9a-fA-F]+)$"))
-@require_power("add_character")
+@require_power(("add_character", "approve_request"))
 async def cancel_upload(client, callback_query):
     lang = await get_effective_lang(callback_query)
     upload_id = callback_query.matches[0].group(1)

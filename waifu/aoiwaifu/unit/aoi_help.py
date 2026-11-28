@@ -116,7 +116,7 @@ HELP_DATA = {
             "• `/saddsudo` — grant sudo (reply; starts with add_character power)\n"
             "• `/sremovesudo` — remove sudo (reply or user id)\n"
             "• `/seditsudo` — toggle a sudo's powers via keyboard (reply)\n"
-            "• `/waifusudolist` — list sudo users (owner only)\n"
+            "• `/waifusudolist` — list sudo users + powers (owner only; music sudo list is `/sudolist`)\n"
             "• `/bcast`, `/list`, `/groups`, `/backup`"
         ),
     },

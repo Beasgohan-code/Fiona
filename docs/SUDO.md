@@ -12,9 +12,9 @@ one in the music package). They do not share state. This page explains both.
 | Check | What it grants |
 | --- | --- |
 | `OWNER_ID` env var | Full bypass: every `require_power()` gate and every owner check. |
-| `EXTRA_ADMIN_ID` env var (optional) | Same bypass a second account. `0`/unset disables it. |
+| `EXTRA_ADMIN_ID` env var (optional) | Same bypass for a second account. `0`/unset disables it. |
 | `SUDO` env var (static, comma-separated IDs) | **Not** a power bypass. Only gates `/list`, `/groups` and `/findani`. |
-| `sudo_users` Mongo collection | The real sudo system. `require_power('<power>')` checks this collection's per-user `powers` map after the owner bypass. |
+| `sudo_users` Mongo collection | The real sudo system. `require_power('<power>')` checks each user's `powers` map after the owner bypass. |
 
 ### Managing sudo users
 
@@ -27,22 +27,27 @@ All four commands require the `VIP` power (or `OWNER_ID`):
 - **`/seditsudo`** — *reply* to a user's message. Opens a keyboard with one
   Enabled/Disabled toggle per power (add_character, delete_character,
   update_character, approve_request, approve_inventory_request, VIP).
-- **`/waifusudolist`** — lists all sudo users with t.me links. **Owner only**,
-  not even VIP.
+- **`/waifusudolist`** — owner-only; lists every sudo user with their enabled
+  powers. (The music package owns the name `/sudolist` — it lists music
+  sudoers, so Fiona keeps this one prefixed to avoid a command collision in
+  the merged bot.)
 
 ### What each power unlocks
 
 | Power | Grants |
 | --- | --- |
-| `add_character` | `/add`, `/gupload`, `/find`, approval/cancellation of `/addchar` user submissions (the Approve/Cancel buttons) |
+| `add_character` | `/add`, `/gupload`, `/find`, and the Approve/Cancel buttons on `/addchar` user submissions |
+| `approve_request` | The Approve/Cancel buttons on `/addchar` user submissions (works as an **alternative** to `add_character`, so you can hand out approval rights without full upload rights) |
 | `delete_character` | `/deletechar`, `/gdelete` (remove a character and purge it from collections) |
 | `update_character` | `/update`, `/gupdate <id> <field> <value>`, `/maxupdate` (edit character data/image) |
-| `approve_request` | Declared in the schema; **no handler currently enforces it** (reserved for future use) |
-| `approve_inventory_request` | Declared in the schema; **no handler currently enforces it** (reserved for future use) |
+| `approve_inventory_request` | Declared in the schema; **no handler enforces it yet** (reserved — there is no inventory-request flow in the codebase) |
 | `VIP` | `/saddsudo`, `/sremovesudo`, `/seditsudo`, `/backup`, `/backupstatus`, `/listbackups`, `/blocklist`, `/removeblocklist`, `/addblocklistgc`, `/removeblocklistgc`, `/blocklistgc`, `/cgen`, `/kill`, `/add <user-id> <amount>` (economy), `/transfer`, `/backtransfer`, `/rdelete` |
 
 Powers are **independent** — VIP does *not* imply `add_character`, and
 `add_character` does not imply VIP. Toggle each one with `/seditsudo`.
+`require_power` also accepts a list of powers and grants access when the
+user holds **any** of them — that is how the submission-review buttons accept
+either `add_character` or `approve_request`.
 
 ### Can a sudo add characters? Yes — with `add_character`
 
@@ -58,8 +63,9 @@ Powers are **independent** — VIP does *not* imply `add_character`, and
 3. **Check the next free ID:** `/find` (and `/findani <query>` for the static
    `SUDO` list, owner tooling).
 4. **Approving community submissions:** Any user can `/addchar <name> <anime>`
-   replying to an image; a sudo with `add_character` taps **Approve** on the
-   review card and the character is inserted with a fresh ID.
+   replying to an image; a staff member with `add_character` **or**
+   `approve_request` taps **Approve** on the review card and the character is
+   inserted with a fresh ID.
 
 Prerequisites for uploads: `CHARA_CHANNEL_ID` (or `GLOG`) must be set and the
 bot must be able to post there, and `IMGBB_API_KEYS` must be configured for
@@ -69,21 +75,29 @@ ImgBB uploads (Catbox needs no key).
 
 ## 2. Music (voice chat) — MongoDB `sudoers` collection
 
-The music package does **not** use the `sudo_users` collection and has **no
-`/addsudo` command**. Its sudo set is:
+The music package manages sudoers via bot commands, separate from the waifu
+power system:
 
-1. `OWNER_ID` from the music config (env) — always included.
-2. The `sudoers` Mongo document `{"sudo": "sudo"}` → `{"sudoers": [id, ...]}`.
-   At boot the bot merges `OWNER_ID` into this document, and every id in it
-   becomes a music sudoer.
+- **`/addsudo`** (owner only) — *reply* to a message or pass a username/ID;
+  adds the user to the `sudoers` Mongo document and to the in-memory `SUDOERS`
+  set immediately.
+- **`/delsudo`** (owner only) — same form; removes the user from the document
+  and the set.
 
-There is **no in-bot command** to add or remove music sudoers — to grant one,
-edit that document in MongoDB directly (or add the person via the waifu side
-and they still won't get music powers — the two systems are separate).
+Requires `MONGO_DB_URI` to be set; without it the commands refuse (the Aoi
+production database won't accept sudo edits). At boot, `OWNER_ID` is merged
+into the same `sudoers` document, so music sudoers persist across restarts.
 
 Music sudoers can run the music admin commands (e.g. `/globalban`,
-`/blacklistchat`, `/auth`, `/autoend`, `/sudoers` …), i.e. the handlers
-decorated with the `SUDOERS` filter.
+`/blacklistchat`, `/auth`, `/lock`/`/unlock`-style moderation, `/autoend`,
+`/videolimit`, … — the handlers decorated with the `SUDOERS` filter).
+There is also `/dev` (development tools), which is disabled in the merged
+bot launcher.
+
+> Music sudo grants **no** waifu/collector powers, and vice versa. If you want
+> someone to moderate voice chats but not add characters, use `/addsudo`; if
+> they should only approve character submissions, use `/saddsudo` +
+> `/seditsudo` with `approve_request` only.
 
 ---
 
@@ -93,6 +107,7 @@ decorated with the `SUDOERS` filter.
 
 **Yes.** In the waifu collector: `/saddsudo` the user (or `/seditsudo` → toggle
 `add_character`), then they can `/add`, `/gupload` and approve `/addchar`
-submissions. Plain `VIP` alone is *not* enough — the `add_character` power is
-required. In the music package, sudo status doesn't grant character commands at
-all — that's a Fiona-collector concept.
+submissions. If you want them to *only* approve submissions without upload
+rights, grant `approve_request` instead. Plain `VIP` alone is *not* enough —
+an actual add/upload power is required. The music package's separate sudo
+system has nothing to do with character commands.

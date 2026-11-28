@@ -59,7 +59,14 @@ async def add_sudo(client, message):
         await reply_notice(message, tr(f'User <code>{replied_user_id}</code> is already a sudo.', lang))
         return
     await sudo_users.update_one({'_id': replied_user_id}, {'$set': {'powers': {'add_character': True}}}, upsert=True)
-    await reply_notice(message, tr(f"User <code>{replied_user_id}</code> has been added as a sudo with 'add_character' power.", lang))
+    await reply_notice(
+        message,
+        tr(
+            f"User <code>{replied_user_id}</code> has been added as a sudo with 'add_character' power. "
+            f"Reply to their message with /seditsudo to toggle or grant other powers.",
+            lang,
+        ),
+    )
 
 
 @app.on_message(filters.command('sremovesudo'))
@@ -137,6 +144,11 @@ async def sudo_list(client, message):
     sudo_list_text = '🛠 <b>Sudo Users List:</b>\n\n'
     for user in users:
         user_id = user.get('_id')
+        granted = ', '.join(
+            html.escape(power) for power in ALL_POWERS
+            if (user.get('powers') or {}).get(power)
+        )
+        flags = f' — {granted or "no powers enabled"}'
         try:
             user_info = await client.get_users(user_id)
             name = html.escape(str(user_info.first_name or 'Unknown'))
@@ -145,7 +157,8 @@ async def sudo_list(client, message):
             name = 'Unknown'
             uname = None
         if uname:
-            sudo_list_text += f'➤ <a href="https://t.me/{html.escape(str(uname), quote=True)}">{name}</a> (<code>{user_id}</code>)\n'
+            link = f'<a href="https://t.me/{html.escape(str(uname), quote=True)}">{name}</a>'
         else:
-            sudo_list_text += f'➤ {name} (<code>{user_id}</code>)\n'
+            link = name
+        sudo_list_text += f'➤ {link} (<code>{user_id}</code>){flags}\n'
     await reply_notice(message, tr(sudo_list_text, lang))
