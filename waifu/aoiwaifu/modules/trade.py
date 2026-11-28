@@ -5,6 +5,7 @@ from aoiwaifu.unit.rich_ui import (
     premium_text,
     rich_card,
     reply_notice,
+    user_mention,
 )
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
 import asyncio
@@ -49,8 +50,10 @@ async def trade(client, message):
     if sender_id == receiver_id:
         await reply_notice(message, tr("You can't trade a character with yourself!", lang), parse_mode=ParseMode.HTML)
         return
+    receiver_mention = user_mention(message.reply_to_message.from_user)
+    sender_mention = user_mention(message.from_user)
     if receiver_id in lock:
-        await reply_notice(message, tr(f'{message.reply_to_message.from_user.mention} is already in a trade. Please wait until their current trade is completed.', lang), parse_mode=ParseMode.HTML)
+        await reply_notice(message, tr(f'{receiver_mention} is already in a trade. Please wait until their current trade is completed.', lang), parse_mode=ParseMode.HTML)
         return
     if len(message.command) != 3:
         await reply_notice(message, tr("You need to provide your character ID and the other user's character ID! Usage: /trade <my_char_id> <user_char_id>", lang), parse_mode=ParseMode.HTML)
@@ -67,11 +70,11 @@ async def trade(client, message):
         return await reply_notice(message, tr("⚠️ One user's character collection data is invalid. Please contact support.", lang), parse_mode=ParseMode.HTML)
     sender_char = next((char for char in sender_characters if isinstance(char, dict) and str(char.get('id')) == str(sender_char_id)), None)
     if not sender_char:
-        await reply_notice(message, tr(f"You don't have the character with ID <b>{sender_char_id}</b> in your collection!", lang), parse_mode=ParseMode.HTML)
+        await reply_notice(message, tr(f"You don't have the character with ID <b>{html.escape(str(sender_char_id))}</b> in your collection!", lang), parse_mode=ParseMode.HTML)
         return
     receiver_char = next((char for char in receiver_characters if isinstance(char, dict) and str(char.get('id')) == str(receiver_char_id)), None)
     if not receiver_char:
-        await reply_notice(message, tr(f"{message.reply_to_message.from_user.mention} doesn't have the character with ID <b>{receiver_char_id}</b> in their collection!", lang), parse_mode=ParseMode.HTML)
+        await reply_notice(message, tr(f"{receiver_mention} doesn't have the character with ID <b>{html.escape(str(receiver_char_id))}</b> in their collection!", lang), parse_mode=ParseMode.HTML)
         return
     trade_id = str(uuid.uuid4())
     lock.append(sender_id)
@@ -84,9 +87,9 @@ async def trade(client, message):
         ]
     ])
     trade_body = (
-        f"{message.reply_to_message.from_user.mention}, review this swap before confirming.\n"
-        f"You receive character <code>{receiver_char_id}</code>; "
-        f"{message.from_user.mention} offers <code>{sender_char_id}</code>.\n"
+        f"{receiver_mention}, review this swap before confirming.\n"
+        f"You receive character <code>{html.escape(str(receiver_char_id))}</code>; "
+        f"{sender_mention} offers <code>{html.escape(str(sender_char_id))}</code>.\n"
         "Only the recipient can accept. This offer expires in 10 minutes."
     )
     trade_message = await reply_panel(message,

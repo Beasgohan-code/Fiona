@@ -6,6 +6,7 @@ from aoiwaifu.unit.rich_ui import (
     rich_card,
     rich_table,
     reply_notice,
+    user_mention,
 )
 # ==============================================================================
 # How to Use:
@@ -174,7 +175,7 @@ async def get_unique_characters(user_id, target_rarities=None):
 async def mclaim(_, message: t_types.Message):
     lang = await get_effective_lang(message)
     user_id = message.from_user.id
-    mention = message.from_user.mention
+    mention = user_mention(message.from_user)
     target_chat = str(chat or '').strip()
     if target_chat and str(message.chat.id) != target_chat:
         reply_markup = None

@@ -50,6 +50,15 @@ def rich_progress_bar(current, maximum, width: int = 12) -> str:
     return "▰" * filled + "▱" * (width - filled)
 
 
+def user_mention(user, fallback: str = "User") -> str:
+    """Return an HTML-safe tg:// mention link for rich cards and panels."""
+    name = rich_esc(getattr(user, "first_name", None) or fallback)
+    user_id = getattr(user, "id", None)
+    if user_id is None:
+        return name
+    return f'<a href="tg://user?id={int(user_id)}">{name}</a>'
+
+
 def rich_table(headers, rows) -> str:
     """Render a compact, Telegram-safe table with clear row and column breaks.
 
