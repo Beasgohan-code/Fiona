@@ -16,7 +16,7 @@ import time
 import uuid
 from bson.objectid import ObjectId
 from pyrogram import filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram.types import InlineKeyboardMarkup
 
 from aoiwaifu import CHARA_CHANNEL_ID, app as ZYRO, collection, db, rarity_map, require_power
 from aoiwaifu.admin.upload import (
@@ -55,10 +55,10 @@ def _prune_addchar_uploads():
 def _addchar_host_keyboard(token):
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("ImgBB", callback_data=f"addcharhost:{token}:imgbb"),
-            InlineKeyboardButton("Catbox", callback_data=f"addcharhost:{token}:catbox"),
+            premium_button("ImgBB", emoji="IMAGE_PHOTO", style="PRIMARY", callback_data=f"addcharhost:{token}:imgbb"),
+            premium_button("Catbox", emoji="UPLOAD", style="PRIMARY", callback_data=f"addcharhost:{token}:catbox"),
         ],
-        [InlineKeyboardButton("Cancel", callback_data=f"addcharhost:{token}:cancel")],
+        [premium_button("Cancel", emoji="CLOSE", style="DANGER", callback_data=f"addcharhost:{token}:cancel")],
     ])
 
 
