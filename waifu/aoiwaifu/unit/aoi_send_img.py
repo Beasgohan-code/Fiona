@@ -224,17 +224,20 @@ async def _expire_spawn(bot, chat_id: int, spawn_token: str) -> None:
 
 
 def build_spawn_hint(name) -> str | None:
-    """Safe, deterministic clue for the Hint button; None when unusable."""
+    """Masked-name clue for the Hint button (e.g. 'Goku' → 'G__k'); None when unusable."""
     name = str(name or "").strip()
     if not name or name.lower() == "unknown":
         return None
-    words = [word for word in name.split() if word]
-    letters = sum(1 for ch in name if ch.isalnum())
-    vowels = sum(1 for ch in name.lower() if ch in "aeiou")
-    first = words[0][0].upper()
-    word_label = f"{len(words)} word{'s' if len(words) != 1 else ''}"
-    vowel_label = f"{vowels} vowel{'s' if vowels != 1 else ''}"
-    return f"💡 {letters} letters · {word_label} · starts with “{first}” · {vowel_label}"
+    masked_words = []
+    for word in name.split():
+        if len(word) <= 1:
+            masked_words.append(word)
+        elif len(word) == 2:
+            masked_words.append(word[0] + "_")
+        else:
+            middle = "".join("_" if ch.isalnum() else ch for ch in word[1:-1])
+            masked_words.append(word[0] + middle + word[-1])
+    return f"💡 HINT: {' '.join(masked_words)}"
 
 
 def spawn_hint_answer(chat_id: int, message_id, state) -> str:

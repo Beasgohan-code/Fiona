@@ -6,8 +6,6 @@ from aoiwaifu.unit.rich_ui import (
     premium_button,
     premium_text,
     rich_card,
-    rich_heading,
-    rich_showcase_panel,
     reply_notice,
 )
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t
@@ -290,8 +288,7 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                 await edit_panel(callback_query.message, tr(empty_filter_text, lang), reply_markup)
                 return
             characters = filtered_characters
-        total_characters = len(characters)
-        amv_characters = len([c for c in characters if 'vid_url' in c])
+        total_items = len(characters)
         character_counts = Counter(str(character.get('id', '')) for character in characters)
         unique_characters = list({str(character.get('id')): character for character in characters}.values())
         items_per_page = 10
@@ -299,18 +296,16 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
         if page < 0 or page >= total_pages:
             page = 0
         lang = await get_effective_lang(callback_query or message, user_id=user_id)
-        duplicate_copies = max(0, total_characters - len(unique_characters))
-        harem_message = (
-            "<blockquote>"
-            f"📄 <b>Page:</b> {page + 1}/{total_pages}  •  "
-            f"✨ <b>Unique:</b> {len(unique_characters):,}  •  🎴 <b>Cards:</b> {total_characters:,}"
-            f"\n🔁 <b>Duplicate copies:</b> {duplicate_copies:,}"
-        )
         if anime_filter:
-            harem_message += f"\n🔎 <b>Anime:</b> {escape(str(anime_filter))} · use /harem to clear"
-        if filter_rarity:
-            harem_message += f"\n{t('harem_filtered_by', lang, rarity=escape(str(filter_rarity)))}"
-        harem_message += "</blockquote>"
+            title_mode = f" | {escape(str(anime_filter))}"
+        elif filter_rarity:
+            title_mode = f" | {escape(str(filter_rarity))}"
+        else:
+            title_mode = ""
+        harem_message = (
+            f"🎒 <b>{escape(user_first_name)}'s Collection</b>{title_mode} "
+            f"(Total: {total_items:,})\n"
+        )
         current_characters = unique_characters[page * items_per_page:(page + 1) * items_per_page]
         current_grouped_characters = {k: list(v) for k, v in groupby(current_characters, key=lambda x: x.get('anime', 'Unknown Anime'))}
         catalog_anime_counts = await _fetch_catalog_anime_counts(current_grouped_characters)
@@ -321,42 +316,60 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                 for character in all_characters
                 if character.get('anime', 'Unknown Anime') == anime
             })
-            completion = (owned_in_anime / total_anime_chars * 100) if total_anime_chars else 0
             harem_message += (
-                f"\n\n{rich_heading(escape(str(anime)), '⛩️')} "
-                f"<i>{owned_in_anime}/{total_anime_chars} collected · {completion:.1f}%</i>\n"
+                f"\n <b>{escape(str(anime))}</b>  {owned_in_anime}/{total_anime_chars}\n"
             )
             for character in chars:
                 character_id = str(character.get('id', '?'))
                 count = character_counts.get(character_id, 1)
                 rarity_emoji = rarity_map2.get(character.get('rarity'), '❔')
                 harem_message += (
-                    f"◈ <code>{escape(character_id)}</code> {rarity_emoji} "
-                    f"<b>{escape(str(character.get('name', 'Unknown Character')))}</b> "
-                    f"×{count}\n"
+                    f"◈ <code>{escape(character_id)}</code> "
+                    f"⌠{rarity_emoji}⌡ {escape(str(character.get('name', 'Unknown Character')))} ×{count}\n"
                 )
-        harem_message = rich_showcase_panel(f'{user_first_name} · COLLECTION', harem_message, '🎴')
+        harem_message += f"\n<b>Page: {page + 1}/{total_pages}</b>"
         keyboard = [
             [
                 premium_button(
-                    f'Harem ({total_characters})',
-                    emoji='USERS_GROUP',
+                    '🌐',
                     switch_inline_query_current_chat=f'collection.{user_id}',
                 ),
                 premium_button(
-                    f'AMV ({amv_characters})',
-                    emoji='VIDEO_STREAM',
+                    '🎬',
                     switch_inline_query_current_chat=f'collection.{user_id}.AMV',
                 ),
             ],
-            [
-                premium_button(
-                    tr('Refresh', lang),
-                    emoji='REFRESH',
-                    callback_data=f"harem_refresh:{page}:{user_id}:{filter_rarity or 'None'}",
-                ),
-            ],
         ]
+        noop_callback = 'harem_page_indicator:noop'
+        nav_buttons = []
+        if page > 0:
+            nav_buttons.append(
+                premium_button(
+                    '⬅️',
+                    style='PRIMARY',
+                    callback_data=f"harem:{page - 1}:{user_id}:{filter_rarity or 'None'}",
+                )
+            )
+        else:
+            nav_buttons.append(
+                premium_button('🚫', callback_data=noop_callback)
+            )
+        nav_buttons.append(
+            premium_button(f'{page + 1} / {total_pages}', callback_data=noop_callback)
+        )
+        if page < total_pages - 1:
+            nav_buttons.append(
+                premium_button(
+                    '➡️',
+                    style='PRIMARY',
+                    callback_data=f"harem:{page + 1}:{user_id}:{filter_rarity or 'None'}",
+                )
+            )
+        else:
+            nav_buttons.append(
+                premium_button('🚫', callback_data=noop_callback)
+            )
+        keyboard.append(nav_buttons)
         if anime_filter:
             keyboard.append([
                 premium_button(
@@ -365,25 +378,15 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                     callback_data=f'remove_anime_filter:{user_id}',
                 )
             ])
-        if total_pages > 1:
-            nav_buttons = []
-            if page > 0:
-                nav_buttons.append(
-                    premium_button(
-                        tr('Previous', lang),
-                        emoji='LEFT_CHEVRON',
-                        callback_data=f"harem:{page - 1}:{user_id}:{filter_rarity or 'None'}",
-                    )
+        if filter_rarity:
+            keyboard.append([
+                premium_button(
+                    tr('Remove filter', lang),
+                    emoji='CLOSE',
+                    style='DANGER',
+                    callback_data=f'remove_filter:{user_id}',
                 )
-            if page < total_pages - 1:
-                nav_buttons.append(
-                    premium_button(
-                        tr('Next', lang),
-                        emoji='RIGHT_CHEVRON',
-                        callback_data=f"harem:{page + 1}:{user_id}:{filter_rarity or 'None'}",
-                    )
-                )
-            keyboard.append(nav_buttons)
+            ])
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         # Pick favorite character photo, else first available character photo, else PHOTO_URL[0]
@@ -484,6 +487,12 @@ async def harem_callback(client: Client, callback_query: CallbackQuery):
         await display_harem(client, callback_query.message, user_id, page, filter_rarity, is_initial=False, callback_query=callback_query, force_refresh_photo=False)
     except Exception as e:
         logger.warning(f'Error in harem callback: {e}')
+@app.on_callback_query(filters.regex('^harem_page_indicator:'))
+async def harem_page_indicator_callback(client: Client, callback_query: CallbackQuery):
+    """No-op for the disabled 🚫 edge buttons and the page indicator."""
+    await callback_query.answer()
+
+
 @app.on_callback_query(filters.regex('^harem_refresh:'))
 async def harem_refresh_callback(client: Client, callback_query: CallbackQuery):
     lang = await get_effective_lang(callback_query)

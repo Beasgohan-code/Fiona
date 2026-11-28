@@ -49,5 +49,42 @@ class SpawnCardTests(unittest.TestCase):
         self.assertIn("/hunt &lt;name&gt;", self.spawn_source)
 
 
+class SpawnHintTests(unittest.TestCase):
+    def setUp(self):
+        self.spawn_source = SPAWN_FILE.read_text(encoding="utf-8")
+
+    def _build_spawn_hint(self, name):
+        import ast
+
+        tree = ast.parse(self.spawn_source)
+        helper = next(
+            node for node in tree.body
+            if isinstance(node, ast.FunctionDef) and node.name == "build_spawn_hint"
+        )
+        namespace = {}
+        exec(compile(ast.Module(body=[helper], type_ignores=[]), str(SPAWN_FILE), "exec"), namespace)
+        return namespace["build_spawn_hint"](name)
+
+    def test_hint_masks_single_word_name(self):
+        self.assertEqual(self._build_spawn_hint("Goku"), "💡 HINT: G__u")
+
+    def test_hint_keeps_word_boundaries_for_multi_word_names(self):
+        self.assertEqual(self._build_spawn_hint("Monkey D Luffy"), "💡 HINT: M____y D L___y")
+
+    def test_hint_hides_two_letter_words_partially(self):
+        self.assertEqual(self._build_spawn_hint("Go"), "💡 HINT: G_")
+
+    def test_hint_never_echoes_full_name(self):
+        masked = self._build_spawn_hint("Kirigakure Shito")
+        self.assertNotIn("Kirigakure", masked)
+        self.assertNotIn("Shito", masked)
+        self.assertIn("K________e", masked)
+        self.assertIn("S___o", masked)
+
+    def test_hint_unknown_or_missing_name_has_no_clue(self):
+        self.assertIsNone(self._build_spawn_hint(""))
+        self.assertIsNone(self._build_spawn_hint("unknown"))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -20,8 +20,11 @@ def premium_text(text: str) -> str:
         return str(text or "")
 
 
-def premium_button(text: str, emoji: str, **kwargs):
-    """Build a native premium-icon button with graceful plain-button fallback."""
+def premium_button(text: str, emoji: str = None, **kwargs):
+    """Build a native premium-icon button with graceful plain-button fallback.
+
+    Pass emoji=None (or omit it) for a glyph-only button in contexts where the
+    unicode label should stand alone."""
     return pbtn(text=text, emoji=emoji, **kwargs)
 
 

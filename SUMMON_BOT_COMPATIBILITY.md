@@ -12,7 +12,7 @@ are not copied wholesale.
 | `/start`, `/ping`, `/help`, `/menu`, `/commands` | `/start`, `/ping`, `/help`, `/menu`, `/commands` |
 | `/balance`, `/bal`, `/daily`, `/givemoney`, `/rmmoney` | `/balance`, `/bal`, `/daily` and `/dailygift`; owner-only `/givemoney <user_id> <amount>` and `/rmmoney <user_id> <amount>` adjust collector coins |
 | `/spin` | `/spin` — Fiona-sized daily coin rewards; one atomic 24-hour claim per user |
-| `/collection`, `/harem`, `/claimlist` | `/harem`, `/collection`, `/claimlist`; accepts an optional case-insensitive anime-title fragment, keeps it while paging, and shows per-anime progress percentages plus duplicate-copy totals |
+| `/collection`, `/harem`, `/claimlist` | `/harem`, `/collection`, `/claimlist`; accepts an optional case-insensitive anime-title fragment, keeps it while paging, and renders the card in Summon-bot's layout — `🎒 <b>Name's Collection</b> (Total: N)` header, per-anime `<b>Anime</b>  owned/total` groups, `◈ <code>id</code> ⌠emoji⌡ name ×copies` rows, a `<b>Page: x/y</b>` footer, and `🌐` / `🎬` inline-switch plus `⬅️`/`🚫`/`➡️` nav buttons |
 | Wishlist management | Fiona's `/wishlist` / `/wish` views or adds to a character wishlist (up to 20 catalog IDs); `/unwish <id>` removes one |
 | Duplicate selling | Fiona's `/sell <character_id>` sells one spare copy while preserving your last copy; `/sellall` first previews duplicate-sale value and only sells duplicates with `/sellall confirm` |
 | `/auction`, `/bid`, `/auctionlist`, `/mybids`, `/cancelauction` | Fiona-native live character auctions backed by `db["character_auctions"]`; bids are escrowed atomically, previous high bidders are refunded after a CAS, and ended auctions settle idempotently (winner receives the escrowed copy, seller is paid once) |
@@ -21,7 +21,7 @@ are not copied wholesale.
 | Fiona collection pins | `/pincharacter`, `/unpincharacter`, `/pinnedcharacters` (legacy aliases `/hpin`, `/hunpin`, `/pinlist`); the pinned list provides owner-scoped one-tap unpin controls |
 | `/check`, `/info` | `/check` |
 | `/search`, `/find` | `/search`, `/sips` or the bot's inline search |
-| `/summon`, `/guess` | `/summon`, `/guess` and related Fiona catch aliases (`/hunt`, `/protecc`, `/collect`, `/grab`). Auto- and manual-spawn cards carry a premium Hint button that answers ephemerally with safe clues (letter/word count, first initial, vowel count); stale or already-caught spawns reject the hint |
+| `/summon`, `/guess` | `/summon`, `/guess` and related Fiona catch aliases (`/hunt`, `/protecc`, `/collect`, `/grab`). Auto- and manual-spawn cards carry a premium Hint button that answers ephemerally with a masked-name clue (e.g. Goku → G__u); stale or already-caught spawns reject the hint |
 | `/fav`, `/pay`, `/shop`, `/gift`, `/hmode` | Same Fiona commands |
 | `/top`, `/rank` | `/top`, `/rank` |
 | `/stats`, `/server` | `/server` or `/st` for community totals; `/stats` remains the music statistics command |
