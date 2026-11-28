@@ -26,7 +26,7 @@ from aoiwaifu.admin.upload import (
     upload_to_catbox,
     upload_to_imgbb,
 )
-from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
+from aoiwaifu.unit.aoi_lang import get_effective_lang, tr, tr_panel
 WRONG_FORMAT_TEXT = (
     "Wrong ❌ format...\n"
     "eg. /addchar muzan-kibutsuji Demon-slayer\n\n"
@@ -184,7 +184,7 @@ async def choose_addchar_host(client, callback_query):
                 await send_media_panel(client,
                     chat_id=CHARA_CHANNEL_ID,
                     photo=img_url,
-                    caption=premium_text(tr(
+                    caption=premium_text(tr_panel(
                         rich_card(
                             "Character submission pending",
                             f"<b>Name:</b> {html.escape(pending['name'])}\n"
@@ -247,7 +247,7 @@ async def approve_upload(client, callback_query):
     await upload_collection.delete_one({"_id": ObjectId(upload_id)})
     await edit_panel(
         callback_query.message,
-        tr(
+        tr_panel(
             rich_card(
                 "Character approved",
                 f"<b>{html.escape(character['name'])}</b> · {html.escape(character['anime'])}\n"
@@ -270,7 +270,7 @@ async def cancel_upload(client, callback_query):
     await upload_collection.delete_one({"_id": ObjectId(upload_id)})
     await edit_panel(
         callback_query.message,
-        tr(
+        tr_panel(
             rich_card(
                 "Submission cancelled",
                 f"No character was added. Cancelled by {html.escape(callback_query.from_user.first_name or 'Admin')}.",

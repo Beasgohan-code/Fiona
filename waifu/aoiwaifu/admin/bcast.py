@@ -30,7 +30,7 @@ async def broadcast(_, message):
 
     progress_message = await reply_panel(message,
         premium_text(
-            tr(
+            tr_panel(
                 rich_card(
                     "Broadcast",
                     "Starting. Your replied message will be sent to registered users and groups.",

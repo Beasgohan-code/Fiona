@@ -18,7 +18,7 @@ from pyrogram.types import Message
 
 from aoiwaifu import app, user_collection
 from aoiwaifu.admin.blocklist import is_user_blocklisted
-from aoiwaifu.unit.aoi_lang import get_effective_lang, t, tr
+from aoiwaifu.unit.aoi_lang import get_effective_lang, t, tr, tr_panel
 
 pay_in_flight = set()
 lock = {}
@@ -333,7 +333,7 @@ async def pay(client: Client, message: Message):
             await send_panel(client,
                 recipient_id,
                 premium_text(
-                    tr(
+                    tr_panel(
                         rich_card(
                             "Payment received",
                             f"You received <b>{amount:,} coins</b> from {sender_name}.",

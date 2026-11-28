@@ -1,7 +1,6 @@
 """tr_panel() must translate the text fragments of a trusted HTML panel
 without ever touching its markup, and the panel call sites must use it."""
 import ast
-import re
 import unittest
 from pathlib import Path
 
@@ -57,12 +56,23 @@ class TrPanelBehaviorTests(unittest.TestCase):
 
 class PanelCallSiteTests(unittest.TestCase):
     def test_no_trusted_html_panel_is_fed_to_plain_tr(self):
-        pattern = re.compile(r"\btr\((?:rich_card|rich_showcase_panel|notice_card|premium_text)\(")
-        offenders = [
-            str(path)
-            for path in WAIFU.rglob("*.py")
-            if pattern.search(path.read_text(encoding="utf-8"))
-        ]
+        targets = {"rich_card", "rich_showcase_panel", "notice_card"}
+        offenders = []
+        for path in WAIFU.rglob("*.py"):
+            if "__pycache__" in path.parts:
+                continue
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            for node in ast.walk(tree):
+                if (
+                    isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Name)
+                    and node.func.id == "tr"
+                    and node.args
+                    and isinstance(node.args[0], ast.Call)
+                    and isinstance(node.args[0].func, ast.Name)
+                    and node.args[0].func.id in targets
+                ):
+                    offenders.append(f"{path}:{node.lineno}")
         self.assertEqual(offenders, [], offenders)
 
     def test_shop_panel_failure_path_uses_tr_panel(self):

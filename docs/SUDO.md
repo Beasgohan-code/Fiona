@@ -13,7 +13,7 @@ one in the music package). They do not share state. This page explains both.
 | --- | --- |
 | `OWNER_ID` env var | Full bypass: every `require_power()` gate and every owner check. |
 | `EXTRA_ADMIN_ID` env var (optional) | Same bypass for a second account. `0`/unset disables it. |
-| `SUDO` env var (static, comma-separated IDs) | **Not** a power bypass. Only gates `/list`, `/groups` and `/findani`. |
+| `SUDO` env var (static, comma-separated IDs) | **Not** a power bypass. Only gates `/list`, `/groups`, `/findani` and the owner+sudo broadcast `/waifubcast` / `/waifubroadcast`. |
 | `sudo_users` Mongo collection | The real sudo system. `require_power('<power>')` checks each user's `powers` map after the owner bypass. |
 
 ### Managing sudo users
