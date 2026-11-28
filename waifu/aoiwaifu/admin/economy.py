@@ -103,7 +103,53 @@ async def kill_handler(client: Client, message: Message):
         await reply_notice(message, tr(f"An error occurred: {e}", lang))
 
 
-@app.on_message(filters.command("add"))
+def _is_other_add(_, __, message):
+    """Any /add that is neither the currency form nor the character form."""
+    command = getattr(message, "command", []) or []
+    if not command:
+        return False
+    if len(command) >= 3 and str(command[1]).lower() in ("c", "b"):
+        return False
+    if (
+        len(command) == 5
+        and str(command[1]).lower() not in ("c", "b")
+        and str(command[3]).isdigit()
+    ):
+        return False
+    return True
+
+
+@app.on_message(filters.command("add") & filters.create(_is_other_add))
+async def admin_add_usage_hint(client: Client, message: Message):
+    """Catch-all /add: anything that is neither the currency form nor the
+    character form gets a combined usage hint instead of silence.
+
+    Deliberately ungated — it only prints help text, and requiring VIP here
+    would double-reply next to the character module's own power refusal.
+    """
+    lang = await get_effective_lang(message)
+    await reply_notice(
+        message,
+        tr(
+            "⚡ <b>/add</b>\n\n"
+            "• <code>/add c &lt;value&gt; [target]</code> — credit Coins\n"
+            "• <code>/add b &lt;value&gt; [target]</code> — credit Tokens\n"
+            "• <code>/add &lt;name&gt; &lt;anime&gt; &lt;rarity-id&gt; &lt;url&gt;</code> — add a character "
+            "(add_character power)",
+            lang,
+        ),
+        parse_mode=enums.ParseMode.HTML,
+    )
+
+
+def _is_currency_add(_, __, message):
+    """Matches the economy /add: /add c|b <amount> ... . The character /add
+    (name anime rarity-id url) is handled by the character module instead."""
+    command = getattr(message, "command", []) or []
+    return len(command) >= 3 and str(command[1]).lower() in ("c", "b")
+
+
+@app.on_message(filters.command("add") & filters.create(_is_currency_add))
 @require_power("VIP")
 async def admin_add_currency_handler(client: Client, message: Message):
     """

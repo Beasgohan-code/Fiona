@@ -5,7 +5,7 @@ from aoiwaifu.unit.rich_ui import (
 from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t
 from pyrogram import Client, filters
 from pyrogram.enums import ChatMemberStatus
-from aoiwaifu import group_user_totals_collection, group_ctimes, OWNER_ID, app, x
+from aoiwaifu import group_user_totals_collection, group_ctimes, OWNER_ID, app, EXTRA_ADMIN_ID
 
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ async def is_admin(client: Client, chat_id: int, user_id: int) -> bool:
     Bypasses check if user_id matches ADMIN_ID.
     Returns True if the user is an admin, owner, or matches ADMIN_ID, False otherwise.
     """
-    if user_id == x:
+    if EXTRA_ADMIN_ID and user_id == EXTRA_ADMIN_ID:
         return True
 
     try:

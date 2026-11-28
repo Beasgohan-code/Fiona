@@ -196,7 +196,22 @@ def _get_upload_lock() -> asyncio.Lock:
     return _upload_lock
 
 
-@ZYRO.on_message(filters.command(["add"]))
+def _is_character_add(_, __, message):
+    """Disambiguates the Summon-style character /add from the economy /add.
+
+    The economy /add (<c|b> <amount> [target]) owns the c/b prefix; the
+    character form requires exactly <name> <anime> <rarity-id> <url> with a
+    numeric rarity and a non-c/b first argument, so the two never both reply.
+    """
+    command = getattr(message, "command", []) or []
+    if len(command) != 5:
+        return False
+    if str(command[1]).lower() in ("c", "b"):
+        return False
+    return str(command[3]).isdigit()
+
+
+@ZYRO.on_message(filters.command(["add"]) & filters.create(_is_character_add))
 @require_power("add_character")
 async def add_character_command(client, message):
     """Summon-compatible direct URL form: /add name anime rarity-id image-url."""

@@ -9,8 +9,10 @@ from aoiwaifu.unit.aoi_parse_fix import SudoUsersHybrid
 
 # Optional second account that bypasses every require_power() check, like
 # OWNER_ID. Historically a hardcoded placeholder; set EXTRA_ADMIN_ID in the
-# environment to enable it (0/empty disables it).
-x = int(os.getenv("EXTRA_ADMIN_ID", "0") or 0)
+# environment to enable it (0/empty disables it). `x` is kept as a
+# backwards-compatible alias — older code imports it by that name.
+EXTRA_ADMIN_ID = int(os.getenv("EXTRA_ADMIN_ID", "0") or 0)
+x = EXTRA_ADMIN_ID
 
 sudo_users = SudoUsersHybrid(db['sudo_users'], SUDO, OWNER_ID)
 
@@ -70,3 +72,5 @@ def require_power(required_power):
         return wrapper
 
     return decorator
+
+__all__ = ["ALL_POWERS", "require_power", "sudo_users", "EXTRA_ADMIN_ID", "x"]
