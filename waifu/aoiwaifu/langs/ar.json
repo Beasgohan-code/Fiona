@@ -74,7 +74,6 @@
   "refer_caption": "<b>🎁 Refer and earn</b>\nInvite your friends to Fiona and earn rewards!\n\n<b>Rewards per referral</b>\n💵 ${ref_dollars} Waifu Dollars\n💰 {ref_coins:,} Coins\n👗 10 referrals: unlock a second dress-up character (Gojo or Alya) free\n\n<b>Your referral statistics</b>\n👥 Friends invited: <code>{referrals_count}</code>\n🎁 Character milestone: {char_milestone_status}\n💵 Dollars earned: <code>${total_dollars:,}</code>\n💰 Coins earned: <code>{total_coins:,}</code>\n\n<b>Recent referrals</b>\n{history_block}\n\n<b>Your invite link</b>\n<code>{ref_link}</code>\n<i>Share your link to invite friends.</i>",
   "btn_share": "🚀 مشاركة",
   "btn_record": "📋 القائمة",
-  "shop_main_caption": "🌟 <b>Choose a rarity below to browse the bazaar:</b>\n🫧 Frequent  •  🎋 Superior  •  🪸 Elite\n👑 Majestic  •  🏜️ Summer",
   "game_arena_header": "🎮 <b>𝐀𝐎𝐈 𝐆𝐀𝐌𝐄 𝐀𝐑𝐄𝐍𝐀</b>",
   "game_global_top10": "🌍 <b>أفضل 10 عالمياً:</b>",
   "game_chat_top10": "🏆 <b>أفضل 10 في المجموعة:</b>",

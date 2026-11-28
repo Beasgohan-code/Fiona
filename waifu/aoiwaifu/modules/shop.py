@@ -4,7 +4,7 @@ from aoiwaifu.unit.rich_ui import (
     premium_text,
     rich_showcase_panel,
 )
-from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t
+from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
 import html
 import random
 from pyrogram.types import InlineKeyboardMarkup, InputMediaPhoto, InputMediaVideo
@@ -41,12 +41,36 @@ RARITY_PRICE = {
 SHOP_RARITIES = [(rarity, rarity.split(maxsplit=1)[0]) for rarity in RARITY_NAMES]
 
 def build_shop_keyboard() -> InlineKeyboardMarkup:
+    """Rarity grid shown by the 'Open Shop' step (Summon-style SELECT RARITY)."""
     buttons = [
         premium_button(rarity.split(maxsplit=1)[1], emoji='STAR', callback_data=f'xeno_{i}')
         for i, (rarity, _) in enumerate(SHOP_RARITIES)
     ]
     keyboard = [buttons[i:i + 3] for i in range(0, len(buttons), 3)]
+    keyboard.append([
+        premium_button('Back', emoji='LEFT_CHEVRON', callback_data='shop_home'),
+    ])
     return InlineKeyboardMarkup(keyboard)
+
+def build_entry_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([[
+        premium_button('Open Shop', emoji='CART', style='SUCCESS', callback_data='open_shop'),
+    ]])
+
+def entry_caption() -> str:
+    return rich_showcase_panel(
+        'WELCOME TO SHOP',
+        "<blockquote>🎴 Official characters are up for sale."
+        " Browse the catalog and buy your favorites with coins.</blockquote>",
+        '🛒',
+    )
+
+def rarity_grid_caption() -> str:
+    return rich_showcase_panel(
+        'SELECT RARITY',
+        "<blockquote>Choose a rarity to browse the catalog.</blockquote>",
+        '🛒',
+    )
 
 def safe_split(data, sep='_', expected=2):
     parts = data.split(sep)
@@ -76,16 +100,10 @@ async def _edit_shop_message_media(msg, media_url: str, caption: str, reply_mark
 
 @app.on_message(filters.command(['shop', 'hshop', 'hshopmenu']))
 async def shop_menu(client, message):
-    lang = await get_effective_lang(message)
     await reply_photo_panel(message,
         photo=SHOP_IMAGE_URL,
-        caption=premium_text(rich_showcase_panel(
-            'FIONA CHARACTER BAZAAR',
-            f"<blockquote>{t('shop_main_caption', lang)}</blockquote>"
-            "<p><i>Choose a rarity below to explore the catalog.</i></p>",
-            '🛍️',
-        )),
-        reply_markup=build_shop_keyboard(),
+        caption=premium_text(entry_caption()),
+        reply_markup=build_entry_keyboard(),
         parse_mode=ParseMode.HTML,
     )
 
@@ -123,12 +141,12 @@ async def show_character(client, msg, user_id):
         else f"You need {price - balance:,} more coins to afford this character."
     )
     caption = rich_showcase_panel(
-        "BAZAAR CHARACTER",
+        "SHOP CHARACTER",
         "<blockquote>" + "\n".join((
+            f"🆔 <b>ID:</b> <code>{html.escape(str(char.get('id', '?')))}</code>",
             f"💎 <b>Name:</b> {html.escape(str(char.get('name', 'Unknown')))}",
             f"🏯 <b>Anime:</b> {html.escape(str(char.get('anime', 'Unknown')))}",
             f"✨ <b>Rarity:</b> {html.escape(str(char.get('rarity', 'Unknown')))}",
-            f"🆔 <b>ID:</b> <code>{html.escape(str(char.get('id', '?')))}</code>",
             f"💰 <b>Price:</b> <code>{price:,}</code> coins",
             f"👛 <b>Your wallet:</b> <code>{balance:,}</code> coins",
             f"📦 <b>Already owned:</b> <code>{owned}</code>",
@@ -138,13 +156,15 @@ async def show_character(client, msg, user_id):
     )
     keyboard = [
         [
-            premium_button('Previous', emoji='LEFT_CHEVRON', callback_data='prev_char'),
-            premium_button('Buy', emoji='CART', style='SUCCESS', callback_data=f"claim_{data['index']}"),
-            premium_button('Next', emoji='RIGHT_CHEVRON', callback_data='next_char'),
+            premium_button('◀', callback_data='prev_char'),
+            premium_button('▶', callback_data='next_char'),
+        ],
+        [
+            premium_button(f"Buy · {price:,}", emoji='CART', style='SUCCESS', callback_data=f"claim_{data['index']}"),
         ],
         [
             premium_button('Refresh · 5k', emoji='REFRESH', callback_data='refresh_chars'),
-            premium_button('Shop home', emoji='HOME', callback_data='shop_back'),
+            premium_button('Back', emoji='LEFT_CHEVRON', callback_data='open_shop'),
         ],
     ]
     image_url = char.get('img_url') or char.get('image') or char.get('url')
@@ -155,19 +175,26 @@ async def show_character(client, msg, user_id):
             return
     await _edit_shop_message_media(msg=msg, media_url=image_url, caption=caption, reply_markup=InlineKeyboardMarkup(keyboard))
 
-@app.on_callback_query(filters.regex('^shop_back$'))
+async def _send_entry_card(msg):
+    await _edit_shop_message_media(
+        msg=msg,
+        media_url=SHOP_IMAGE_URL,
+        caption=entry_caption(),
+        reply_markup=build_entry_keyboard(),
+    )
+
+@app.on_callback_query(filters.regex('^shop_back$|^shop_home$'))
 async def shop_back_callback(client, callback_query):
-    lang = await get_effective_lang(callback_query)
-    home_caption = premium_text(rich_showcase_panel(
-        'FIONA CHARACTER BAZAAR',
-        f"<blockquote>{t('shop_main_caption', lang)}</blockquote>"
-        "<p><i>Choose a rarity below to explore the catalog.</i></p>",
-        '🛍️',
-    ))
+    """Backwards-compatible alias: back to the WELCOME TO SHOP card."""
+    await _send_entry_card(callback_query.message)
+    await callback_query.answer()
+
+@app.on_callback_query(filters.regex('^open_shop$'))
+async def open_shop_callback(client, callback_query):
     await _edit_shop_message_media(
         msg=callback_query.message,
         media_url=SHOP_IMAGE_URL,
-        caption=home_caption,
+        caption=rarity_grid_caption(),
         reply_markup=build_shop_keyboard(),
     )
     await callback_query.answer()
@@ -238,7 +265,29 @@ async def claim_character(client, callback_query):
         updated_user = await user_collection.find_one_and_update({'id': user_id, 'balance': {'$gte': price}}, {'$inc': {'balance': -price}, '$push': {'characters': {'_id': ObjectId(), 'img_url': char.get('img_url'), 'name': char.get('name'), 'anime': char.get('anime'), 'rarity': char.get('rarity'), 'id': char.get('id')}}}, return_document=ReturnDocument.AFTER)
         if not updated_user:
             return await callback_query.answer(tr('❌ Not enough coins or not registered!', lang), show_alert=True)
-        await callback_query.answer(tr(f"🎉 You claimed {char.get('name')} for {price:,} coins!", lang), show_alert=True)
-        await show_character(client, callback_query.message, user_id)
+        new_balance = int(updated_user.get('balance', 0) or 0)
+        buyer_name = html.escape(str(callback_query.from_user.first_name or 'Collector'))
+        success_caption = rich_showcase_panel(
+            'PURCHASE SUCCESSFUL',
+            "<blockquote>" + "\n".join((
+                f"👤 <a href='tg://user?id={int(user_id)}'>{buyer_name}</a>",
+                f"🎴 <b>Character:</b> {html.escape(str(char.get('name', 'Unknown')))}",
+                f"🏯 <b>Anime:</b> {html.escape(str(char.get('anime', 'Unknown')))}",
+                f"✨ <b>Rarity:</b> {html.escape(str(char.get('rarity', 'Unknown')))}",
+                f"💰 <b>Spent:</b> <code>{price:,}</code> coins",
+                f"👛 <b>New wallet:</b> <code>{new_balance:,}</code> coins",
+            )) + "</blockquote>",
+            '✅',
+        )
+        success_keyboard = InlineKeyboardMarkup([[
+            premium_button('Back to shop', emoji='LEFT_CHEVRON', callback_data='open_shop'),
+        ]])
+        await _edit_shop_message_media(
+            msg=callback_query.message,
+            media_url=char.get('img_url') or char.get('image') or char.get('url') or SHOP_IMAGE_URL,
+            caption=success_caption,
+            reply_markup=success_keyboard,
+        )
+        await callback_query.answer(tr('🎉 Purchase complete!', lang))
     finally:
         shop_claim_locks.discard(user_id)
