@@ -4,28 +4,33 @@ from aoiwaifu.unit.rich_ui import (
 )
 # ==============================================================================
 # How to Use:
-#   - Purpose: Manages sudo users and granular power flags, including automatic
-#     VIP session revocation (Auto-Logout) whenever VIP power is turned off.
-#   - Components: add_sudo, remove_sudo, edit_sudo, toggle_power, sudo_list.
+#   - Purpose: Manages sudo users and their granular power flags
+#     (add_character / delete_character / update_character / approve_request /
+#     approve_inventory_request / VIP) stored in MongoDB's sudo_users collection.
+#   - Components: add_sudo, remove_sudo, edit_sudo, toggle_power, sudo_list, noop_callback.
 #   - Roots / Routes:
-#       * Commands: /saddsudo, /sremovesudo, /seditsudo, /sudolist
+#       * Commands: /saddsudo, /sremovesudo, /seditsudo, /waifusudolist
 #       * Callbacks: toggle_<uid>_<power>, close_keyboard
 #       * DB Collection: db.sudo_users
 #   - Usage: Loaded automatically by aoiwaifu/__main__.py.
 # ==============================================================================
 
-from aoiwaifu.unit.aoi_lang import get_user_lang, get_chat_lang, get_effective_lang, set_user_lang, set_chat_lang, has_user_set_lang, t, tr
-from pyrogram import Client, filters
+from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
+from pyrogram import filters
 from pyrogram.types import InlineKeyboardMarkup, CallbackQuery
-from pymongo import MongoClient
 from aoiwaifu import OWNER_ID, SUDO
 from aoiwaifu import app, db, require_power
-from functools import wraps
 import html
 from aoiwaifu.unit.aoi_parse_fix import SudoUsersHybrid
 
 sudo_users = SudoUsersHybrid(db['sudo_users'], SUDO, OWNER_ID)
 ALL_POWERS = ['add_character', 'delete_character', 'update_character', 'approve_request', 'approve_inventory_request', 'VIP']
+
+
+@app.on_callback_query(filters.regex('^noop$'))
+async def noop_callback(client, callback_query):
+    """No-op for label-only buttons (the power-name column of the toggle keyboard)."""
+    await callback_query.answer()
 
 
 def _powers_keyboard(user_id: int, powers: dict):
@@ -104,8 +109,6 @@ async def toggle_power(client, callback_query):
     new_status = not current_status
     await sudo_users.update_one({'_id': user_id}, {'$set': {f'powers.{power}': new_status}})
 
-    # If VIP power was turned OFF, immediately auto-logout any active VIP Admin Panel session!
-
     await callback_query.answer(tr(f"Power '{power}' updated to {('Yes' if new_status else 'No')}.", lang), show_alert=True)
     user_data = await sudo_users.find_one({'_id': user_id})
     powers = user_data.get('powers', {})
@@ -119,34 +122,6 @@ async def close_keyboard(client, callback_query):
     lang = await get_effective_lang(callback_query)
     await callback_query.message.edit_reply_markup(reply_markup=None)
     await callback_query.answer(tr('Keyboard closed.', lang), show_alert=True)
-
-
-def require_power(required_power):
-
-    def decorator(func):
-
-        @wraps(func)
-        async def wrapper(client, message, *args, **kwargs):
-            lang = await get_effective_lang(message)
-            if isinstance(message, CallbackQuery):
-                user_id = message.from_user.id
-                if user_id == OWNER_ID:
-                    return await func(client, message, *args, **kwargs)
-                user_data = await sudo_users.find_one({'_id': user_id})
-                if not user_data or not user_data.get('powers', {}).get(required_power, False):
-                    await message.answer(tr(f'You do not have the {required_power} power required to use this button.', lang), show_alert=True)
-                    return
-                return await func(client, message, *args, **kwargs)
-            user_id = message.from_user.id
-            if user_id == OWNER_ID:
-                return await func(client, message, *args, **kwargs)
-            user_data = await sudo_users.find_one({'_id': user_id})
-            if not user_data or not user_data.get('powers', {}).get(required_power, False):
-                await reply_notice(message, tr(f'You do not have the <code>{required_power}</code> power required to use this command.', lang))
-                return
-            return await func(client, message, *args, **kwargs)
-        return wrapper
-    return decorator
 
 
 @app.on_message(filters.command('waifusudolist'))

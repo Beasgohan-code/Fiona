@@ -1,10 +1,15 @@
+import os
+
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, CallbackQuery
-from pymongo import MongoClient
 from aoiwaifu import *
 from functools import wraps
 from aoiwaifu.unit.aoi_lang import get_effective_lang, tr
-x = 00000
+
+# Optional second account that bypasses every require_power() check, like
+# OWNER_ID. Historically a hardcoded placeholder; set EXTRA_ADMIN_ID in the
+# environment to enable it (0/empty disables it).
+x = int(os.getenv("EXTRA_ADMIN_ID", "0") or 0)
 from aoiwaifu.unit.aoi_parse_fix import SudoUsersHybrid
 sudo_users = SudoUsersHybrid(db['sudo_users'], SUDO, OWNER_ID)
 

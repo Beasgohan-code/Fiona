@@ -113,7 +113,11 @@ HELP_DATA = {
             "• `/cgen <char_id> <limit>` — Generate a character redeem code\n"
             "• `/add`, `/kill`, `/transfer`, `/backtransfer` — Manage user data & currency\n"
             "• `/blocklist`, `/removeblocklist`, `/addblocklistgc`, `/removeblocklistgc` — Blocklists\n"
-            "• `/bcast`, `/saddsudo`, `/sremovesudo`, `/seditsudo`, `/sudolist`, `/list`, `/groups`, `/backup`"
+            "• `/saddsudo` — grant sudo (reply; starts with add_character power)\n"
+            "• `/sremovesudo` — remove sudo (reply or user id)\n"
+            "• `/seditsudo` — toggle a sudo's powers via keyboard (reply)\n"
+            "• `/waifusudolist` — list sudo users (owner only)\n"
+            "• `/bcast`, `/list`, `/groups`, `/backup`"
         ),
     },
 }
